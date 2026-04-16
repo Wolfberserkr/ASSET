@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "Bash(rm -f vite.config.js.timestamp-*.mjs roulette-preview.html ASSET_Build_Prompt.md ASSET_Spec_v2_Stress_Tested.md)",
+      "Bash(rm -rf dist)",
+      "Bash(npm run:*)",
+      "Bash(gh repo:*)",
+      "Bash(git --version)",
+      "Bash(git config:*)"
+    ]
+  }
+}
