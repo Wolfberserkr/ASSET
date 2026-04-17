@@ -123,9 +123,9 @@ function RouletteTable({ scenario }) {
   ]
 
   return (
-    <div className="flex gap-0" style={{ background: '#0b1a0b' }}>
+    <div className="flex flex-col" style={{ background: '#0b1a0b' }}>
       {/* ── SVG table ───────────────────────────────────────── */}
-      <div className="flex-1 min-w-0">
+      <div className="w-full">
         <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
 
           {/* Filters */}
@@ -243,32 +243,28 @@ function RouletteTable({ scenario }) {
         </svg>
       </div>
 
-      {/* ── Bet list (right panel) ───────────────────────────── */}
-      <div className="flex flex-col w-52 shrink-0" style={{ borderLeft: '1px solid #15803d' }}>
-        <div className="px-3 py-2.5" style={{ borderBottom: '1px solid #1a3a1a' }}>
+      {/* ── Bet list (below table) ──────────────────────────── */}
+      <div style={{ borderTop: '1px solid #15803d' }}>
+        <div className="px-3 py-2" style={{ borderBottom: '1px solid #1a3a1a' }}>
           <p className="text-xs font-semibold uppercase tracking-widest"
             style={{ color: '#86efac' }}>Bets on the Table</p>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2">
+        <div className="grid gap-2 p-3"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
           {bets.map((bet, i) => {
             const s = CHIP_COLORS[bet.chip?.color] ?? CHIP_COLORS.Red
             return (
-              <div key={i} className="flex flex-col gap-1 py-1.5"
-                style={{ borderBottom: i < bets.length - 1 ? '1px solid #1a3a1a' : 'none' }}>
-                <span className="text-xs font-medium leading-tight" style={{ color: '#d1fae5' }}>
+              <div key={i} className="flex items-center justify-between px-2.5 py-2 rounded-lg"
+                style={{ background: '#0f2a0f', border: '1px solid #1a3a1a' }}>
+                <span className="text-xs font-medium leading-tight mr-2" style={{ color: '#d1fae5' }}>
                   {bet.label}
                 </span>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <span style={{
-                      display: 'inline-block', width: 8, height: 8,
-                      borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
-                      boxShadow: '0 0 4px #fbbf24aa', flexShrink: 0,
-                    }} />
-                    <span className="text-xs" style={{ color: '#9ca3af' }}>
-                      ${bet.chip?.denomination} {bet.chip?.color}
-                    </span>
-                  </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span style={{
+                    display: 'inline-block', width: 8, height: 8,
+                    borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
+                    flexShrink: 0,
+                  }} />
                   <span className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>
                     ${bet.amount}
                   </span>
@@ -277,9 +273,9 @@ function RouletteTable({ scenario }) {
             )
           })}
         </div>
-        <div className="px-3 py-2.5" style={{ borderTop: '1px solid #15803d' }}>
-          <p className="text-xs font-mono" style={{ color: '#6b7280' }}>Winnings only</p>
-          <p className="text-xs font-mono font-bold mt-0.5" style={{ color: '#fbbf24' }}>???</p>
+        <div className="px-3 pb-2.5 flex items-center justify-between">
+          <p className="text-xs font-mono" style={{ color: '#6b7280' }}>Winnings only — enter total below</p>
+          <p className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>???</p>
         </div>
       </div>
     </div>

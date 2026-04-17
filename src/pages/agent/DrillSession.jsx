@@ -440,7 +440,7 @@ export default function DrillSession() {
       </div>
 
       {/* ── Question area ─────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center px-4 py-6 w-full max-w-xl mx-auto">
+      <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isRoulette ? 'max-w-3xl' : 'max-w-xl'}`}>
 
         {/* Category + difficulty tags */}
         <div className="flex items-center gap-2 mb-4 self-start flex-wrap">
