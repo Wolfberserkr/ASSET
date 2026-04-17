@@ -283,7 +283,7 @@ export default function DrillSession() {
       game_id:          q.game_id ?? null,
       user_answer:      String(userAnswer),
       is_correct:       isCorrect,
-      bet_amount_shown: rouletteScenario ? null : (betContext?.totalBet ?? null),
+      bet_amount_shown: rouletteScenario ? rouletteScenario.correctPayout : (betContext?.totalBet ?? null),
       answered_at:      new Date().toISOString(),
     }
 
@@ -408,7 +408,7 @@ export default function DrillSession() {
   // Roulette displays a generated scenario; question_text from DB is not shown.
   // For all other payout drills, inject the odds into the question text.
   const displayText = isRoulette && rouletteScenario
-    ? `Winning number: ${rouletteScenario.winningNumber}. Calculate the total payout for all winning bets. Do not include the original bet amounts.`
+    ? `Winning number: ${rouletteScenario.winningNumber} — what is the total payout for all winning bets? Enter winnings only, do not include the original bet amounts.`
     : (isPayout && !isRoulette && q?.correct_answer)
       ? injectOddsIntoQuestion(q.question_text, q.correct_answer)
       : q?.question_text

@@ -123,156 +123,163 @@ function RouletteTable({ scenario }) {
   ]
 
   return (
-    <div>
+    <div className="flex gap-0" style={{ background: '#0b1a0b' }}>
       {/* ── SVG table ───────────────────────────────────────── */}
-      <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full" style={{ maxHeight: 270 }}>
+      <div className="flex-1 min-w-0">
+        <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
 
-        {/* Filters */}
-        <defs>
-          <filter id="chipGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
-            <feFlood floodColor="#fbbf24" floodOpacity="0.75" result="color" />
-            <feComposite in="color" in2="blur" operator="in" result="glow" />
-            <feMerge>
-              <feMergeNode in="glow" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+          {/* Filters */}
+          <defs>
+            <filter id="chipGlow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+              <feFlood floodColor="#fbbf24" floodOpacity="0.75" result="color" />
+              <feComposite in="color" in2="blur" operator="in" result="glow" />
+              <feMerge>
+                <feMergeNode in="glow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
-        {/* Felt */}
-        <rect x={0} y={0} width={SVG_W} height={SVG_H} rx={8} fill="#1a4a1a" />
+          {/* Felt */}
+          <rect x={0} y={0} width={SVG_W} height={SVG_H} rx={8} fill="#1a4a1a" />
 
-        {/* 00 cell */}
-        <rect x={0} y={0} width={ZW} height={CH * 1.5}
-          fill="#16a34a" stroke="#15803d" strokeWidth={1} />
-        <text x={ZW / 2} y={CH * 0.75 + 4} textAnchor="middle"
-          fontSize={11} fontWeight="bold" fill="white" fontFamily="sans-serif">00</text>
+          {/* 00 cell */}
+          <rect x={0} y={0} width={ZW} height={CH * 1.5}
+            fill="#16a34a" stroke="#15803d" strokeWidth={1} />
+          <text x={ZW / 2} y={CH * 0.75 + 4} textAnchor="middle"
+            fontSize={11} fontWeight="bold" fill="white" fontFamily="sans-serif">00</text>
 
-        {/* Divider */}
-        <line x1={0} y1={CH * 1.5} x2={ZW} y2={CH * 1.5} stroke="#15803d" strokeWidth={1} />
+          {/* Divider */}
+          <line x1={0} y1={CH * 1.5} x2={ZW} y2={CH * 1.5} stroke="#15803d" strokeWidth={1} />
 
-        {/* 0 cell */}
-        <rect x={0} y={CH * 1.5} width={ZW} height={CH * 1.5}
-          fill="#16a34a" stroke="#15803d" strokeWidth={1} />
-        <text x={ZW / 2} y={CH * 2.25 + 4} textAnchor="middle"
-          fontSize={11} fontWeight="bold" fill="white" fontFamily="sans-serif">0</text>
+          {/* 0 cell */}
+          <rect x={0} y={CH * 1.5} width={ZW} height={CH * 1.5}
+            fill="#16a34a" stroke="#15803d" strokeWidth={1} />
+          <text x={ZW / 2} y={CH * 2.25 + 4} textAnchor="middle"
+            fontSize={11} fontWeight="bold" fill="white" fontFamily="sans-serif">0</text>
 
-        {/* Number cells */}
-        {rows.map(row =>
-          row.map(n => {
-            const { x, y } = cellOf(n)
-            const fill = RED_NUMS.has(n) ? '#dc2626' : '#1c1917'
+          {/* Number cells */}
+          {rows.map(row =>
+            row.map(n => {
+              const { x, y } = cellOf(n)
+              const fill = RED_NUMS.has(n) ? '#dc2626' : '#1c1917'
+              return (
+                <g key={n}>
+                  <rect x={x} y={y} width={CW} height={CH}
+                    fill={fill} stroke="#374151" strokeWidth={0.5} />
+                  <text x={x + CW / 2} y={y + CH / 2 + 5}
+                    textAnchor="middle" fontSize={10}
+                    fontWeight="600" fill="white" fontFamily="sans-serif">{n}</text>
+                </g>
+              )
+            })
+          )}
+
+          {/* 2:1 column labels */}
+          {[0, 1, 2].map(r => (
+            <g key={r}>
+              <rect x={ZW + GRID_W} y={r * CH} width={38} height={CH}
+                fill="#16a34a" stroke="#15803d" strokeWidth={1} />
+              <text x={ZW + GRID_W + 19} y={r * CH + CH / 2 + 5}
+                textAnchor="middle" fontSize={8} fontWeight="bold"
+                fill="white" fontFamily="sans-serif">2:1</text>
+            </g>
+          ))}
+
+          {/* Dozen bets */}
+          {['1st 12', '2nd 12', '3rd 12'].map((label, i) => {
+            const w = GRID_W / 3
+            const x = ZW + i * w
             return (
-              <g key={n}>
-                <rect x={x} y={y} width={CW} height={CH}
-                  fill={fill} stroke="#374151" strokeWidth={0.5} />
-                <text x={x + CW / 2} y={y + CH / 2 + 5}
-                  textAnchor="middle" fontSize={10}
-                  fontWeight="600" fill="white" fontFamily="sans-serif">{n}</text>
+              <g key={label}>
+                <rect x={x} y={CH * 3} width={w} height={40}
+                  fill="#1e4e1e" stroke="#15803d" strokeWidth={1} />
+                <text x={x + w / 2} y={CH * 3 + 24} textAnchor="middle"
+                  fontSize={10} fontWeight="600" fill="white" fontFamily="sans-serif">{label}</text>
               </g>
             )
-          })
-        )}
+          })}
 
-        {/* 2:1 column labels */}
-        {[0, 1, 2].map(r => (
-          <g key={r}>
-            <rect x={ZW + GRID_W} y={r * CH} width={38} height={CH}
-              fill="#16a34a" stroke="#15803d" strokeWidth={1} />
-            <text x={ZW + GRID_W + 19} y={r * CH + CH / 2 + 5}
-              textAnchor="middle" fontSize={8} fontWeight="bold"
-              fill="white" fontFamily="sans-serif">2:1</text>
-          </g>
-        ))}
+          {/* Even-money bets */}
+          {['1-18', 'EVEN', 'RED', 'BLACK', 'ODD', '19-36'].map((label, i) => {
+            const w    = GRID_W / 6
+            const x    = ZW + i * w
+            const y    = CH * 3 + 40
+            const fill = label === 'RED' ? '#991b1b' : label === 'BLACK' ? '#1c1917' : '#1e4e1e'
+            return (
+              <g key={label}>
+                <rect x={x} y={y} width={w} height={40}
+                  fill={fill} stroke="#15803d" strokeWidth={1} />
+                <text x={x + w / 2} y={y + 24} textAnchor="middle"
+                  fontSize={9} fontWeight="600" fill="white" fontFamily="sans-serif">{label}</text>
+              </g>
+            )
+          })}
 
-        {/* Dozen bets */}
-        {['1st 12', '2nd 12', '3rd 12'].map((label, i) => {
-          const w = GRID_W / 3
-          const x = ZW + i * w
-          return (
-            <g key={label}>
-              <rect x={x} y={CH * 3} width={w} height={40}
-                fill="#1e4e1e" stroke="#15803d" strokeWidth={1} />
-              <text x={x + w / 2} y={CH * 3 + 24} textAnchor="middle"
-                fontSize={10} fontWeight="600" fill="white" fontFamily="sans-serif">{label}</text>
-            </g>
-          )
-        })}
+          {/* Bet chips */}
+          {bets.map((bet, i) => <BetChip key={i} bet={bet} />)}
 
-        {/* Even-money bets */}
-        {['1-18', 'EVEN', 'RED', 'BLACK', 'ODD', '19-36'].map((label, i) => {
-          const w    = GRID_W / 6
-          const x    = ZW + i * w
-          const y    = CH * 3 + 40
-          const fill = label === 'RED' ? '#991b1b' : label === 'BLACK' ? '#1c1917' : '#1e4e1e'
-          return (
-            <g key={label}>
-              <rect x={x} y={y} width={w} height={40}
-                fill={fill} stroke="#15803d" strokeWidth={1} />
-              <text x={x + w / 2} y={y + 24} textAnchor="middle"
-                fontSize={9} fontWeight="600" fill="white" fontFamily="sans-serif">{label}</text>
-            </g>
-          )
-        })}
+          {/* Winning number blue dot */}
+          {(() => {
+            const r = 5
+            const style = { fill: '#1d4ed8', stroke: '#93c5fd', strokeWidth: 1.5 }
+            if (win00) return <circle cx={ZW / 2} cy={CH * 0.75} r={r} {...style} />
+            if (win0)  return <circle cx={ZW / 2} cy={CH * 2.25} r={r} {...style} />
+            const wNum = Number(winStr)
+            if (wNum >= 1 && wNum <= 36) {
+              const c = cellOf(wNum)
+              return <circle cx={c.cx} cy={c.cy} r={r} {...style} />
+            }
+            return null
+          })()}
 
-        {/* Bet chips */}
-        {bets.map((bet, i) => <BetChip key={i} bet={bet} />)}
+          {/* Legend */}
+          <rect x={ZW + 4} y={SVG_H - 14} width={120} height={12} rx={3} fill="#0b0f1a" opacity={0.75} />
+          <circle cx={ZW + 12} cy={SVG_H - 8} r={4} fill="#1d4ed8" stroke="#93c5fd" strokeWidth={1} />
+          <text x={ZW + 19} y={SVG_H - 4} fontSize={7.5} fill="#93c5fd" fontFamily="sans-serif">
+            = Winning Number
+          </text>
+        </svg>
+      </div>
 
-        {/* Winning number blue dot — rendered last, small enough not to cover the chip */}
-        {(() => {
-          const r = 5
-          const style = { fill: '#1d4ed8', stroke: '#93c5fd', strokeWidth: 1.5 }
-          if (win00) return <circle cx={ZW / 2} cy={CH * 0.75} r={r} {...style} />
-          if (win0)  return <circle cx={ZW / 2} cy={CH * 2.25} r={r} {...style} />
-          const wNum = Number(winStr)
-          if (wNum >= 1 && wNum <= 36) {
-            const c = cellOf(wNum)
-            return <circle cx={c.cx} cy={c.cy} r={r} {...style} />
-          }
-          return null
-        })()}
-
-        {/* Legend */}
-        <rect x={ZW + 4} y={SVG_H - 14} width={120} height={12} rx={3} fill="#0b0f1a" opacity={0.75} />
-        <circle cx={ZW + 12} cy={SVG_H - 8} r={4} fill="#1d4ed8" stroke="#93c5fd" strokeWidth={1} />
-        <text x={ZW + 19} y={SVG_H - 4} fontSize={7.5} fill="#93c5fd" fontFamily="sans-serif">
-          = Winning Number
-        </text>
-      </svg>
-
-      {/* ── Bet list ─────────────────────────────────────────── */}
-      <div style={{ background: '#0b1a0b', borderTop: '1px solid #15803d' }}>
-        <div className="px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2"
-            style={{ color: '#86efac' }}>BETS ON THE TABLE</p>
-          <div className="flex flex-col gap-1">
-            {bets.map((bet, i) => {
-              const s = CHIP_COLORS[bet.chip?.color] ?? CHIP_COLORS.Red
-              return (
-                <div key={i}
-                  className="flex items-center justify-between text-xs py-1"
-                  style={{ borderBottom: '1px solid #1a3a1a' }}>
-                  <span style={{ color: '#d1fae5' }}>{bet.label}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="flex items-center gap-1">
-                      <span style={{
-                        display: 'inline-block', width: 9, height: 9,
-                        borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
-                        boxShadow: '0 0 4px #fbbf24aa',
-                      }} />
-                      <span style={{ color: '#9ca3af' }}>
-                        ${bet.chip?.denomination} {bet.chip?.color}
-                      </span>
-                    </span>
-                    <span className="font-mono font-bold" style={{ color: '#fbbf24' }}>
-                      = ${bet.amount}
+      {/* ── Bet list (right panel) ───────────────────────────── */}
+      <div className="flex flex-col w-52 shrink-0" style={{ borderLeft: '1px solid #15803d' }}>
+        <div className="px-3 py-2.5" style={{ borderBottom: '1px solid #1a3a1a' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest"
+            style={{ color: '#86efac' }}>Bets on the Table</p>
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2">
+          {bets.map((bet, i) => {
+            const s = CHIP_COLORS[bet.chip?.color] ?? CHIP_COLORS.Red
+            return (
+              <div key={i} className="flex flex-col gap-1 py-1.5"
+                style={{ borderBottom: i < bets.length - 1 ? '1px solid #1a3a1a' : 'none' }}>
+                <span className="text-xs font-medium leading-tight" style={{ color: '#d1fae5' }}>
+                  {bet.label}
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <span style={{
+                      display: 'inline-block', width: 8, height: 8,
+                      borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
+                      boxShadow: '0 0 4px #fbbf24aa', flexShrink: 0,
+                    }} />
+                    <span className="text-xs" style={{ color: '#9ca3af' }}>
+                      ${bet.chip?.denomination} {bet.chip?.color}
                     </span>
                   </span>
+                  <span className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>
+                    ${bet.amount}
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="px-3 py-2.5" style={{ borderTop: '1px solid #15803d' }}>
+          <p className="text-xs font-mono" style={{ color: '#6b7280' }}>Winnings only</p>
+          <p className="text-xs font-mono font-bold mt-0.5" style={{ color: '#fbbf24' }}>???</p>
         </div>
       </div>
     </div>
@@ -430,13 +437,6 @@ export default function PayoutTable({ gameName, scenario, chips, totalBet, activ
       <div className="w-full rounded-2xl overflow-hidden"
         style={{ border: '1px solid #15803d' }}>
         <RouletteTable scenario={scenario} />
-        <div className="flex items-center justify-center gap-2 py-2"
-          style={{ background: '#061006', borderTop: '1px solid #15803d' }}>
-          <span className="text-xs font-mono" style={{ color: '#6b7280' }}>
-            Payout (winnings only — do not include original bets):
-          </span>
-          <span className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>???</span>
-        </div>
       </div>
     )
   }

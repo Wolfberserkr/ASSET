@@ -58,6 +58,33 @@ function AccuracyBar({ pct, color }) {
 function MissedQuestion({ answer, index, gameName }) {
   const [open, setOpen] = useState(false)
   const q = answer.question
+  const isRoulette = gameName?.toLowerCase().includes('roulette') && q?.type === 'payout'
+
+  // For Roulette: bet_amount_shown stores correctPayout (set in DrillSession).
+  // For other payout drills: bet_amount_shown stores the total bet shown to the agent.
+  const correctAnswerDisplay = (() => {
+    if (isRoulette) {
+      const amt = answer.bet_amount_shown
+      return amt != null
+        ? `$${Number(amt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : '—'
+    }
+    if (q?.type === 'payout' && answer.bet_amount_shown) {
+      return `$${(parseFloat(q.correct_answer) * answer.bet_amount_shown).toFixed(2)}`
+    }
+    return q?.correct_answer ?? '—'
+  })()
+
+  const userAnswerDisplay = (() => {
+    const raw = answer.user_answer || '—'
+    if ((isRoulette || q?.type === 'payout') && raw !== '—') {
+      const num = parseFloat(raw.replace(/[$,\s]/g, ''))
+      if (!isNaN(num)) {
+        return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      }
+    }
+    return raw
+  })()
 
   return (
     <div
@@ -71,7 +98,7 @@ function MissedQuestion({ answer, index, gameName }) {
         <XCircle size={18} className="shrink-0 mt-0.5" style={{ color: 'var(--color-brand-danger)' }} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium line-clamp-2" style={{ color: 'var(--color-brand-text)' }}>
-            {q?.question_text ?? '—'}
+            {isRoulette ? 'Roulette — Payout Drill' : (q?.question_text ?? '—')}
           </p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             {q?.category && (
@@ -110,7 +137,7 @@ function MissedQuestion({ answer, index, gameName }) {
               Your answer
             </p>
             <p className="text-sm font-mono" style={{ color: '#fca5a5' }}>
-              {answer.user_answer || '—'}
+              {userAnswerDisplay}
             </p>
           </div>
 
@@ -119,10 +146,7 @@ function MissedQuestion({ answer, index, gameName }) {
               Correct answer
             </p>
             <p className="text-sm font-mono" style={{ color: '#86efac' }}>
-              {q?.type === 'payout' && answer.bet_amount_shown
-                ? `$${(parseFloat(q.correct_answer) * answer.bet_amount_shown).toFixed(2)}`
-                : q?.correct_answer ?? '—'
-              }
+              {correctAnswerDisplay}
             </p>
           </div>
 

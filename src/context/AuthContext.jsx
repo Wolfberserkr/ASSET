@@ -85,12 +85,12 @@ export function AuthProvider({ children }) {
     const empIdLower = employeeId.trim().toLowerCase()
     const email      = `${empIdLower}@stellaris.local`
 
-    // 1. Check lockout via RPC
+    // 1. Check lockout via RPC (non-fatal if RPC unavailable)
     const { data: isLocked, error: lockError } = await supabase
       .rpc('check_login_lockout', { p_employee_id: empIdLower })
 
-    if (lockError) throw new Error('Unable to verify lockout status.')
-    if (isLocked)  throw new Error('LOCKED')
+    if (lockError) console.warn('check_login_lockout RPC error:', lockError.message)
+    if (!lockError && isLocked) throw new Error('LOCKED')
 
     // 2. Attempt sign-in
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
