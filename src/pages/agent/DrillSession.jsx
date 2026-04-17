@@ -8,7 +8,7 @@ import { useSessionTimer } from '../../hooks/useSessionTimer'
 import { useAdaptiveDifficulty } from '../../hooks/useAdaptiveDifficulty'
 import PayoutTable from '../../components/tables/PayoutTable'
 import {
-  Clock, AlertTriangle, ChevronRight, DollarSign,
+  Clock, AlertTriangle, ChevronRight, DollarSign, X,
 } from 'lucide-react'
 
 // ─── Roulette detection ───────────────────────────────────────────────────────
@@ -131,6 +131,7 @@ export default function DrillSession() {
   const [inputError,      setInputError]      = useState('')
   const [loadError,       setLoadError]       = useState('')
   const [focusedIdx,      setFocusedIdx]      = useState(0)   // keyboard nav for multiple choice
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   const sessionIdRef  = useRef(null)
   const finalizingRef = useRef(false)
@@ -423,6 +424,35 @@ export default function DrillSession() {
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3"
            style={{ background: 'var(--color-brand-card)', borderBottom: '1px solid var(--color-brand-border)' }}>
 
+        {/* Leave button / inline confirmation */}
+        {!showLeaveConfirm ? (
+          <button
+            onClick={() => setShowLeaveConfirm(true)}
+            className="shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-opacity hover:opacity-100 opacity-60"
+            style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}
+          >
+            <X size={12} /> Leave
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Leave?</span>
+            <button
+              onClick={() => finalizeSession('abandoned')}
+              className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
+              style={{ background: '#2e0a0a', color: 'var(--color-brand-danger)', border: '1px solid var(--color-brand-danger)' }}
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setShowLeaveConfirm(false)}
+              className="text-xs px-2.5 py-1.5 rounded-lg"
+              style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         <span className="text-sm font-semibold font-mono shrink-0" style={{ color: 'var(--color-brand-text)' }}>
           {currentIdx + 1}<span style={{ color: 'var(--color-brand-muted)' }}>/{questions.length}</span>
         </span>
@@ -440,7 +470,7 @@ export default function DrillSession() {
       </div>
 
       {/* ── Question area ─────────────────────────────────────── */}
-      <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isRoulette ? 'max-w-3xl' : 'max-w-xl'}`}>
+      <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isPayout ? 'max-w-3xl' : 'max-w-xl'}`}>
 
         {/* Category + difficulty tags */}
         <div className="flex items-center gap-2 mb-4 self-start flex-wrap">
