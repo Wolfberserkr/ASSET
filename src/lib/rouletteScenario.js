@@ -2,18 +2,19 @@
  * rouletteScenario.js
  *
  * Client-side American Roulette scenario generator for payout drills.
- * Replaces the single-ratio DB question approach with a fully randomised
- * multi-bet layout that the agent must evaluate.
+ * Every bet in a scenario covers the winning number — no losing bets.
  *
- * Chips: White ($1), Red ($5), Green ($25) only.
- * Bet types: Straight, Split, Street, Corner, Dozen, Column, Even Money.
+ * Chips: White ($1) and Red ($5) only.
+ * All bets within a scenario share the same chip denomination.
+ *
+ * Bet types: Straight, Split, Street, Corner.
  *
  * Returns: { winningNumber, bets, correctPayout }
  *
  * Each bet:
  *   { type, label, numbers, payout, chip: { color, denomination, count }, amount, cx, cy }
  *
- * correctPayout = sum of (amount × payout) for winning bets only.
+ * correctPayout = sum of (amount × payout) for all bets (all win).
  * Original bet amounts are NOT included (return winnings only).
  */
 
@@ -28,10 +29,10 @@ const GRID_W = CW * 12
 
 export const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36])
 
-const ODD_NUMS  = new Set(Array.from({ length: 18 }, (_, i) => i * 2 + 1))   // 1,3,…35
-const EVEN_NUMS = new Set(Array.from({ length: 18 }, (_, i) => (i + 1) * 2)) // 2,4,…36
-const LOW_NUMS  = new Set(Array.from({ length: 18 }, (_, i) => i + 1))       // 1–18
-const HIGH_NUMS = new Set(Array.from({ length: 18 }, (_, i) => i + 19))      // 19–36
+const ODD_NUMS  = new Set(Array.from({ length: 18 }, (_, i) => i * 2 + 1))
+const EVEN_NUMS = new Set(Array.from({ length: 18 }, (_, i) => (i + 1) * 2))
+const LOW_NUMS  = new Set(Array.from({ length: 18 }, (_, i) => i + 1))
+const HIGH_NUMS = new Set(Array.from({ length: 18 }, (_, i) => i + 19))
 
 // The three roulette columns (correspond to the 2:1 bets on the right)
 const COL_NUMS = [
@@ -40,13 +41,16 @@ const COL_NUMS = [
   new Set([1,4,7,10,13,16,19,22,25,28,31,34]),  // col 3 — bottom row
 ]
 
-// ─── Chips ────────────────────────────────────────────────────────────────────
+// ─── Chips: White ($1) and Red ($5) only ─────────────────────────────────────
 
-const CHIPS = [
-  { color: 'White', denomination: 1 },
-  { color: 'Red',   denomination: 5 },
-  { color: 'Green', denomination: 25 },
-]
+function chip(denom) {
+  return { color: denom === 1 ? 'White' : 'Red', denomination: denom, count: 1 }
+}
+
+// Each scenario picks one denomination — 70 % $5, 30 % $1
+function scenarioChip() {
+  return chip(Math.random() < 0.3 ? 1 : 5)
+}
 
 // ─── Tiny utilities ───────────────────────────────────────────────────────────
 
@@ -61,11 +65,6 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]]
   }
   return a
-}
-
-function randomChip() {
-  const chip = pick(CHIPS)
-  return { color: chip.color, denomination: chip.denomination, count: 1 }
 }
 
 // ─── Cell geometry ────────────────────────────────────────────────────────────
@@ -114,9 +113,7 @@ function posSplit(a, b) {
 }
 
 function posStreet(nums) {
-  // Chip sits on the bottom border of the number grid (the line between the
-  // number cells and the dozen row), centred on its column — mirrors real
-  // casino placement so agents can distinguish a street from a split.
+  // Chip sits on the bottom border of the number grid, centred on its column
   const col = Math.floor((nums[0] - 1) / 3)
   return { cx: ZW + col * CW + CW / 2, cy: CH * 3 }
 }
@@ -129,17 +126,14 @@ function posCorner(base) {
 }
 
 function posColumn(colIdx) {
-  // 0-based: col 0 = top row, col 1 = mid, col 2 = bottom
   return { cx: ZW + GRID_W + 19, cy: colIdx * CH + CH / 2 }
 }
 
 function posDozens(dozIdx) {
-  // 0-based: 0 = 1st 12, 1 = 2nd 12, 2 = 3rd 12
   const w = GRID_W / 3
   return { cx: ZW + dozIdx * w + w / 2, cy: CH * 3 + 20 }
 }
 
-// Even-money slot order matches the SVG: 1-18, EVEN, RED, BLACK, ODD, 19-36
 const EVEN_SLOT_IDX = { low: 0, even: 1, red: 2, black: 3, odd: 4, high: 5 }
 
 function posEvenMoney(type) {
@@ -176,7 +170,6 @@ function makeSplit(a, b) {
 }
 
 function makeStreet(n) {
-  // n is the smallest number in the street (1, 4, 7, … 34)
   const col  = Math.floor((n - 1) / 3)
   const base = col * 3 + 1
   const nums = [base, base + 1, base + 2]
@@ -226,12 +219,12 @@ function makeDozens(dozIdx) {
 
 function makeEvenMoney(type) {
   const configs = {
-    red:   { label: 'Red',       numbers: [...RED_NUMS] },
-    black: { label: 'Black',     numbers: Array.from({ length: 18 }, (_, i) => [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35][i]) },
-    odd:   { label: 'Odd',       numbers: [...ODD_NUMS] },
-    even:  { label: 'Even',      numbers: [...EVEN_NUMS] },
-    low:   { label: '1–18 Low',  numbers: [...LOW_NUMS] },
-    high:  { label: '19–36 High',numbers: [...HIGH_NUMS] },
+    red:   { label: 'Red',        numbers: [...RED_NUMS] },
+    black: { label: 'Black',      numbers: Array.from({ length: 18 }, (_, i) => [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35][i]) },
+    odd:   { label: 'Odd',        numbers: [...ODD_NUMS] },
+    even:  { label: 'Even',       numbers: [...EVEN_NUMS] },
+    low:   { label: '1–18 Low',   numbers: [...LOW_NUMS] },
+    high:  { label: '19–36 High', numbers: [...HIGH_NUMS] },
   }
   const cfg = configs[type] ?? configs.red
   return {
@@ -250,124 +243,152 @@ function covers(bet, winner) {
   return bet.numbers.some(n => String(n) === wStr)
 }
 
+// ─── All splits that cover number n ──────────────────────────────────────────
+
+function allSplitsCovering(n) {
+  const col  = Math.floor((n - 1) / 3)
+  const pairs = []
+  if (col > 0)                          pairs.push([n - 3, n])  // horizontal left
+  if (col < 11)                         pairs.push([n, n + 3])  // horizontal right
+  if ((n - 1) % 3 !== 0)               pairs.push([n - 1, n])  // vertical down
+  if (n % 3 !== 0 && n < 36)           pairs.push([n, n + 1])  // vertical up
+  return pairs  // each element is [a, b]
+}
+
 // ─── Valid corner bases for a given number ────────────────────────────────────
 
 function validCornerBasesFor(n) {
   // A corner covers base, base+1, base+3, base+4.
-  // Valid base requires base%3 != 0 (base and base+1 share the same column)
-  // and base <= 32 (so base+4 <= 36).
   const bases = []
-  // n = base      → base = n
-  if (n % 3 !== 0 && n <= 32) bases.push(n)
-  // n = base + 1  → base = n-1
-  if ((n - 1) % 3 !== 0 && n - 1 >= 1 && n - 1 <= 32) bases.push(n - 1)
-  // n = base + 3  → base = n-3
-  if ((n - 3) % 3 !== 0 && n - 3 >= 1 && n - 3 <= 32) bases.push(n - 3)
-  // n = base + 4  → base = n-4
-  if ((n - 4) % 3 !== 0 && n - 4 >= 1 && n - 4 <= 32) bases.push(n - 4)
+  if (n % 3 !== 0 && n <= 32)                              bases.push(n)
+  if ((n - 1) % 3 !== 0 && n - 1 >= 1 && n - 1 <= 32)    bases.push(n - 1)
+  if ((n - 3) % 3 !== 0 && n - 3 >= 1 && n - 3 <= 32)    bases.push(n - 3)
+  if ((n - 4) % 3 !== 0 && n - 4 >= 1 && n - 4 <= 32)    bases.push(n - 4)
   return bases
 }
 
-// ─── Outside bet type that wins for a given number ───────────────────────────
+// ─── Scenario templates for 0 and 00 ─────────────────────────────────────────
 
-function winningOutsideFor(n) {
-  if (typeof n !== 'number' || n === 0) return null
-  const options = []
-  options.push(makeEvenMoney(RED_NUMS.has(n) ? 'red' : 'black'))
-  options.push(makeEvenMoney(ODD_NUMS.has(n) ? 'odd' : 'even'))
-  options.push(makeEvenMoney(LOW_NUMS.has(n) ? 'low' : 'high'))
-  const dozIdx = n <= 12 ? 0 : n <= 24 ? 1 : 2
-  options.push(makeDozens(dozIdx))
-  const colIdx = COL_NUMS.findIndex(s => s.has(n))
-  if (colIdx >= 0) options.push(makeColumn(colIdx))
-  return pick(options)
+function buildZeroScenario(winner) {
+  const templates = [
+    // Straight on the winning zero
+    () => [makeStraight(winner)],
+    // 0 / 00 split (covers both)
+    () => [makeSplit(0, '00')],
+    // Straight + 0/00 split
+    () => [makeStraight(winner), makeSplit(0, '00')],
+  ]
+  return pick(templates)()
 }
 
-// ─── Losing inside bet (straight on a different number) ──────────────────────
-
-function losingInsideBet(winner) {
-  const wStr = String(winner)
-  const candidates = [0, '00', ...Array.from({ length: 36 }, (_, i) => i + 1)]
-    .filter(n => String(n) !== wStr)
-  return makeStraight(pick(candidates))
-}
-
-// ─── Losing outside bet (one that definitely loses for this winner) ───────────
-
-function losingOutsideBetFor(winner) {
-  const n = typeof winner === 'number' ? winner : -1
-  const isZeroWin = n <= 0 || winner === '00'
-
-  const options = []
-  if (!isZeroWin) {
-    if (RED_NUMS.has(n))   options.push(makeEvenMoney('black'))
-    else                   options.push(makeEvenMoney('red'))
-    if (ODD_NUMS.has(n))   options.push(makeEvenMoney('even'))
-    else                   options.push(makeEvenMoney('odd'))
-    if (LOW_NUMS.has(n))   options.push(makeEvenMoney('high'))
-    else                   options.push(makeEvenMoney('low'))
-    const dozIdx = n <= 12 ? 0 : n <= 24 ? 1 : 2
-    const losingDoz = [0, 1, 2].filter(d => d !== dozIdx)
-    options.push(makeDozens(pick(losingDoz)))
-    const colIdx = COL_NUMS.findIndex(s => s.has(n))
-    const losingCol = [0, 1, 2].filter(c => c !== colIdx)
-    options.push(makeColumn(pick(losingCol)))
-  } else {
-    // All outside bets lose when 0/00 hits — pick any
-    options.push(makeEvenMoney(pick(['red','black','odd','even','low','high'])))
-    options.push(makeDozens(pick([0,1,2])))
-    options.push(makeColumn(pick([0,1,2])))
-  }
-  return pick(options)
-}
-
-// ─── Multi-inside-bet helper (for alternating questions) ─────────────────────
+// ─── Scenario templates for numbers 1–36 ─────────────────────────────────────
 
 /**
- * Builds 2–3 inside bets that all cover number n.
- * Used on every other question to drill multiple simultaneous inside bets
- * on the winning number (e.g. straight up + split + corner).
+ * All bets in the returned array cover number n.
+ * Templates are weighted equally; only templates that produce ≥1 valid bet
+ * for this specific number are eligible.
  */
-function buildMultiInsideBets(n) {
-  const bets = []
+function buildNumberScenario(n) {
+  const splitPairs  = allSplitsCovering(n)
+  const cornerBases = validCornerBasesFor(n)
+  const hasSplits   = splitPairs.length > 0
+  const hasCorners  = cornerBases.length > 0
 
-  // 1. Always add a straight up on n
-  bets.push(makeStraight(n))
+  const allSplitBets  = () => splitPairs.map(([a, b]) => makeSplit(a, b))
+  const allCornerBets = () => cornerBases.map(base => makeCorner(base))
 
-  // 2. Add a split that covers n (prefer horizontal so chip sits away from straight)
-  const col = Math.floor((n - 1) / 3)
-  const splitPairs = []
-  if (col > 0) splitPairs.push([n - 3, n])                      // horizontal left
-  if (col < 11) splitPairs.push([n, n + 3])                     // horizontal right
-  if ((n - 1) % 3 !== 0) splitPairs.push([n - 1, n])            // vertical up
-  if (n % 3 !== 0 && n < 36) splitPairs.push([n, n + 1])        // vertical down
-  if (splitPairs.length > 0) {
-    const [a, b] = pick(splitPairs)
-    bets.push(makeSplit(a, b))
+  // ── Define templates ────────────────────────────────────────────────────────
+  // Each entry: { weight, build } — build() returns an array of raw bets.
+  // Higher weight = more frequent.
+
+  const candidates = []
+
+  // 1. Straight only
+  candidates.push({ w: 6, build: () => [makeStraight(n)] })
+
+  // 2. Straight + all adjacent splits
+  //    e.g. $5 straight on 5 + $5 each on 2/5, 4/5, 5/6, 5/8
+  if (hasSplits) {
+    candidates.push({ w: 10, build: () => [makeStraight(n), ...allSplitBets()] })
   }
 
-  // 3. Add a corner that covers n (if any valid corner exists)
-  const bases = validCornerBasesFor(n)
-  if (bases.length > 0) {
-    bets.push(makeCorner(pick(bases)))
-  } else {
-    // Fallback: add a street that covers n
-    bets.push(makeStreet(n))
+  // 3. All splits only (no straight)
+  if (splitPairs.length >= 2) {
+    candidates.push({ w: 6, build: allSplitBets })
   }
 
-  return bets
+  // 4. One random split only
+  if (hasSplits) {
+    candidates.push({ w: 4, build: () => [makeSplit(...pick(splitPairs))] })
+  }
+
+  // 5. Straight + all corners
+  //    e.g. $5 straight on 5 + $5 each on corners 1/2/4/5, 2/3/5/6, 4/5/7/8, 5/6/8/9
+  if (hasCorners) {
+    candidates.push({ w: 10, build: () => [makeStraight(n), ...allCornerBets()] })
+  }
+
+  // 6. All corners only
+  if (hasCorners) {
+    candidates.push({ w: 6, build: allCornerBets })
+  }
+
+  // 7. One random corner only
+  if (hasCorners) {
+    candidates.push({ w: 4, build: () => [makeCorner(pick(cornerBases))] })
+  }
+
+  // 8. Straight + all corners + all splits (full inside combo)
+  //    Only include when total bets ≤ 6 to avoid too many chips on screen
+  if (hasCorners && hasSplits) {
+    const total = 1 + cornerBases.length + splitPairs.length
+    if (total <= 7) {
+      candidates.push({ w: 8, build: () => [makeStraight(n), ...allCornerBets(), ...allSplitBets()] })
+    }
+  }
+
+  // 9. All corners + all splits (no straight)
+  if (hasCorners && hasSplits) {
+    const total = cornerBases.length + splitPairs.length
+    if (total <= 6) {
+      candidates.push({ w: 6, build: () => [...allCornerBets(), ...allSplitBets()] })
+    }
+  }
+
+  // 10. Street only
+  candidates.push({ w: 4, build: () => [makeStreet(n)] })
+
+  // 11. Straight + street
+  candidates.push({ w: 6, build: () => [makeStraight(n), makeStreet(n)] })
+
+  // 12. Straight + one corner + one split
+  if (hasCorners && hasSplits) {
+    candidates.push({
+      w: 6,
+      build: () => [
+        makeStraight(n),
+        makeCorner(pick(cornerBases)),
+        makeSplit(...pick(splitPairs)),
+      ],
+    })
+  }
+
+  // ── Weighted random pick ─────────────────────────────────────────────────
+  const totalW = candidates.reduce((s, c) => s + c.w, 0)
+  let r = Math.random() * totalW
+  for (const { w, build } of candidates) {
+    r -= w
+    if (r <= 0) return build()
+  }
+  return candidates[candidates.length - 1].build()
 }
-
-// ─── Alternating-question state ────────────────────────────────────────────────
-
-// Every other scenario (2nd, 4th, 6th…) places multiple inside bets on the
-// winning number so agents practice calculating combined inside payouts.
-let _scenarioCallCount = 0
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
  * Generates a complete American Roulette training scenario.
+ * All bets cover the winning number. No losing bets.
+ * Chips are White ($1) or Red ($5) — same denomination for all bets.
  *
  * @returns {{
  *   winningNumber: number | '00',
@@ -376,102 +397,26 @@ let _scenarioCallCount = 0
  * }}
  */
 export function generateRouletteScenario() {
-  _scenarioCallCount++
-  const isMultiInside = _scenarioCallCount % 2 === 0  // every other call
-
-  // ── 1. Winning number ──────────────────────────────────────────────────────
-  const pool = [0, '00', ...Array.from({ length: 36 }, (_, i) => i + 1)]
+  // ── 1. Winning number ────────────────────────────────────────────────────
+  const pool   = [0, '00', ...Array.from({ length: 36 }, (_, i) => i + 1)]
   const winner = pick(pool)
-  const isZeroWin = winner === 0 || winner === '00'
 
-  const rawBets = []
+  // ── 2. Build bet list (all bets cover winner) ────────────────────────────
+  const rawBets = (winner === 0 || winner === '00')
+    ? buildZeroScenario(winner)
+    : buildNumberScenario(Number(winner))
 
-  // ── 2. Build bet list ──────────────────────────────────────────────────────
+  // ── 3. Assign chips — same denomination for every bet in the scenario ────
+  const chipObj = scenarioChip()
+  const bets = rawBets.map(bet => ({
+    ...bet,
+    chip:   chipObj,
+    amount: chipObj.denomination,
+  }))
 
-  if (isZeroWin) {
-    // Always include a straight on the winning zero
-    rawBets.push(makeStraight(winner))
-
-    // 50 % chance to also include the 0–00 split (covers both)
-    if (Math.random() < 0.5) rawBets.push(makeSplit(0, '00'))
-
-    // 1–2 losing inside bets (straight on a different number)
-    const numLosers = 1 + Math.floor(Math.random() * 2)
-    for (let i = 0; i < numLosers; i++) {
-      const loser = losingInsideBet(winner)
-      if (!rawBets.some(b => b.label === loser.label)) rawBets.push(loser)
-    }
-
-  } else {
-    const n = Number(winner)
-
-    // ── Inside bets on the winning number ──
-    if (isMultiInside) {
-      // Multi-inside: straight up + split + corner (all cover n)
-      const multiBets = buildMultiInsideBets(n)
-      rawBets.push(...multiBets)
-    } else {
-      // Single inside bet — pick one type
-      const insideChoice = pick(['straight', 'split', 'street', 'corner'])
-
-      if (insideChoice === 'straight') {
-        rawBets.push(makeStraight(n))
-
-      } else if (insideChoice === 'split') {
-        const col = Math.floor((n - 1) / 3)
-        const pairs = []
-        if ((n - 1) % 3 !== 0) pairs.push([n - 1, n])
-        if (n % 3 !== 0 && n < 36) pairs.push([n, n + 1])
-        if (col > 0) pairs.push([n - 3, n])
-        if (col < 11) pairs.push([n, n + 3])
-        const [a, b] = pick(pairs)
-        rawBets.push(makeSplit(a, b))
-
-      } else if (insideChoice === 'street') {
-        rawBets.push(makeStreet(n))
-
-      } else {
-        // corner
-        const bases = validCornerBasesFor(n)
-        if (bases.length > 0) {
-          rawBets.push(makeCorner(pick(bases)))
-        } else {
-          rawBets.push(makeStraight(n)) // fallback
-        }
-      }
-    }
-
-    // ── 1–2 losing inside bets ──
-    const numLosers = 1 + Math.floor(Math.random() * 2)
-    let losersAdded = 0
-    for (let attempt = 0; attempt < 6 && losersAdded < numLosers; attempt++) {
-      const loser = losingInsideBet(winner)
-      if (!rawBets.some(b => b.label === loser.label)) {
-        rawBets.push(loser)
-        losersAdded++
-      }
-    }
-
-    // ── 25 % chance to add a 0 or 00 straight (always loses for 1–36 winner) ──
-    if (Math.random() < 0.25 && rawBets.length < 5) {
-      const zeroStraight = makeStraight(pick([0, '00']))
-      if (!rawBets.some(b => b.label === zeroStraight.label)) {
-        rawBets.push(zeroStraight)
-      }
-    }
-  }
-
-  // ── 3. Assign chips to each bet (all inside — random chip) ────────────────
-  const bets = rawBets.map(bet => {
-    const chip   = randomChip()
-    const amount = chip.denomination * chip.count
-    return { ...bet, chip, amount }
-  })
-
-  // ── 4. Compute correct payout (winnings only, no stake returned) ───────────
-  const correctPayout = bets.reduce((sum, bet) => {
-    return covers(bet, winner) ? sum + bet.amount * bet.payout : sum
-  }, 0)
+  // ── 4. Compute correct payout (winnings only, stake not returned) ─────────
+  // Since all bets cover the winner, every bet pays out.
+  const correctPayout = bets.reduce((sum, bet) => sum + bet.amount * bet.payout, 0)
 
   return { winningNumber: winner, bets, correctPayout }
 }
