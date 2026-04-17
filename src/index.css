@@ -46,6 +46,21 @@ body {
   outline: none;
 }
 
+/* ── Page fade-in transition ───────────────────────────────── */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: page-in 0.18s ease-out both;
+}
+
+/* ── Performance hints for animated elements ───────────────── */
+aside {
+  will-change: transform;
+}
+
 /* ── Responsive table wrapper ──────────────────────────────── */
 .table-responsive {
   overflow-x: auto;

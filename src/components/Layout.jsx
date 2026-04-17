@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -57,15 +57,26 @@ export default function Layout({ children, bg }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const navLinks = isManagement ? mgmtNav : agentNav
+  const pageKey = useRef(0)
+  const prevPath = useRef(location.pathname)
+
+  // Increment key on route change to re-trigger page-enter animation
+  if (location.pathname !== prevPath.current) {
+    pageKey.current += 1
+    prevPath.current = location.pathname
+  }
 
   // Close sidebar on route change
   useEffect(() => { setSidebarOpen(false) }, [location.pathname])
 
-  // Lock body scroll when mobile sidebar is open
+  // Lock body scroll when mobile sidebar is open — deferred to avoid scroll jump before animation
   useEffect(() => {
-    if (sidebarOpen) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
-    return () => { document.body.style.overflow = '' }
+    if (sidebarOpen) {
+      const t = setTimeout(() => { document.body.style.overflow = 'hidden' }, 0)
+      return () => { clearTimeout(t); document.body.style.overflow = '' }
+    } else {
+      document.body.style.overflow = ''
+    }
   }, [sidebarOpen])
 
   return (
@@ -88,14 +99,17 @@ export default function Layout({ children, bg }) {
         <span className="text-sm font-bold" style={{ color: 'var(--color-brand-text)' }}>Stellaris</span>
       </div>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* Mobile overlay — always rendered, fades in/out via CSS */}
+      <div
+        className="fixed inset-0 z-40 md:hidden transition-opacity duration-200"
+        style={{
+          background: 'rgba(0,0,0,0.6)',
+          opacity: sidebarOpen ? 1 : 0,
+          pointerEvents: sidebarOpen ? 'auto' : 'none',
+        }}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
 
       {/* Sidebar */}
       <aside
@@ -186,7 +200,7 @@ export default function Layout({ children, bg }) {
           </div>
         )}
 
-        <div className="relative z-10 max-w-5xl mx-auto p-4 md:p-6">
+        <div key={pageKey.current} className="page-enter relative z-10 max-w-5xl mx-auto p-4 md:p-6">
           {children}
         </div>
       </main>

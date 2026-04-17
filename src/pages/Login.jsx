@@ -102,7 +102,7 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      className="page-enter min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
       style={{ background: 'var(--color-brand-bg)' }}
     >
       {/* ── Vanta NET background ── */}
