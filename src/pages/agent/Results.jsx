@@ -427,9 +427,28 @@ export default function Results() {
           <Zap size={13} /> Question Sequence
         </p>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {answers.map((a, i) => (
-            <div key={a.id} className="flex flex-col items-center gap-1">
+          {Array.from({ length: totalQ }, (_, i) => {
+            const a = answers[i]
+            if (!a) {
+              // Unanswered slot — shown as neutral grey
+              return (
+                <div
+                  key={i}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold"
+                  style={{
+                    background: 'var(--color-brand-border)',
+                    color: 'var(--color-brand-muted)',
+                    border: '1px solid var(--color-brand-border)',
+                  }}
+                  title={`Q${i + 1} — not answered`}
+                >
+                  {i + 1}
+                </div>
+              )
+            }
+            return (
               <div
+                key={a.id}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-mono font-bold"
                 style={{
                   background: a.is_correct ? '#0a2e1a' : '#2e0a0a',
@@ -440,8 +459,8 @@ export default function Results() {
               >
                 {i + 1}
               </div>
-            </div>
-          ))}
+            )
+          })}
           {answers.length === 0 && (
             <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>No answers recorded.</span>
           )}
@@ -455,6 +474,12 @@ export default function Results() {
             <div className="w-3 h-3 rounded-sm" style={{ background: 'var(--color-brand-danger)' }} />
             <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Missed</span>
           </div>
+          {answers.length < totalQ && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: 'var(--color-brand-border)' }} />
+              <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Not answered</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -589,7 +614,7 @@ export default function Results() {
       )}
 
       {/* ── Perfect score banner ────────────────────────────────── */}
-      {missedAnswers.length === 0 && (
+      {wrongCount === 0 && answers.length > 0 && (
         <div
           className="rounded-2xl p-6 text-center mb-4"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-success)' }}
