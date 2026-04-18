@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import { BookOpen, Plus, AlertTriangle, Check, X, Edit2 } from 'lucide-react'
@@ -171,8 +172,8 @@ export default function QuestionEditor() {
         )}
       </div>
 
-      {/* Form modal */}
-      {form && (
+      {/* Form modal — rendered via portal so position:fixed is always relative to the viewport */}
+      {form && createPortal(
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
           style={{ background: 'rgba(0,0,0,0.7)' }}
           role="dialog" aria-modal="true" aria-label={form.id ? 'Edit question' : 'New question'}>
@@ -311,7 +312,8 @@ export default function QuestionEditor() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </Layout>
   )
