@@ -424,7 +424,7 @@ export default function AgentDashboard() {
           <Leaderboard
             myName={profile?.name?.split(' ')[0] ?? 'You'}
             myAvgScore={myAvgScore}
-            mySessions={recentSessions.length}
+            mySessions={recert?.completed ?? recentSessions.length}
           />
         </div>
 
