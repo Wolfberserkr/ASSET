@@ -61,6 +61,36 @@ aside {
   will-change: transform;
 }
 
+/* ── Sidebar slide easing ───────────────────────────────────── */
+/* ease-out on open (instant start = feels responsive),
+   ease-in on close (fades away naturally) */
+.sidebar-open {
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.sidebar-closed {
+  transition: transform 200ms cubic-bezier(0.55, 0, 1, 0.45);
+}
+
+/* ── Alert banner entry ─────────────────────────────────────── */
+@keyframes alert-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.alert-enter {
+  animation: alert-in 150ms ease-out both;
+}
+
+/* ── Hover: only on devices with a real pointer ────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .hover-gold:hover {
+    border-color: var(--color-brand-gold) !important;
+  }
+  .hover-danger:hover {
+    color: var(--color-brand-danger) !important;
+    background: #1f0a0a !important;
+  }
+}
+
 /* ── Responsive table wrapper ──────────────────────────────── */
 .table-responsive {
   overflow-x: auto;

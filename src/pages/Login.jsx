@@ -91,7 +91,7 @@ export default function Login() {
 
         {/* Label */}
         <p
-          className="mt-5 text-sm font-semibold tracking-widest uppercase animate-pulse"
+          className="mt-5 text-sm font-semibold tracking-widest uppercase"
           style={{ color: 'var(--color-brand-muted)', letterSpacing: '0.18em' }}
         >
           Stellaris Surveillance
@@ -130,7 +130,7 @@ export default function Login() {
         {/* Timeout notice */}
         {timeoutReason && !error && (
           <div
-            className="flex items-center gap-2 p-3 rounded-lg mb-4 text-sm"
+            className="alert-enter flex items-center gap-2 p-3 rounded-lg mb-4 text-sm"
             style={{ background: '#1c1a0f', border: '1px solid var(--color-brand-warning)', color: 'var(--color-brand-warning)' }}
           >
             <Clock size={16} className="shrink-0" />
@@ -219,7 +219,7 @@ export default function Login() {
             {/* Error */}
             {error && (
               <div
-                className="flex items-start gap-2 p-3 rounded-lg text-sm"
+                className="alert-enter flex items-start gap-2 p-3 rounded-lg text-sm"
                 style={{ background: '#1f0a0a', border: '1px solid var(--color-brand-danger)', color: '#fca5a5' }}
               >
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
@@ -231,7 +231,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting || !employeeId || !password}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50 active:scale-[0.98] transition-transform duration-100"
               style={{
                 background: 'var(--color-brand-gold)',
                 color: '#0b0f1a',

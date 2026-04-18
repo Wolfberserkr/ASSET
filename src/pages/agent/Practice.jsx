@@ -103,16 +103,11 @@ function GameCard({ name, drillType, count, onClick, disabled }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="text-left rounded-2xl p-5 transition-all duration-150 disabled:opacity-50"
+      className="text-left rounded-2xl p-5 disabled:opacity-50 hover-gold active:scale-[0.97]"
       style={{
         background: 'var(--color-brand-card)',
         border: '1px solid var(--color-brand-border)',
-      }}
-      onMouseEnter={e => {
-        if (!disabled) e.currentTarget.style.borderColor = 'var(--color-brand-gold)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--color-brand-border)'
+        transition: 'border-color 150ms ease-out, transform 100ms ease-out',
       }}
     >
       <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-brand-text)' }}>
@@ -560,19 +555,12 @@ export default function Practice() {
             <button
               key={`${queueIdx}-${i}`}
               onClick={() => submitAnswer(option)}
-              className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium transition-all duration-100"
+              className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium hover-gold active:scale-[0.98]"
               style={{
                 background: 'var(--color-brand-card)',
                 border: '1px solid var(--color-brand-border)',
                 color: 'var(--color-brand-text)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--color-brand-gold)'
-                e.currentTarget.style.background  = '#141100'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--color-brand-border)'
-                e.currentTarget.style.background  = 'var(--color-brand-card)'
+                transition: 'background-color 100ms ease-out, border-color 100ms ease-out, transform 100ms ease-out',
               }}
             >
               <span

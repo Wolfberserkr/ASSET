@@ -434,19 +434,19 @@ export default function DrillSession() {
             <X size={12} /> Leave
           </button>
         ) : (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="alert-enter flex items-center gap-2 shrink-0">
             <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Leave?</span>
             <button
               onClick={() => finalizeSession('abandoned')}
-              className="text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-              style={{ background: '#2e0a0a', color: 'var(--color-brand-danger)', border: '1px solid var(--color-brand-danger)' }}
+              className="text-xs px-2.5 py-1.5 rounded-lg font-semibold active:scale-[0.97]"
+              style={{ background: '#2e0a0a', color: 'var(--color-brand-danger)', border: '1px solid var(--color-brand-danger)', transition: 'transform 100ms ease-out' }}
             >
               Yes
             </button>
             <button
               onClick={() => setShowLeaveConfirm(false)}
-              className="text-xs px-2.5 py-1.5 rounded-lg"
-              style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}
+              className="text-xs px-2.5 py-1.5 rounded-lg active:scale-[0.97]"
+              style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)', transition: 'transform 100ms ease-out' }}
             >
               Cancel
             </button>
@@ -458,8 +458,8 @@ export default function DrillSession() {
         </span>
 
         <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
-          <div className="h-1.5 rounded-full transition-all duration-300"
-               style={{ width: `${progress}%`, background: 'var(--color-brand-gold)' }} />
+          <div className="h-1.5 rounded-full"
+               style={{ width: `${progress}%`, background: 'var(--color-brand-gold)', transition: 'width 300ms ease-out' }} />
         </div>
 
         <div className="flex items-center gap-1.5 text-sm font-mono font-semibold shrink-0"
@@ -544,8 +544,8 @@ export default function DrillSession() {
               )}
               <button
                 type="submit"
-                className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
-                style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+                className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
+                style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a', transition: 'transform 100ms ease-out' }}
               >
                 Submit Answer <ChevronRight size={16} />
               </button>
@@ -563,11 +563,12 @@ export default function DrillSession() {
                   key={`${currentIdx}-${i}`}
                   onClick={() => submitAnswer(option)}
                   onMouseEnter={() => setFocusedIdx(i)}
-                  className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium transition-all duration-100"
+                  className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium active:scale-[0.98]"
                   style={{
                     background: isFocused ? '#141100' : 'var(--color-brand-card)',
                     border: `1px solid ${isFocused ? 'var(--color-brand-gold)' : 'var(--color-brand-border)'}`,
                     color: 'var(--color-brand-text)',
+                    transition: 'background-color 100ms ease-out, border-color 100ms ease-out, transform 100ms ease-out',
                   }}
                 >
                   <span

@@ -42,8 +42,8 @@ function AccuracyBar({ pct, color }) {
     <div className="flex items-center gap-2">
       <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
         <div
-          className="h-1.5 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: color }}
+          className="h-1.5 rounded-full"
+          style={{ width: `${pct}%`, background: color, transition: 'width 500ms ease-out' }}
         />
       </div>
       <span className="text-xs font-mono w-9 text-right" style={{ color }}>
@@ -408,8 +408,8 @@ export default function Results() {
         <div className="mt-5">
           <div className="h-2 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
             <div
-              className="h-2 rounded-full transition-all duration-700"
-              style={{ width: `${accuracy}%`, background: scoreColor }}
+              className="h-2 rounded-full"
+              style={{ width: `${accuracy}%`, background: scoreColor, transition: 'width 500ms ease-out' }}
             />
           </div>
           <p className="text-xs mt-1.5" style={{ color: 'var(--color-brand-muted)' }}>

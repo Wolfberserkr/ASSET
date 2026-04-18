@@ -272,7 +272,7 @@ export default function AgentDashboard() {
         <button
           onClick={() => navigate('/drill')}
           disabled={!canDrill || cooldownSecs === null}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-40"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
           style={{
             background: canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)',
             color: canDrill ? '#0b0f1a' : 'var(--color-brand-muted)',
@@ -317,9 +317,10 @@ export default function AgentDashboard() {
               {/* Progress bar */}
               <div className="h-1.5 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
                 <div
-                  className="h-1.5 rounded-full transition-all duration-500"
+                  className="h-1.5 rounded-full"
                   style={{
                     width: `${recertPct}%`,
+                    transition: 'width 500ms ease-out',
                     background: recert?.on_track ? 'var(--color-brand-success)' : 'var(--color-brand-warning)',
                   }}
                 />

@@ -113,8 +113,8 @@ export default function Layout({ children, bg }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-56 shrink-0 flex flex-col h-full transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 w-56 shrink-0 flex flex-col h-full md:relative md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0 sidebar-open' : '-translate-x-full sidebar-closed'
         }`}
         style={{ background: 'var(--color-brand-surface)', borderRight: '1px solid var(--color-brand-border)' }}
       >
@@ -166,10 +166,8 @@ export default function Layout({ children, bg }) {
           </div>
           <button
             onClick={() => logout()}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)]"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)]"
             style={{ color: 'var(--color-brand-muted)' }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-brand-danger)'; e.currentTarget.style.background = '#1f0a0a' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-brand-muted)'; e.currentTarget.style.background = 'transparent' }}
             aria-label="Sign out"
           >
             <LogOut size={16} />

@@ -90,8 +90,8 @@ export default function WeakAreas() {
                 </div>
               </div>
               <div className="h-2 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
-                <div className="h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${pct}%`, background: color }} />
+                <div className="h-2 rounded-full"
+                  style={{ width: `${pct}%`, background: color, transition: 'width 500ms ease-out' }} />
               </div>
             </div>
           )
