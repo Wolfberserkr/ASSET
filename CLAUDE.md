@@ -225,7 +225,7 @@ Rules:
 - **Zero database writes** — no session created, no stats updated, no cooldown triggered, adaptive difficulty unaffected
 - Session timeout confirmed at 30 min inactivity (was already correct — no change needed)
 
-### Phase 3 — Visual Payout Drills
+### Phase 3 — Visual Payout Drills ✅ COMPLETE
 - SVG table layouts for Roulette, Three Card Poker, Let It Ride, UTH
 - Highlighted bet positions
 - Randomized bet amounts from chip_variants

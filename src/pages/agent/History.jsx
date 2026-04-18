@@ -15,6 +15,7 @@ export default function History() {
       .from('sessions')
       .select('id, score, status, completed_at, total_time_seconds, total_questions, started_at')
       .eq('user_id', user.id)
+      .in('status', ['completed', 'abandoned'])
       .order('started_at', { ascending: false })
       .limit(50)
       .then(({ data }) => { setSessions(data ?? []); setLoading(false) })
