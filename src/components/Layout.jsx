@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
-  ChevronRight, PlayCircle, GraduationCap, Menu, X,
+  ChevronRight, PlayCircle, GraduationCap, Menu, X, Library,
 } from 'lucide-react'
 
 const agentNav = [
   { to: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
   { to: '/drill',           label: 'Drill',           icon: PlayCircle },
   { to: '/practice',        label: 'Practice',        icon: GraduationCap },
+  { to: '/resources',       label: 'Resources',       icon: Library },
   { to: '/history',         label: 'My History',      icon: FileText },
   { to: '/change-password', label: 'Change Password', icon: KeyRound },
 ]

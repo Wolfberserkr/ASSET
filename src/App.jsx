@@ -13,6 +13,8 @@ const DrillSession   = lazy(() => import('./pages/agent/DrillSession'))
 const Results        = lazy(() => import('./pages/agent/Results'))
 const History        = lazy(() => import('./pages/agent/History'))
 const Practice       = lazy(() => import('./pages/agent/Practice'))
+const Resources      = lazy(() => import('./pages/agent/Resources'))
+const ResourceDetail = lazy(() => import('./pages/agent/ResourceDetail'))
 
 // Management pages — lazy loaded
 const TeamDashboard  = lazy(() => import('./pages/management/TeamDashboard'))
@@ -46,8 +48,10 @@ export default function App() {
               <Route path="/change-password"    element={<ChangePassword />} />
               <Route path="/drill"              element={<DrillSession />} />
               <Route path="/results/:sessionId" element={<Results />} />
-              <Route path="/history"            element={<History />} />
+              <Route path="/history"              element={<History />} />
               <Route path="/practice"           element={<Practice />} />
+              <Route path="/resources"          element={<Resources />} />
+              <Route path="/resources/:gameId"  element={<ResourceDetail />} />
             </Route>
 
             {/* Management routes */}
