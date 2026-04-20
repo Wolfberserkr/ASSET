@@ -231,10 +231,10 @@ export default function AgentDashboard() {
       {/* ── Full-width top: header + CTA (above the two-column split) ── */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-brand-text)' }}>
-          {greeting}, {profile?.name?.split(' ')[0] ?? 'Agent'}
+          {greeting}, {profile?.employee_id ?? 'Agent'}
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--color-brand-muted)' }}>
-          {profile?.employee_id} · Surveillance Agent
+          Surveillance Agent
         </p>
       </div>
 
