@@ -124,7 +124,7 @@ export default function Layout({ children, bg }) {
           <Shield size={20} style={{ color: 'var(--color-brand-gold)' }} />
           <div className="flex-1">
             <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</p>
-            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>A.S.S.E.T</p>
+            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Surveillance</p>
           </div>
           {/* Mobile close button */}
           <button
