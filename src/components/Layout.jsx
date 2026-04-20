@@ -154,14 +154,11 @@ export default function Layout({ children, bg }) {
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
               style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
             >
-              {profile?.name?.[0]?.toUpperCase() ?? '?'}
+              {profile?.employee_id?.[0]?.toUpperCase() ?? '?'}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate" style={{ color: 'var(--color-brand-text)' }}>
-                {profile?.name ?? '—'}
-              </p>
-              <p className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
-                {profile?.employee_id}
+              <p className="text-sm font-medium truncate font-mono" style={{ color: 'var(--color-brand-text)' }}>
+                {profile?.employee_id ?? '—'}
               </p>
             </div>
           </div>
