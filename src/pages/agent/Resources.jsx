@@ -5,7 +5,7 @@ import Layout from '../../components/Layout'
 import { Library, ChevronRight, FileText, Video, Calculator } from 'lucide-react'
 
 const GAME_ICONS = {
-  'Blackjack':              '🃏',
+  'Blackjack':              '🂡🂫',
   'Roulette':               '🎡',
   'Three Card Poker':       '♠️',
   'Let It Ride':            '🤙',
