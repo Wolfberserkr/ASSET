@@ -97,7 +97,7 @@ export default function Layout({ children, bg }) {
           <Menu size={20} />
         </button>
         <Shield size={18} style={{ color: 'var(--color-brand-gold)' }} />
-        <span className="text-sm font-bold" style={{ color: 'var(--color-brand-text)' }}>Stellaris</span>
+        <span className="text-sm font-bold" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</span>
       </div>
 
       {/* Mobile overlay — always rendered, fades in/out via CSS */}
@@ -123,8 +123,8 @@ export default function Layout({ children, bg }) {
         <div className="px-4 py-5 flex items-center gap-2.5" style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
           <Shield size={20} style={{ color: 'var(--color-brand-gold)' }} />
           <div className="flex-1">
-            <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-brand-text)' }}>Stellaris</p>
-            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Surveillance</p>
+            <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</p>
+            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>A.S.S.E.T</p>
           </div>
           {/* Mobile close button */}
           <button

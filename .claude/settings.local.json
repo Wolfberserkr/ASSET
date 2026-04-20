@@ -7,7 +7,19 @@
       "Bash(npm run:*)",
       "Bash(gh repo:*)",
       "Bash(git --version)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(npx gh-pages:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 11676 /F)",
+      "Bash(taskkill /PID 14484 /F)",
+      "Bash(cmd /c \"taskkill /PID 11676 /F\")",
+      "Bash(cmd /c \"taskkill /PID 14484 /F\")",
+      "Bash(gh api:*)",
+      "Bash(python -m json.tool)",
+      "Bash(xargs grep:*)",
+      "Bash(npx skills *)",
+      "Bash(findstr /i \"deploy\\\\|gh-pages\\\\|homepage\")"
     ]
   }
 }
