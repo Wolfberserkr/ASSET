@@ -243,7 +243,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs mt-6" style={{ color: 'var(--color-brand-muted)' }}>
-          Aruba Marriott Resort &amp; Stellaris Casino · Surveillance
+          Forgot your password? Contact your supervisor.
         </p>
       </div>
     </div>
