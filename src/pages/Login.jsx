@@ -94,7 +94,7 @@ export default function Login() {
           className="mt-5 text-sm font-semibold tracking-widest uppercase"
           style={{ color: 'var(--color-brand-muted)', letterSpacing: '0.18em' }}
         >
-          Stellaris Surveillance
+          A.S.S.E.T.
         </p>
       </div>
     )
@@ -120,10 +120,10 @@ export default function Login() {
             <Shield size={32} style={{ color: 'var(--color-brand-gold)' }} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-brand-text)' }}>
-            Stellaris Surveillance
+            A.S.S.E.T.
           </h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-brand-muted)' }}>
-            Drills &amp; Training Platform
+            Aruba Surveillance Skill Enhancement &amp; Training
           </p>
         </div>
 
