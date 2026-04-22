@@ -3,6 +3,40 @@ import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import { KeyRound, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
+const inputStyle = {
+  background: 'var(--color-brand-surface)',
+  border: '1px solid var(--color-brand-border)',
+  color: 'var(--color-brand-text)',
+}
+
+function PasswordField({ id, label, value, onChange, show, onToggle }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-medium mb-1.5 uppercase tracking-widest"
+        style={{ color: 'var(--color-brand-muted)' }}>
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          required
+          className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm outline-none"
+          style={inputStyle}
+          onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+          onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
+        />
+        <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2"
+          style={{ color: 'var(--color-brand-muted)' }} tabIndex={-1}>
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function ChangePassword() {
   const [current,   setCurrent]   = useState('')
   const [newPass,   setNewPass]   = useState('')
@@ -58,38 +92,6 @@ export default function ChangePassword() {
       setLoading(false)
     }
   }
-
-  const inputStyle = {
-    background: 'var(--color-brand-surface)',
-    border: '1px solid var(--color-brand-border)',
-    color: 'var(--color-brand-text)',
-  }
-
-  const PasswordField = ({ id, label, value, onChange, show, onToggle }) => (
-    <div>
-      <label htmlFor={id} className="block text-xs font-medium mb-1.5 uppercase tracking-widest"
-        style={{ color: 'var(--color-brand-muted)' }}>
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          type={show ? 'text' : 'password'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          required
-          className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm outline-none"
-          style={inputStyle}
-          onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
-          onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
-        />
-        <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2"
-          style={{ color: 'var(--color-brand-muted)' }} tabIndex={-1}>
-          {show ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-      </div>
-    </div>
-  )
 
   return (
     <Layout>
