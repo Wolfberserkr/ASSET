@@ -66,7 +66,8 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null
       setUser(authUser)
-      fetchProfile(authUser)
+      setLoading(true)
+      fetchProfile(authUser).finally(() => setLoading(false))
       if (authUser) {
         startActivityTracking()
       } else {
