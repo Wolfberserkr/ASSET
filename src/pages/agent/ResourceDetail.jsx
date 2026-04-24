@@ -376,16 +376,8 @@ function LetItRideCalc({ config }) {
   )
 }
 
-// ─── UTH calculator ───────────────────────────────────────────────────────────
-function UTHCalc({ config }) {
-  const [ante,  setAnte]  = useState('')
-  const [play,  setPlay]  = useState('4')   // multiplier
-  const [trips, setTrips] = useState('')
-  const anteAmt  = parseBet(ante)
-  const playAmt  = anteAmt * parseFloat(play)
-  const tripsAmt = parseBet(trips)
-
-  const BetInput = ({ label, value, onChange, note }) => (
+function UTHBetInput({ label, value, onChange, note }) {
+  return (
     <div>
       <p className="text-xs font-medium mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-brand-muted)' }}>
         {label}
@@ -409,6 +401,16 @@ function UTHCalc({ config }) {
       </div>
     </div>
   )
+}
+
+// ─── UTH calculator ───────────────────────────────────────────────────────────
+function UTHCalc({ config }) {
+  const [ante,  setAnte]  = useState('')
+  const [play,  setPlay]  = useState('4')   // multiplier
+  const [trips, setTrips] = useState('')
+  const anteAmt  = parseBet(ante)
+  const playAmt  = anteAmt * parseFloat(play)
+  const tripsAmt = parseBet(trips)
 
   return (
     <div className="space-y-5">
@@ -419,7 +421,7 @@ function UTHCalc({ config }) {
           Enter Bets
         </p>
         <div className="flex flex-wrap gap-5 items-end">
-          <BetInput label="Ante / Blind (equal)" value={ante} onChange={setAnte} />
+          <UTHBetInput label="Ante / Blind (equal)" value={ante} onChange={setAnte} />
           <div>
             <p className="text-xs font-medium mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-brand-muted)' }}>
               Play Multiplier
@@ -439,7 +441,7 @@ function UTHCalc({ config }) {
               ))}
             </div>
           </div>
-          <BetInput label="Trips (optional)" value={trips} onChange={setTrips} />
+          <UTHBetInput label="Trips (optional)" value={trips} onChange={setTrips} />
         </div>
         {anteAmt > 0 && (
           <div className="flex flex-wrap gap-4 mt-4 pt-4"
