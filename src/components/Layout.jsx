@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { computeDecay, decayDismissKey } from '../lib/decayUtils'
 import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
@@ -81,26 +82,35 @@ export default function Layout({ children, bg }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [notifOpen,   setNotifOpen]   = useState(false)
-  const [missed,      setMissed]      = useState([])
-  const [dismissed,   setDismissed]   = useState(loadDismissed)
+  const [notifOpen,    setNotifOpen]    = useState(false)
+  const [missed,       setMissed]       = useState([])
+  const [decayAlerts,  setDecayAlerts]  = useState([])
+  const [dismissed,    setDismissed]    = useState(loadDismissed)
 
   useEffect(() => {
     if (!isManagement) return
     const now = new Date()
     const firstLast  = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
     const firstThis  = new Date(now.getFullYear(), now.getMonth(),     1).toISOString()
+    const cutoff28   = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
     Promise.all([
       supabase.from('sessions').select('user_id').eq('status', 'completed')
         .gte('completed_at', firstLast).lt('completed_at', firstThis),
       supabase.from('users').select('id, name, employee_id').eq('role', 'agent').eq('is_active', true),
-    ]).then(([sRes, uRes]) => {
+      supabase.from('sessions').select('user_id, score, completed_at')
+        .eq('status', 'completed').gte('completed_at', cutoff28),
+    ]).then(([sRes, uRes, decayRes]) => {
+      const agents = uRes.data ?? []
       const counts = {}
       for (const s of sRes.data ?? []) counts[s.user_id] = (counts[s.user_id] ?? 0) + 1
       setMissed(
-        (uRes.data ?? [])
-          .filter(u => (counts[u.id] ?? 0) < REQUIRED)
-          .map(u => ({ ...u, count: counts[u.id] ?? 0 }))
+        agents.filter(u => (counts[u.id] ?? 0) < REQUIRED)
+              .map(u => ({ ...u, count: counts[u.id] ?? 0 }))
+      )
+      const decayMap = computeDecay(decayRes.data ?? [])
+      setDecayAlerts(
+        agents.filter(u => decayMap[u.id]?.isDecaying)
+              .map(u => ({ ...u, ...decayMap[u.id] }))
       )
     })
   }, [isManagement])
@@ -111,14 +121,22 @@ export default function Layout({ children, bg }) {
     localStorage.setItem('notif_dismissed', JSON.stringify(next))
   }
 
-  const dismissAll = () => {
-    const next = { ...dismissed }
-    missed.forEach(a => { next[notifKey(a.id)] = true })
+  const dismissDecay = (userId) => {
+    const next = { ...dismissed, [decayDismissKey(userId)]: true }
     setDismissed(next)
     localStorage.setItem('notif_dismissed', JSON.stringify(next))
   }
 
-  const undismissed = missed.filter(a => !dismissed[notifKey(a.id)])
+  const dismissAll = () => {
+    const next = { ...dismissed }
+    missed.forEach(a => { next[notifKey(a.id)] = true })
+    decayAlerts.forEach(a => { next[decayDismissKey(a.id)] = true })
+    setDismissed(next)
+    localStorage.setItem('notif_dismissed', JSON.stringify(next))
+  }
+
+  const undismissed      = missed.filter(a => !dismissed[notifKey(a.id)])
+  const undismissedDecay = decayAlerts.filter(a => !dismissed[decayDismissKey(a.id)])
 
   const navLinks = isManagement ? mgmtNav : agentNav
   const pageKey = useRef(0)
@@ -213,15 +231,15 @@ export default function Layout({ children, bg }) {
             <button
               onClick={() => setNotifOpen(o => !o)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{ color: undismissed.length ? 'var(--color-brand-gold)' : 'var(--color-brand-muted)' }}
+              style={{ color: (undismissed.length + undismissedDecay.length) ? 'var(--color-brand-gold)' : 'var(--color-brand-muted)' }}
               aria-label="Notifications"
             >
               <span className="relative">
                 <Bell size={16} />
-                {undismissed.length > 0 && (
+                {(undismissed.length + undismissedDecay.length) > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center"
                     style={{ background: '#fca5a5', color: '#1a0000' }}>
-                    {undismissed.length}
+                    {undismissed.length + undismissedDecay.length}
                   </span>
                 )}
               </span>
@@ -246,7 +264,7 @@ export default function Layout({ children, bg }) {
                       <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>{prevMonthLabel()} recertification</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {undismissed.length > 1 && (
+                      {(undismissed.length + undismissedDecay.length) > 1 && (
                         <button onClick={dismissAll}
                           className="text-xs px-2 py-1 rounded-md transition-opacity hover:opacity-70"
                           style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}>
@@ -261,32 +279,69 @@ export default function Layout({ children, bg }) {
                   </div>
 
                   {/* Body */}
-                  <div className="max-h-72 overflow-y-auto">
-                    {undismissed.length === 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {undismissed.length === 0 && undismissedDecay.length === 0 ? (
                       <p className="px-4 py-6 text-sm text-center" style={{ color: 'var(--color-brand-muted)' }}>
                         No new notifications
                       </p>
                     ) : (
-                      undismissed.map((a, i) => (
-                        <div key={a.id} className="flex items-start gap-3 px-4 py-3"
-                          style={{ borderBottom: i < undismissed.length - 1 ? '1px solid var(--color-brand-border)' : 'none' }}>
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-                            style={{ background: '#2a0a0a', color: '#fca5a5' }}>
-                            {a.name[0]}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium" style={{ color: 'var(--color-brand-text)' }}>{a.name}</p>
-                            <p className="text-xs mt-0.5" style={{ color: '#fca5a5' }}>
-                              Missed {prevMonthLabel()} target — {a.count}/{REQUIRED} sessions
-                            </p>
-                          </div>
-                          <button onClick={() => dismissOne(a.id)}
-                            className="shrink-0 p-1 rounded hover:opacity-60 transition-opacity mt-0.5"
-                            style={{ color: 'var(--color-brand-muted)' }} aria-label="Dismiss">
-                            <X size={13} />
-                          </button>
-                        </div>
-                      ))
+                      <>
+                        {/* Missed last month */}
+                        {undismissed.length > 0 && (
+                          <>
+                            <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest"
+                              style={{ color: 'var(--color-brand-muted)' }}>Missed Target</p>
+                            {undismissed.map((a, i) => (
+                              <div key={a.id} className="flex items-start gap-3 px-4 py-3"
+                                style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                                  style={{ background: '#2a0a0a', color: '#fca5a5' }}>
+                                  {a.name[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium" style={{ color: 'var(--color-brand-text)' }}>{a.name}</p>
+                                  <p className="text-xs mt-0.5" style={{ color: '#fca5a5' }}>
+                                    Missed {prevMonthLabel()} target — {a.count}/{REQUIRED} sessions
+                                  </p>
+                                </div>
+                                <button onClick={() => dismissOne(a.id)}
+                                  className="shrink-0 p-1 rounded hover:opacity-60 transition-opacity mt-0.5"
+                                  style={{ color: 'var(--color-brand-muted)' }} aria-label="Dismiss">
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Score decay */}
+                        {undismissedDecay.length > 0 && (
+                          <>
+                            <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest"
+                              style={{ color: 'var(--color-brand-muted)' }}>Score Decay</p>
+                            {undismissedDecay.map(a => (
+                              <div key={a.id} className="flex items-start gap-3 px-4 py-3"
+                                style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                                  style={{ background: '#1a0f1f', color: '#c084fc' }}>
+                                  {a.name[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium" style={{ color: 'var(--color-brand-text)' }}>{a.name}</p>
+                                  <p className="text-xs mt-0.5" style={{ color: '#c084fc' }}>
+                                    Score down {a.dropPct}% over 2 weeks ({a.priorAvg} → {a.recentAvg})
+                                  </p>
+                                </div>
+                                <button onClick={() => dismissDecay(a.id)}
+                                  className="shrink-0 p-1 rounded hover:opacity-60 transition-opacity mt-0.5"
+                                  style={{ color: 'var(--color-brand-muted)' }} aria-label="Dismiss">
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

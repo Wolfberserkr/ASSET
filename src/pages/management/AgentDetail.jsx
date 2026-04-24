@@ -4,7 +4,8 @@ import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import * as XLSX from 'xlsx'
-import { ArrowLeft, Download, Trophy, Clock, CheckSquare, TrendingUp, Target } from 'lucide-react'
+import { ArrowLeft, Download, Trophy, Clock, CheckSquare, TrendingUp, Target, TrendingDown } from 'lucide-react'
+import { computeDecay } from '../../lib/decayUtils'
 
 // ── Score Trend Chart ─────────────────────────────────────────────────────────
 function ScoreTrend({ sessions }) {
@@ -197,6 +198,8 @@ export default function AgentDetail() {
   }, [id])
 
   const completedSessions = sessions.filter(s => s.status === 'completed')
+  const decayMap   = computeDecay(completedSessions.map(s => ({ user_id: id, score: s.score, completed_at: s.completed_at })))
+  const decayInfo  = decayMap[id]
   const avgScore = completedSessions.length
     ? (completedSessions.reduce((s, x) => s + x.score, 0) / completedSessions.length).toFixed(1)
     : '—'
@@ -254,6 +257,18 @@ export default function AgentDetail() {
           <Download size={15} /> Export Excel
         </button>
       </div>
+
+      {/* Decay warning */}
+      {decayInfo?.isDecaying && (
+        <div className="flex items-center gap-2 p-3 rounded-lg mb-5 text-sm"
+          style={{ background: '#1a0f1f', border: '1px solid #c084fc', color: '#c084fc' }}>
+          <TrendingDown size={15} className="shrink-0" />
+          <span>
+            Score down <strong>{decayInfo.dropPct}%</strong> over the past 2 weeks —
+            avg dropped from <strong>{decayInfo.priorAvg}</strong> to <strong>{decayInfo.recentAvg}</strong>.
+          </span>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">

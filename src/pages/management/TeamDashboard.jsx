@@ -7,8 +7,9 @@ import StatCard from '../../components/StatCard'
 import * as XLSX from 'xlsx'
 import {
   Users, Trophy, CheckSquare, Download,
-  ChevronRight, AlertTriangle, Search,
+  ChevronRight, AlertTriangle, Search, TrendingDown,
 } from 'lucide-react'
+import { computeDecay } from '../../lib/decayUtils'
 
 // ── Export helpers ─────────────────────────────────────────────
 function exportToExcel(agents, dateRange) {
@@ -41,6 +42,7 @@ function exportToExcel(agents, dateRange) {
 export default function TeamDashboard() {
   const navigate = useNavigate()
   const [agents,    setAgents]    = useState([])
+  const [decayMap,  setDecayMap]  = useState({})
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
   const [search,    setSearch]    = useState('')
@@ -48,9 +50,15 @@ export default function TeamDashboard() {
   const loadAgents = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const { data, error: err } = await supabase.rpc('get_all_agents')
-    if (err) { setError(err.message); setLoading(false); return }
-    setAgents(data ?? [])
+    const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
+    const [agentsRes, sessionsRes] = await Promise.all([
+      supabase.rpc('get_all_agents'),
+      supabase.from('sessions').select('user_id, score, completed_at')
+        .eq('status', 'completed').gte('completed_at', cutoff),
+    ])
+    if (agentsRes.error) { setError(agentsRes.error.message); setLoading(false); return }
+    setAgents(agentsRes.data ?? [])
+    setDecayMap(computeDecay(sessionsRes.data ?? []))
     setLoading(false)
   }, [])
 
@@ -68,6 +76,7 @@ export default function TeamDashboard() {
     : '—'
   const onTrack       = agents.filter(a => Number(a.sessions_this_month ?? 0) >= 20).length
   const belowTarget   = agents.filter(a => Number(a.sessions_this_month ?? 0) < 20)
+  const decayAgents   = agents.filter(a => decayMap[a.id]?.isDecaying)
 
   return (
     <Layout bg={<VantaBackground style={{ width: '100%', height: '100%' }} />}>
@@ -100,6 +109,17 @@ export default function TeamDashboard() {
           <span>
             <strong>{belowTarget.length} agent{belowTarget.length > 1 ? 's are' : ' is'}</strong> below the 20-session monthly target:{' '}
             {belowTarget.map(a => a.name.split(' ')[0]).join(', ')}
+          </span>
+        </div>
+      )}
+
+      {decayAgents.length > 0 && (
+        <div className="flex items-start gap-2 p-3 rounded-lg mb-5 text-sm"
+          style={{ background: '#1a0f1f', border: '1px solid #c084fc', color: '#c084fc' }}>
+          <TrendingDown size={16} className="shrink-0 mt-0.5" />
+          <span>
+            <strong>{decayAgents.length} agent{decayAgents.length > 1 ? 's' : ''}</strong> showing score decay (&gt;15% drop over 2 weeks):{' '}
+            {decayAgents.map(a => a.name.split(' ')[0]).join(', ')}
           </span>
         </div>
       )}
@@ -182,7 +202,16 @@ export default function TeamDashboard() {
                           {agent.name[0]}
                         </div>
                         <div>
-                          <p className="font-medium" style={{ color: 'var(--color-brand-text)' }}>{agent.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium" style={{ color: 'var(--color-brand-text)' }}>{agent.name}</p>
+                            {decayMap[agent.id]?.isDecaying && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                                title={`Score down ${decayMap[agent.id].dropPct}% over 2 weeks (${decayMap[agent.id].priorAvg} → ${decayMap[agent.id].recentAvg})`}
+                                style={{ background: '#1a0f1f', color: '#c084fc' }}>
+                                ↓{decayMap[agent.id].dropPct}%
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{agent.employee_id}</p>
                         </div>
                       </div>
