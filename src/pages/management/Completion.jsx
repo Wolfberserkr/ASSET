@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import * as XLSX from 'xlsx'
-import { CheckSquare, Download, AlertTriangle, Flag } from 'lucide-react'
+import { CheckSquare, Download, AlertTriangle, Flag, X } from 'lucide-react'
 
 const REQUIRED = 20
 
@@ -36,11 +36,27 @@ const STATUS_META = {
 
 const STATUS_ORDER = { 'flagged': 0, 'at-risk': 1, 'below-target': 2, 'on-track': 3 }
 
+// Key includes the previous month so dismissal auto-expires next month
+function lastMonthDismissKey() {
+  const d = new Date()
+  const year  = d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear()
+  const month = String(d.getMonth() === 0 ? 12 : d.getMonth()).padStart(2, '0')
+  return `completion_dismissed_${year}-${month}`
+}
+
 export default function Completion() {
   const [agents,        setAgents]        = useState([])
   const [lastMonthMap,  setLastMonthMap]  = useState({})
   const [loading,       setLoading]       = useState(true)
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem(lastMonthDismissKey()) === 'true'
+  )
   const daysLeft = daysLeftInMonth()
+
+  const dismissBanner = useCallback(() => {
+    localStorage.setItem(lastMonthDismissKey(), 'true')
+    setBannerDismissed(true)
+  }, [])
 
   useEffect(() => {
     const now = new Date()
@@ -140,13 +156,17 @@ export default function Completion() {
       )}
 
       {/* Last month flag banner */}
-      {missedLastCount > 0 && (
+      {missedLastCount > 0 && !bannerDismissed && (
         <div className="flex items-start gap-2 p-3 rounded-lg mb-5 text-sm"
           style={{ background: '#1a0a0a', border: '1px solid #fca5a5', color: '#fca5a5' }}>
           <Flag size={16} className="shrink-0 mt-0.5" />
-          <span>
+          <span className="flex-1">
             {missedLastCount} agent{missedLastCount > 1 ? 's' : ''} did not meet the {REQUIRED}-session target in {monthLabel(-1)}.
           </span>
+          <button onClick={dismissBanner} className="shrink-0 p-0.5 rounded hover:opacity-70 transition-opacity"
+            aria-label="Dismiss" style={{ color: '#fca5a5' }}>
+            <X size={15} />
+          </button>
         </div>
       )}
 
