@@ -10,13 +10,14 @@ import { ArrowLeft, FileText, Video, Calculator, ExternalLink, VideoOff, FileX }
 
 const CALC = {
   'Blackjack': {
+    specialType: 'blackjack',
     sections: [
       {
         id: 'main',
         title: 'Main Bet',
         inputLabel: 'Bet amount ($)',
         outcomes: [
-          { label: 'Blackjack',           ratio: 1.5,  note: '3:2',  highlight: true },
+          { label: 'Blackjack', ratios: { '3:2': 1.5, '6:5': 1.2 }, highlight: true },
           { label: 'Win',                 ratio: 1,    note: '1:1'   },
           { label: 'Insurance win',       ratio: 2,    note: '2:1'   },
           { label: 'Push',                ratio: 0,    note: 'bet returned', muted: true },
@@ -165,6 +166,73 @@ function PayoutRow({ label, note, payout, highlight, muted }) {
       <span className="text-sm font-bold font-mono" style={{ color }}>
         {muted && payout === 0 ? '—' : fmt(payout)}
       </span>
+    </div>
+  )
+}
+
+// ─── Blackjack calculator (with 3:2 / 6:5 toggle) ───────────────────────────
+function BlackjackCalc({ config }) {
+  const [bet, setBet] = useState('')
+  const [mode, setMode] = useState('3:2')
+  const amount = parseBet(bet)
+  const section = config.sections[0]
+
+  return (
+    <div className="rounded-xl overflow-hidden"
+      style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+      <div className="px-4 py-3 flex items-center justify-between gap-4"
+        style={{ borderBottom: '1px solid var(--color-brand-border)', background: 'var(--color-brand-surface)' }}>
+        <div className="flex items-center gap-3">
+          <p className="font-semibold text-sm" style={{ color: 'var(--color-brand-text)' }}>{section.title}</p>
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-brand-border)' }}>
+            {['3:2', '6:5'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => setMode(opt)}
+                className="px-2.5 py-1 text-xs font-mono font-semibold transition-colors"
+                style={{
+                  background: mode === opt ? 'var(--color-brand-gold)' : 'transparent',
+                  color: mode === opt ? '#0b0f1a' : 'var(--color-brand-muted)',
+                  borderRight: opt === '3:2' ? '1px solid var(--color-brand-border)' : 'none',
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="relative shrink-0">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono"
+            style={{ color: 'var(--color-brand-muted)' }}>$</span>
+          <input
+            type="number" min="0" step="0.01" placeholder="0.00"
+            value={bet} onChange={e => setBet(e.target.value)}
+            className="w-32 pl-7 pr-3 py-2 rounded-lg text-sm font-mono outline-none text-right"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }}
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+            onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
+          />
+        </div>
+      </div>
+      <div className="flex items-center justify-between py-1.5 px-4"
+        style={{ borderBottom: '1px solid var(--color-brand-border)', background: 'var(--color-brand-surface)' }}>
+        <span className="text-xs uppercase tracking-widest font-medium" style={{ color: 'var(--color-brand-muted)' }}>Outcome</span>
+        <span className="text-xs uppercase tracking-widest font-medium" style={{ color: 'var(--color-brand-muted)' }}>Win</span>
+      </div>
+      {section.outcomes.map(o => {
+        const ratio = o.ratios ? o.ratios[mode] : o.ratio
+        const note  = o.ratios ? mode : o.note
+        return (
+          <PayoutRow
+            key={o.label}
+            label={o.label}
+            note={note}
+            payout={o.muted ? 0 : amount * ratio}
+            highlight={o.highlight}
+            muted={o.muted}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -637,6 +705,9 @@ export default function ResourceDetail() {
         <div>
           {calcConfig ? (
             <div className="space-y-5">
+              {calcConfig.specialType === 'blackjack' && (
+                <BlackjackCalc config={calcConfig} />
+              )}
               {calcConfig.specialType === 'let_it_ride' && (
                 <LetItRideCalc config={calcConfig} />
               )}
