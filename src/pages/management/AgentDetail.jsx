@@ -124,6 +124,25 @@ function GameAccuracy({ data }) {
   )
 }
 
+// ── UA Parser ────────────────────────────────────────────────────────────────
+function parseUA(ua) {
+  if (!ua) return '—'
+  const browser =
+    /Edg\//.test(ua) ? 'Edge' :
+    /Chrome\//.test(ua) ? 'Chrome' :
+    /Firefox\//.test(ua) ? 'Firefox' :
+    /Safari\//.test(ua) && !/Chrome/.test(ua) ? 'Safari' :
+    'Browser'
+  const os =
+    /Windows NT/.test(ua) ? 'Windows' :
+    /Mac OS X/.test(ua) ? 'macOS' :
+    /Android/.test(ua) ? 'Android' :
+    /iPhone|iPad/.test(ua) ? 'iOS' :
+    /Linux/.test(ua) ? 'Linux' :
+    'Unknown OS'
+  return `${browser} · ${os}`
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AgentDetail() {
   const { id } = useParams()
@@ -281,7 +300,7 @@ export default function AgentDetail() {
             <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-                  {['Date', 'Status', 'Score', 'Duration', 'IP'].map(h => (
+                  {['Date', 'Status', 'Score', 'Duration', 'IP', 'Device'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-widest"
                       style={{ color: 'var(--color-brand-muted)' }}>{h}</th>
                   ))}
@@ -314,6 +333,9 @@ export default function AgentDetail() {
                       </td>
                       <td className="px-4 py-3 text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
                         {s.ip_address ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+                        {parseUA(s.user_agent)}
                       </td>
                     </tr>
                   )
