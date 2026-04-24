@@ -512,16 +512,36 @@ function UTHCalc({ config }) {
             </span>
           </div>
           {/* Blind payout table */}
-          <div className="px-4 py-2.5"
+          <div className="flex items-center justify-between px-4 py-2.5"
             style={{ borderBottom: '1px solid var(--color-brand-border)', background: 'var(--color-brand-surface)' }}>
             <span className="text-xs uppercase tracking-widest font-medium" style={{ color: 'var(--color-brand-muted)' }}>
               Blind Bonus (qualifying hands only)
             </span>
+            <span className="text-xs uppercase tracking-widest font-medium" style={{ color: 'var(--color-brand-muted)' }}>
+              Blind&nbsp;&nbsp;&nbsp;&nbsp;Total Win
+            </span>
           </div>
-          {config.blindOutcomes.map(o => (
-            <PayoutRow key={o.label} label={o.label} note={o.note}
-              payout={o.muted ? 0 : anteAmt * o.ratio} highlight={o.highlight} muted={o.muted} />
-          ))}
+          {config.blindOutcomes.map(o => {
+            const blindWin = o.muted ? 0 : anteAmt * o.ratio
+            const totalWin = o.muted ? 0 : anteAmt + playAmt + blindWin
+            return (
+              <div key={o.label} className="flex items-center justify-between py-2.5 px-4"
+                style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
+                <div>
+                  <span className="text-sm" style={{ color: 'var(--color-brand-text)' }}>{o.label}</span>
+                  <span className="text-xs ml-2 font-mono" style={{ color: 'var(--color-brand-muted)' }}>{o.note}</span>
+                </div>
+                <div className="flex items-center gap-4 font-mono text-sm font-bold">
+                  <span style={{ color: o.muted ? 'var(--color-brand-muted)' : o.highlight ? 'var(--color-brand-gold)' : 'var(--color-brand-success)' }}>
+                    {o.muted ? '—' : fmt(blindWin)}
+                  </span>
+                  <span className="w-24 text-right" style={{ color: o.muted ? 'var(--color-brand-muted)' : 'var(--color-brand-text)' }}>
+                    {o.muted ? 'push' : fmt(totalWin)}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
