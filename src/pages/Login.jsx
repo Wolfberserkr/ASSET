@@ -32,9 +32,9 @@ export default function Login() {
     setSubmitting(true)
 
     try {
-      const profileData = await login(employeeId, password)
-      if (profileData?.role === 'agent') navigate('/dashboard')
-      else navigate('/management')
+      await login(employeeId, password)
+      // Navigation is handled by the useEffect above once AuthContext
+      // finishes fetching the profile via onAuthStateChange.
     } catch (err) {
       const msg = err.message
 
