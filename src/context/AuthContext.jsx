@@ -55,23 +55,21 @@ export function AuthProvider({ children }) {
   }, [resetTimeout])
 
   // ── Bootstrap on mount ───────────────────────────────────────
+  // `loading` is a cold-boot gate only: it stays true until the first auth
+  // event (INITIAL_SESSION) tells us whether a session exists. After that,
+  // SIGNED_IN / SIGNED_OUT / USER_UPDATED update user+profile in place
+  // without flipping loading back to true — this prevents ProtectedRoute and
+  // Login from flashing the dark loading screen mid-navigation.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const authUser = session?.user ?? null
-      setUser(authUser)
-      fetchProfile(authUser).finally(() => setLoading(false))
-      if (authUser) startActivityTracking()
-    })
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const authUser = session?.user ?? null
       setUser(authUser)
+
       // TOKEN_REFRESHED only rotates the JWT — profile and role are unchanged.
-      // Setting loading=true here causes ProtectedRoute to flash a dark screen
-      // while the network re-fetch completes, so we skip it entirely.
       if (event === 'TOKEN_REFRESHED') return
-      setLoading(true)
+
       fetchProfile(authUser).finally(() => setLoading(false))
+
       if (authUser) {
         startActivityTracking()
       } else {

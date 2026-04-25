@@ -27,15 +27,21 @@ const QuestionEditor = lazy(() => import('./pages/management/QuestionEditor'))
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center h-full min-h-[60vh]">
-      <div className="w-6 h-6 rounded-full border-2 border-[var(--color-brand-gold)] border-t-transparent animate-spin" />
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ background: 'var(--color-brand-bg)', zIndex: 60 }}
+    >
+      <div
+        className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+        style={{ borderColor: 'var(--color-brand-gold)' }}
+      />
     </div>
   )
 }
 
 export default function App() {
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>

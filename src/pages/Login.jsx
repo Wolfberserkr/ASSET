@@ -34,7 +34,9 @@ export default function Login() {
     try {
       await login(employeeId, password)
       // Navigation is handled by the useEffect above once AuthContext
-      // finishes fetching the profile via onAuthStateChange.
+      // finishes fetching the profile via onAuthStateChange. Keep
+      // submitting=true so the form does not flicker back to its idle
+      // state during the redirect.
     } catch (err) {
       const msg = err.message
 
@@ -52,7 +54,6 @@ export default function Login() {
       } else {
         setError(msg || 'Login failed. Please try again.')
       }
-    } finally {
       setSubmitting(false)
     }
   }
