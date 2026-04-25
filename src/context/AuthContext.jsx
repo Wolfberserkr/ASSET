@@ -63,9 +63,13 @@ export function AuthProvider({ children }) {
       if (authUser) startActivityTracking()
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const authUser = session?.user ?? null
       setUser(authUser)
+      // TOKEN_REFRESHED only rotates the JWT — profile and role are unchanged.
+      // Setting loading=true here causes ProtectedRoute to flash a dark screen
+      // while the network re-fetch completes, so we skip it entirely.
+      if (event === 'TOKEN_REFRESHED') return
       setLoading(true)
       fetchProfile(authUser).finally(() => setLoading(false))
       if (authUser) {

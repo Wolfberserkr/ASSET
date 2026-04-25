@@ -315,7 +315,7 @@ export default function AgentDetail() {
             <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-                  {['Date', 'Status', 'Score', 'Duration', 'IP', 'Device'].map(h => (
+                  {['Date', 'Status', 'Score', 'Duration', 'Device'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-widest"
                       style={{ color: 'var(--color-brand-muted)' }}>{h}</th>
                   ))}
@@ -345,9 +345,6 @@ export default function AgentDetail() {
                       </td>
                       <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--color-brand-muted)' }}>
                         {s.total_time_seconds ? `${mins}m ${String(secs).padStart(2, '0')}s` : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
-                        {s.ip_address ?? '—'}
                       </td>
                       <td className="px-4 py-3 text-xs" style={{ color: 'var(--color-brand-muted)' }}>
                         {parseUA(s.user_agent)}
