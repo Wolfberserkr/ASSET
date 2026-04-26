@@ -58,8 +58,8 @@ function NavItem({ to, label, icon: Icon, onClick }) {
       end={to === '/management' || to === '/dashboard'}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)] ${
-          isActive ? 'bg-[var(--color-brand-card)] text-[var(--color-brand-gold)]' : ''
+        `nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)] ${
+          isActive ? 'nav-item-active bg-[var(--color-brand-card)] text-[var(--color-brand-gold)]' : ''
         }`
       }
       style={({ isActive }) => ({
@@ -68,9 +68,11 @@ function NavItem({ to, label, icon: Icon, onClick }) {
     >
       {({ isActive }) => (
         <>
-          <Icon size={16} />
-          <span>{label}</span>
-          {isActive && <ChevronRight size={14} className="ml-auto" />}
+          <span className="nav-item-icon flex items-center" style={{ color: 'inherit' }}>
+            <Icon size={16} />
+          </span>
+          <span className="relative z-10">{label}</span>
+          {isActive && <ChevronRight size={14} className="ml-auto relative z-10" />}
         </>
       )}
     </NavLink>
