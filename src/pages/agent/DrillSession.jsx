@@ -250,7 +250,6 @@ export default function DrillSession() {
         if (cancelled)  return
 
         sessionIdRef.current = sessionRow.id
-        logAudit('SESSION_STARTED', { session_id: sessionRow.id, question_count: drawn.length })
         const firstQ      = drawn[0]
         const firstIsRoul = isRouletteQuestion(firstQ)
         const bet         = firstQ?.type === 'payout' && !firstIsRoul
@@ -261,6 +260,10 @@ export default function DrillSession() {
         setRouletteScenario(scenario)
         setStatus('active')
         startTimer()
+
+        // Audit fire-and-forget AFTER UI is active so a slow/failing RPC
+        // can never delay the spinner.
+        logAudit('SESSION_STARTED', { session_id: sessionRow.id, question_count: drawn.length })
       } catch (err) {
         console.error('DrillSession init:', err)
         if (!cancelled) setLoadError(err.message ?? 'Failed to start session.')
