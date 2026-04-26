@@ -6,6 +6,7 @@ import { buildSession, randomizeBetAmount } from '../../lib/questionRandomizer'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import { useSessionTimer } from '../../hooks/useSessionTimer'
 import { useAdaptiveDifficulty } from '../../hooks/useAdaptiveDifficulty'
+import { logAudit } from '../../lib/audit'
 import PayoutTable from '../../components/tables/PayoutTable'
 import {
   Clock, AlertTriangle, ChevronRight, DollarSign, X,
@@ -193,10 +194,10 @@ export default function DrillSession() {
         }).catch(() => {})
       }
 
-      supabase.rpc('log_audit_event', {
-        p_action:  outcome === 'completed' ? 'SESSION_COMPLETED' : 'SESSION_ABANDONED',
-        p_details: { session_id: sessionId, score, correct: correctCount },
-      }).catch(() => {})
+      logAudit(
+        outcome === 'completed' ? 'SESSION_COMPLETED' : 'SESSION_ABANDONED',
+        { session_id: sessionId, score, correct: correctCount },
+      )
 
     } catch (err) {
       // Log the error but don't bail — still navigate so the agent sees their results
@@ -249,6 +250,7 @@ export default function DrillSession() {
         if (cancelled)  return
 
         sessionIdRef.current = sessionRow.id
+        logAudit('SESSION_STARTED', { session_id: sessionRow.id, question_count: drawn.length })
         const firstQ      = drawn[0]
         const firstIsRoul = isRouletteQuestion(firstQ)
         const bet         = firstQ?.type === 'payout' && !firstIsRoul

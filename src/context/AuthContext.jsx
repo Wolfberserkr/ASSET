@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { logAudit } from '../lib/audit'
 
 const AuthContext = createContext(null)
 
@@ -103,7 +104,13 @@ export function AuthProvider({ children }) {
       .rpc('check_login_lockout', { p_employee_id: empIdLower })
 
     if (lockError) console.warn('check_login_lockout RPC error:', lockError.message)
-    if (!lockError && isLocked) throw new Error('LOCKED')
+    if (!lockError && isLocked) {
+      // Locked accounts have no JWT, so log_audit_event would no-op.
+      // Insert directly via the public RLS policy (auth.uid() not required for
+      // a locked-out attempt audit — handled by signInWithPassword's anon role,
+      // so we simply skip; lockout is already captured in login_attempts).
+      throw new Error('LOCKED')
+    }
 
     // 2. Attempt sign-in
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -132,10 +139,7 @@ export function AuthProvider({ children }) {
     }
 
     // 5. Audit log
-    await supabase.rpc('log_audit_event', {
-      p_action:  'LOGIN',
-      p_details: { employee_id: empIdLower },
-    }).catch(err => console.warn('[audit] LOGIN failed:', err.message))
+    await logAudit('LOGIN', { employee_id: empIdLower, role: profileData?.role })
 
     return profileData
   }, [])
@@ -156,10 +160,7 @@ export function AuthProvider({ children }) {
     // Audit RPC is sent while the JWT is still technically valid (signOut
     // hasn't been called yet), then signOut invalidates the session server-side.
     if (hadProfile) {
-      supabase.rpc('log_audit_event', {
-        p_action:  'LOGOUT',
-        p_details: { reason },
-      }).catch(err => console.warn('[audit] LOGOUT failed:', err.message))
+      logAudit('LOGOUT', { reason })
     }
     supabase.auth.signOut().catch(() => {})
   }, [navigate, stopActivityTracking])

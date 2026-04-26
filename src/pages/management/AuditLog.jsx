@@ -16,14 +16,20 @@ const ACTION_CATEGORIES = [
   { label: 'All actions',   value: 'all'     },
   { label: 'Auth events',   value: 'auth'    },
   { label: 'Sessions',      value: 'session' },
+  { label: 'Practice',      value: 'practice' },
+  { label: 'Question edits', value: 'admin'  },
 ]
 
-const AUTH_ACTIONS    = new Set(['LOGIN', 'LOGOUT', 'PASSWORD_CHANGE'])
-const SESSION_ACTIONS = new Set(['SESSION_COMPLETED', 'SESSION_ABANDONED'])
+const AUTH_ACTIONS     = new Set(['LOGIN', 'LOGOUT', 'PASSWORD_CHANGE'])
+const SESSION_ACTIONS  = new Set(['SESSION_STARTED', 'SESSION_COMPLETED', 'SESSION_ABANDONED'])
+const PRACTICE_ACTIONS = new Set(['PRACTICE_STARTED'])
+const ADMIN_ACTIONS    = new Set(['QUESTION_CREATED', 'QUESTION_UPDATED', 'QUESTION_TOGGLED'])
 
 function actionCategory(action) {
-  if (AUTH_ACTIONS.has(action))    return 'auth'
-  if (SESSION_ACTIONS.has(action)) return 'session'
+  if (AUTH_ACTIONS.has(action))     return 'auth'
+  if (SESSION_ACTIONS.has(action))  return 'session'
+  if (PRACTICE_ACTIONS.has(action)) return 'practice'
+  if (ADMIN_ACTIONS.has(action))    return 'admin'
   return 'other'
 }
 
@@ -31,19 +37,37 @@ function actionColor(action) {
   if (action === 'LOGIN')              return 'var(--color-brand-blue)'
   if (action === 'LOGOUT')             return 'var(--color-brand-muted)'
   if (action === 'PASSWORD_CHANGE')    return 'var(--color-brand-warning)'
+  if (action === 'SESSION_STARTED')    return 'var(--color-brand-blue)'
   if (action === 'SESSION_COMPLETED')  return 'var(--color-brand-success)'
   if (action === 'SESSION_ABANDONED')  return 'var(--color-brand-danger)'
+  if (action === 'PRACTICE_STARTED')   return 'var(--color-brand-gold)'
+  if (action === 'QUESTION_CREATED')   return 'var(--color-brand-success)'
+  if (action === 'QUESTION_UPDATED')   return 'var(--color-brand-warning)'
+  if (action === 'QUESTION_TOGGLED')   return 'var(--color-brand-muted)'
   return 'var(--color-brand-text)'
 }
 
 function formatDetails(details) {
   if (!details) return null
-  if (details.reason)     return details.reason
+  if (details.scope_name) {
+    return details.question_pool != null
+      ? `${details.scope_name} · ${details.question_pool} qs`
+      : details.scope_name
+  }
+  if (details.is_active !== undefined && details.question_id) {
+    return `Question ${details.is_active ? 'activated' : 'deactivated'}`
+  }
+  if (details.category && details.type) {
+    return `${details.type} · ${details.category}`
+  }
   if (details.score !== undefined) {
     const parts = [`${details.score} pts`]
     if (details.correct !== undefined) parts.push(`${details.correct}/10 correct`)
     return parts.join(' · ')
   }
+  if (details.question_count) return `${details.question_count} questions`
+  if (details.reason)         return details.reason
+  if (details.role)           return `Role: ${details.role}`
   return null
 }
 

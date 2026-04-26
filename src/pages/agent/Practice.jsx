@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { logAudit } from '../../lib/audit'
 import { randomizeBetAmount } from '../../lib/questionRandomizer'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import Layout from '../../components/Layout'
@@ -188,6 +189,12 @@ export default function Practice() {
       })
 
       if (prepared.length === 0) throw new Error('No questions found for this selection.')
+
+      logAudit('PRACTICE_STARTED', {
+        scope: gameOption.id,
+        scope_name: gameOption.name,
+        question_pool: prepared.length,
+      })
 
       const firstQ      = prepared[0]
       const firstIsRoul = isRouletteQuestion(firstQ)

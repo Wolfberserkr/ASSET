@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
+import { logAudit } from '../../lib/audit'
 import Layout from '../../components/Layout'
 import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle } from 'lucide-react'
 
@@ -59,6 +60,13 @@ export default function QuestionEditor() {
 
     if (result.error) { setError(result.error.message); setSaving(false); return }
 
+    logAudit(form.id ? 'QUESTION_UPDATED' : 'QUESTION_CREATED', {
+      question_id: result.data?.id,
+      category:    payload.category,
+      type:        payload.type,
+      game_id:     payload.game_id,
+    })
+
     // Refresh list
     const { data } = await supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(200)
     setQuestions(data ?? [])
@@ -68,6 +76,7 @@ export default function QuestionEditor() {
 
   const toggleActive = async (q) => {
     await supabase.from('questions').update({ is_active: !q.is_active }).eq('id', q.id)
+    logAudit('QUESTION_TOGGLED', { question_id: q.id, is_active: !q.is_active })
     setQuestions(prev => prev.map(x => x.id === q.id ? { ...x, is_active: !x.is_active } : x))
   }
 

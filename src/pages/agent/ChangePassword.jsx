@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { logAudit } from '../../lib/audit'
 import Layout from '../../components/Layout'
 import { KeyRound, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
@@ -79,10 +80,7 @@ export default function ChangePassword() {
       if (updateError) throw updateError
 
       // Audit log
-      await supabase.rpc('log_audit_event', {
-        p_action: 'PASSWORD_CHANGE',
-        p_details: {},
-      }).catch(err => console.warn('[audit] PASSWORD_CHANGE failed:', err.message))
+      await logAudit('PASSWORD_CHANGE', {})
 
       setSuccess(true)
       setCurrent(''); setNewPass(''); setConfirm('')
