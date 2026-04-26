@@ -122,10 +122,10 @@ export function AuthProvider({ children }) {
     }
 
     // 5. Audit log
-    supabase.rpc('log_audit_event', {
+    await supabase.rpc('log_audit_event', {
       p_action:  'LOGIN',
       p_details: { employee_id: empIdLower },
-    })
+    }).catch(err => console.warn('[audit] LOGIN failed:', err.message))
 
     return profileData
   }, [])
@@ -133,10 +133,13 @@ export function AuthProvider({ children }) {
   // ── Logout ────────────────────────────────────────────────────
   const logout = useCallback(async (reason = 'manual') => {
     if (profileRef.current) {
-      supabase.rpc('log_audit_event', {
+      // Must be awaited BEFORE signOut() — signOut() invalidates the JWT, and
+      // the RPC is SECURITY DEFINER using auth.uid(). If the token is gone
+      // before the request resolves, auth.uid() returns NULL and the insert fails.
+      await supabase.rpc('log_audit_event', {
         p_action:  'LOGOUT',
         p_details: { reason },
-      })
+      }).catch(err => console.warn('[audit] LOGOUT failed:', err.message))
     }
 
     stopActivityTracking()

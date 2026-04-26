@@ -79,10 +79,10 @@ export default function ChangePassword() {
       if (updateError) throw updateError
 
       // Audit log
-      supabase.rpc('log_audit_event', {
+      await supabase.rpc('log_audit_event', {
         p_action: 'PASSWORD_CHANGE',
         p_details: {},
-      })
+      }).catch(err => console.warn('[audit] PASSWORD_CHANGE failed:', err.message))
 
       setSuccess(true)
       setCurrent(''); setNewPass(''); setConfirm('')
