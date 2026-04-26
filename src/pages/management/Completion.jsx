@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import * as XLSX from 'xlsx'
-import { CheckSquare, Download, AlertTriangle, Flag, X } from 'lucide-react'
+import { CheckSquare, Download, AlertTriangle, Flag, X, FileCheck } from 'lucide-react'
 
 const REQUIRED = 20
 
@@ -114,6 +114,56 @@ export default function Completion() {
     XLSX.writeFile(wb, `completion_tracker_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
+  const [complianceLoading, setComplianceLoading] = useState(false)
+
+  const exportComplianceRecords = useCallback(async () => {
+    setComplianceLoading(true)
+    const now = new Date()
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const label = now.toLocaleString('default', { month: 'long', year: 'numeric' })
+
+    const { data: sessions } = await supabase
+      .from('sessions')
+      .select('user_id, score, total_time_seconds, completed_at, started_at, users(name, employee_id)')
+      .eq('status', 'completed')
+      .gte('completed_at', firstOfMonth)
+      .order('completed_at', { ascending: true })
+
+    const wb = XLSX.utils.book_new()
+
+    // Sheet 1 — Summary
+    const summaryRows = enriched.map(a => ({
+      'Employee ID':      a.employee_id,
+      'Name':             a.name,
+      'Sessions':         a.count,
+      'Required':         REQUIRED,
+      'Status':           STATUS_META[a.status].label,
+      'Compliant':        a.status === 'on-track' ? 'Yes' : 'No',
+      'Prev Month':       a.lastCount,
+      'Missed Prev':      a.missedLast ? 'Yes' : 'No',
+    }))
+    const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
+    wsSummary['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }]
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary')
+
+    // Sheet 2 — Session Detail
+    const detailRows = (sessions ?? []).map(s => ({
+      'Employee ID':   s.users?.employee_id ?? '—',
+      'Name':          s.users?.name ?? '—',
+      'Date':          new Date(s.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      'Time':          new Date(s.completed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      'Score':         s.score ?? '',
+      'Duration (min)': s.total_time_seconds ? Math.round(s.total_time_seconds / 60) : '',
+    }))
+    const wsDetail = XLSX.utils.json_to_sheet(detailRows)
+    wsDetail['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, wsDetail, 'Session Detail')
+
+    const filename = `compliance_records_${label.replace(' ', '_')}_${now.toISOString().slice(0, 10)}.xlsx`
+    XLSX.writeFile(wb, filename)
+    setComplianceLoading(false)
+  }, [enriched])
+
   const urgentCount = flaggedCount + atRiskCount + belowTargetCount
 
   return (
@@ -135,12 +185,22 @@ export default function Completion() {
             </p>
           </div>
         </div>
-        <button onClick={exportExcel}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}
-          aria-label="Export completion tracker to Excel">
-          <Download size={16} /> Export Excel
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <button onClick={exportComplianceRecords} disabled={complianceLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}
+            title="Export compliance training records (Summary + Session Detail)">
+            {complianceLoading
+              ? <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand-muted)' }} />
+              : <FileCheck size={15} />}
+            Compliance Records
+          </button>
+          <button onClick={exportExcel}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+            <Download size={16} /> Export Excel
+          </button>
+        </div>
       </div>
 
       {/* Alert banner */}
