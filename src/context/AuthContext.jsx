@@ -61,13 +61,23 @@ export function AuthProvider({ children }) {
   // without flipping loading back to true — this prevents ProtectedRoute and
   // Login from flashing the dark loading screen mid-navigation.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const authUser = session?.user ?? null
-      setUser(authUser)
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // TOKEN_REFRESHED only rotates the JWT — profile and role are unchanged.
       if (event === 'TOKEN_REFRESHED') return
 
+      // Guard against a background signOut() firing AFTER a new sign-in.
+      // Logout calls signOut() without awaiting it so navigation is instant;
+      // if the user logs back in before signOut() resolves, the resulting
+      // SIGNED_OUT event would clear the freshly-authenticated state and kick
+      // the user back to the login page. Check for a live session first and
+      // bail out if one exists — it means a new login already raced ahead.
+      if (event === 'SIGNED_OUT') {
+        const { data: { session: live } } = await supabase.auth.getSession()
+        if (live) return
+      }
+
+      const authUser = session?.user ?? null
+      setUser(authUser)
       fetchProfile(authUser).finally(() => setLoading(false))
 
       if (authUser) {
