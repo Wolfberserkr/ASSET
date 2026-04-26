@@ -80,6 +80,16 @@ aside {
   animation: alert-in 150ms ease-out both;
 }
 
+/* ── Breathing pulse (used by ElectricBorder) ───────────────── */
+@keyframes border-breathe {
+  0%, 100% { opacity: var(--breathe-min, 0.55); transform: scale(1); }
+  50%      { opacity: var(--breathe-max, 1);    transform: scale(1.012); }
+}
+@keyframes halo-breathe {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.04); }
+}
+
 /* ── Hover: only on devices with a real pointer ────────────── */
 @media (hover: hover) and (pointer: fine) {
   .hover-gold:hover {
