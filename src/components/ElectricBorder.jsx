@@ -1,12 +1,14 @@
 import { useId } from 'react'
 
 /**
- * Animated SVG-turbulence "electric" border. When `active` is false the
- * wrapper is a no-op pass-through so the child renders unchanged.
+ * Crackling electric border. SVG turbulence drives a jagged displacement
+ * map; multiple stroked layers (sharp + two blurred halos) ride that
+ * displacement so the fringe looks like arcing lightning. When `active`
+ * is false the wrapper is a pass-through.
  */
 export default function ElectricBorder({
   active = true,
-  color = '#22c55e',
+  color = '#dd8448',
   borderRadius = '1rem',
   thickness = 2,
   speed = 1,
@@ -42,6 +44,10 @@ export default function ElectricBorder({
     zIndex: 1,
   }
 
+  // brighter inner stroke — derived from base color via mix-blend
+  const lightColor = `oklch(from ${color} 0.85 c h)`
+  const dimColor = `oklch(from ${color} l c h / 0.5)`
+
   return (
     <div className={className} style={wrapperStyle}>
       <svg
@@ -57,30 +63,31 @@ export default function ElectricBorder({
             height="140%"
             colorInterpolationFilters="sRGB"
           >
+            {/* high-frequency, high-octave fractal noise = jagged crackle */}
             <feTurbulence
-              type="turbulence"
-              baseFrequency="0.014"
-              numOctaves="2"
-              seed="3"
+              type="fractalNoise"
+              baseFrequency="0.08"
+              numOctaves="3"
+              seed="1"
               result="noise"
             >
               <animate
                 attributeName="baseFrequency"
-                values="0.010;0.024;0.010"
-                dur={`${7 / speed}s`}
+                values="0.06;0.12;0.06"
+                dur={`${4.8 / speed}s`}
                 repeatCount="indefinite"
               />
               <animate
                 attributeName="seed"
-                values="1;9;1"
-                dur={`${11 / speed}s`}
+                values="1;14;3;9;1"
+                dur={`${3.12 / speed}s`}
                 repeatCount="indefinite"
               />
             </feTurbulence>
             <feDisplacementMap
               in="SourceGraphic"
               in2="noise"
-              scale={6 * intensity}
+              scale={14 * intensity}
               xChannelSelector="R"
               yChannelSelector="G"
             />
@@ -88,28 +95,68 @@ export default function ElectricBorder({
         </defs>
       </svg>
 
+      {/* tight inner ambient glow */}
       <div
         aria-hidden
         style={{
           position: 'absolute',
           inset: 0,
           borderRadius,
-          filter: 'blur(20px)',
-          opacity: 0.3,
+          padding: '2px',
+          background: `linear-gradient(135deg, ${dimColor}, transparent 40%, transparent 60%, ${dimColor})`,
+          WebkitMask:
+            'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+          WebkitMaskComposite: 'xor',
+          mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+          maskComposite: 'exclude',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* outer halo */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius,
+          filter: 'blur(14px)',
+          opacity: 0.45,
           background: `linear-gradient(-30deg, ${color}, transparent 35%, transparent 65%, ${color})`,
           pointerEvents: 'none',
           zIndex: 0,
         }}
       />
 
-      <div style={{ ...layerBase, filter: `url(#${filterId})` }} aria-hidden />
+      {/* crackling stroke layers — all share the same turbulence filter */}
       <div
-        style={{ ...layerBase, filter: `url(#${filterId}) blur(2px)`, opacity: 0.7 }}
         aria-hidden
+        style={{ ...layerBase, borderColor: lightColor, filter: `url(#${filterId})` }}
       />
       <div
-        style={{ ...layerBase, filter: `url(#${filterId}) blur(8px)`, opacity: 0.5 }}
         aria-hidden
+        style={{
+          ...layerBase,
+          filter: `url(#${filterId}) blur(1.5px)`,
+          opacity: 0.85,
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          ...layerBase,
+          filter: `url(#${filterId}) blur(6px)`,
+          opacity: 0.55,
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          ...layerBase,
+          filter: `url(#${filterId}) blur(14px)`,
+          opacity: 0.35,
+        }}
       />
 
       <div style={{ position: 'relative', zIndex: 2, borderRadius }}>
