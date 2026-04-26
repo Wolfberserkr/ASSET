@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import VantaBackground from '../../components/VantaBackground'
+import ElectricBorder from '../../components/ElectricBorder'
 import {
   Clock, CheckCircle, Trophy, PlayCircle,
   TrendingUp, AlertTriangle, ChevronRight, Medal, Crown,
@@ -249,39 +250,46 @@ export default function AgentDashboard() {
       )}
 
       {/* Start Drill CTA — full width */}
-      <div
-        className="rounded-2xl p-5 mb-6 flex items-center justify-between"
-        style={{
-          background: canDrill
-            ? 'linear-gradient(135deg, #1a2d1a, var(--color-brand-card))'
-            : 'var(--color-brand-card)',
-          border: `1px solid ${canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)'}`,
-        }}
+      <ElectricBorder
+        active={canDrill}
+        color="var(--color-brand-success)"
+        borderRadius="1rem"
+        className="mb-6"
       >
-        <div>
-          <p className="font-semibold text-lg" style={{ color: 'var(--color-brand-text)' }}>
-            {canDrill ? 'Ready to drill' : 'Cooldown active'}
-          </p>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>
-            {canDrill
-              ? '10 questions · 10-minute maximum'
-              : `Next drill available in ${formatCountdown(cooldownSecs ?? 0)}`}
-          </p>
-        </div>
-
-        <button
-          onClick={() => navigate('/drill')}
-          disabled={!canDrill || cooldownSecs === null}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+        <div
+          className="rounded-2xl p-5 flex items-center justify-between"
           style={{
-            background: canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)',
-            color: canDrill ? '#0b0f1a' : 'var(--color-brand-muted)',
+            background: canDrill
+              ? 'linear-gradient(135deg, #1a2d1a, var(--color-brand-card))'
+              : 'var(--color-brand-card)',
+            border: `1px solid ${canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)'}`,
           }}
         >
-          <PlayCircle size={18} />
-          Start Drill
-        </button>
-      </div>
+          <div>
+            <p className="font-semibold text-lg" style={{ color: 'var(--color-brand-text)' }}>
+              {canDrill ? 'Ready to drill' : 'Cooldown active'}
+            </p>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>
+              {canDrill
+                ? '10 questions · 10-minute maximum'
+                : `Next drill available in ${formatCountdown(cooldownSecs ?? 0)}`}
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/drill')}
+            disabled={!canDrill || cooldownSecs === null}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+            style={{
+              background: canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)',
+              color: canDrill ? '#0b0f1a' : 'var(--color-brand-muted)',
+            }}
+          >
+            <PlayCircle size={18} />
+            Start Drill
+          </button>
+        </div>
+      </ElectricBorder>
 
       {/* ── Two-column split: stats + sessions | leaderboard ── */}
       <div className="flex flex-col lg:flex-row gap-5 items-stretch">
