@@ -41,7 +41,7 @@ export default function ElectricBorder({
     borderRadius,
     border: `${thickness}px solid ${color}`,
     pointerEvents: 'none',
-    zIndex: 1,
+    zIndex: 3,
   }
 
   // brighter inner stroke — derived from base color via mix-blend
