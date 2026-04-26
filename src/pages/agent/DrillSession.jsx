@@ -186,12 +186,13 @@ export default function DrillSession() {
         .eq('id', sessionId)
       if (sessErr) console.error('sessions update error:', sessErr)
 
-      // Update question stats (fire-and-forget)
+      // Update question stats (fire-and-forget). PostgrestBuilder lacks
+      // .catch, so fire via .then(noop, noop) which is supported.
       for (const a of resolvedAnswers) {
         supabase.rpc('update_question_stats', {
           p_question_id: a.question_id,
           p_is_correct:  a.is_correct,
-        }).catch(() => {})
+        }).then(() => {}, () => {})
       }
 
       logAudit(
