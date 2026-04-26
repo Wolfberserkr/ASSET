@@ -133,13 +133,15 @@ export function AuthProvider({ children }) {
   // ── Logout ────────────────────────────────────────────────────
   const logout = useCallback(async (reason = 'manual') => {
     if (profileRef.current) {
-      // Must be awaited BEFORE signOut() — signOut() invalidates the JWT, and
-      // the RPC is SECURITY DEFINER using auth.uid(). If the token is gone
-      // before the request resolves, auth.uid() returns NULL and the insert fails.
-      await supabase.rpc('log_audit_event', {
-        p_action:  'LOGOUT',
-        p_details: { reason },
-      }).catch(err => console.warn('[audit] LOGOUT failed:', err.message))
+      // Awaited BEFORE signOut() so the JWT is still valid when the RPC resolves.
+      // Raced against a 2-second timeout so a slow/hanging RPC never blocks logout.
+      await Promise.race([
+        supabase.rpc('log_audit_event', {
+          p_action:  'LOGOUT',
+          p_details: { reason },
+        }).catch(err => console.warn('[audit] LOGOUT failed:', err.message)),
+        new Promise(resolve => setTimeout(resolve, 2000)),
+      ])
     }
 
     stopActivityTracking()
