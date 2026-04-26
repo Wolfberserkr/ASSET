@@ -131,30 +131,27 @@ export function AuthProvider({ children }) {
   }, [])
 
   // ── Logout ────────────────────────────────────────────────────
-  const logout = useCallback(async (reason = 'manual') => {
-    if (profileRef.current) {
-      // Awaited BEFORE signOut() so the JWT is still valid when the RPC resolves.
-      // Raced against a 2-second timeout so a slow/hanging RPC never blocks logout.
-      await Promise.race([
-        supabase.rpc('log_audit_event', {
-          p_action:  'LOGOUT',
-          p_details: { reason },
-        }).catch(err => console.warn('[audit] LOGOUT failed:', err.message)),
-        new Promise(resolve => setTimeout(resolve, 2000)),
-      ])
-    }
-
+  const logout = useCallback((reason = 'manual') => {
     stopActivityTracking()
-    await supabase.auth.signOut()
+
+    // Clear local state and navigate immediately — user sees logout at once.
+    const hadProfile = !!profileRef.current
     setUser(null)
     setProfile(null)
     profileRef.current = null
 
-    if (reason === 'timeout') {
-      navigate('/login?reason=timeout')
-    } else {
-      navigate('/login')
+    navigate(reason === 'timeout' ? '/login?reason=timeout' : '/login')
+
+    // Fire audit log + signOut in the background after state is cleared.
+    // Audit RPC is sent while the JWT is still technically valid (signOut
+    // hasn't been called yet), then signOut invalidates the session server-side.
+    if (hadProfile) {
+      supabase.rpc('log_audit_event', {
+        p_action:  'LOGOUT',
+        p_details: { reason },
+      }).catch(err => console.warn('[audit] LOGOUT failed:', err.message))
     }
+    supabase.auth.signOut().catch(() => {})
   }, [navigate, stopActivityTracking])
 
   const value = {
