@@ -6,7 +6,7 @@ import { computeDecay, decayDismissKey } from '../lib/decayUtils'
 import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
-  ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell,
+  ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Rocket,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -49,6 +49,7 @@ const mgmtNav = [
   { to: '/management/question-stats',   label: 'Question Stats',    icon: ClipboardList },
   { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen },
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText },
+  { to: '/management/deploy',           label: 'Deploy Checklist',  icon: Rocket },
 ]
 
 function NavItem({ to, label, icon: Icon, onClick }) {

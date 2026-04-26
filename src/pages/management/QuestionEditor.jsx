@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { BookOpen, Plus, AlertTriangle, Check, X, Edit2 } from 'lucide-react'
+import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle } from 'lucide-react'
 
 const CATEGORIES = [
   'procedure', 'blackjack', 'roulette', 'three_card_poker', 'let_it_ride', 'ultimate_texas_holdem',
@@ -22,6 +22,7 @@ export default function QuestionEditor() {
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState('')
   const [filterGame, setFilterGame] = useState('all')
+  const [guideOpen, setGuideOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -92,11 +93,19 @@ export default function QuestionEditor() {
             <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Create and manage drill questions</p>
           </div>
         </div>
-        <button onClick={() => { setForm({ ...BLANK }); setError('') }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold self-start"
-          style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
-          <Plus size={16} /> New Question
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <button onClick={() => setGuideOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}
+            title="Bulk import guide">
+            <HelpCircle size={15} /> Bulk Import
+          </button>
+          <button onClick={() => { setForm({ ...BLANK }); setError('') }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+            style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
+            <Plus size={16} /> New Question
+          </button>
+        </div>
       </div>
 
       {/* Low pool warnings */}
@@ -171,6 +180,115 @@ export default function QuestionEditor() {
           ))
         )}
       </div>
+
+      {/* Bulk Import Guide modal */}
+      {guideOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          role="dialog" aria-modal="true" aria-label="Bulk Import Guide">
+          <div className="w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5 sm:p-6"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="font-bold text-lg" style={{ color: 'var(--color-brand-text)' }}>Bulk Import Guide</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>Run these SQL inserts directly in the Supabase SQL Editor</p>
+              </div>
+              <button onClick={() => setGuideOpen(false)} style={{ color: 'var(--color-brand-muted)' }} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-5 text-sm">
+
+              {/* Step 1 */}
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 1 — Get your Game IDs</p>
+                <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>Run this in the Supabase SQL Editor to get the UUID for each game:</p>
+                <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono"
+                  style={{ background: 'var(--color-brand-surface)', color: '#86efac', border: '1px solid var(--color-brand-border)' }}>
+{`SELECT id, name FROM games WHERE is_active = true ORDER BY name;`}
+                </pre>
+              </section>
+
+              {/* Step 2 — MC */}
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 2A — Multiple Choice question</p>
+                <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono leading-relaxed"
+                  style={{ background: 'var(--color-brand-surface)', color: '#93c5fd', border: '1px solid var(--color-brand-border)' }}>
+{`INSERT INTO questions (
+  game_id, type, category, question_text,
+  options, correct_answer, explanation,
+  difficulty, points, is_procedure, is_active
+) VALUES (
+  '<game-uuid>',           -- from Step 1; NULL for procedure questions
+  'multiple_choice',
+  'game_protection',       -- category slug
+  'What should you do if a player...',
+  '["Option A","Option B","Option C","Option D"]',
+  'Option A',              -- must match one option exactly
+  'Because rule 4.2 states...',
+  2,                       -- 1=Easy  2=Medium  3=Hard
+  10,                      -- points (default 10)
+  false,                   -- true = shared procedure question (set game_id to NULL)
+  true
+);`}
+                </pre>
+              </section>
+
+              {/* Step 2 — Payout */}
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 2B — Payout Drill question</p>
+                <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>
+                  <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-brand-surface)' }}>correct_answer</code>
+                  {' '}stores the payout ratio: <strong style={{ color: 'var(--color-brand-text)' }}>"35"</strong> = 35:1, <strong style={{ color: 'var(--color-brand-text)' }}>"1.5"</strong> = 3:2.
+                  The drill validates: <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-brand-surface)' }}>payout = totalBet × ratio</code> (±$0.02).
+                </p>
+                <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono leading-relaxed"
+                  style={{ background: 'var(--color-brand-surface)', color: '#93c5fd', border: '1px solid var(--color-brand-border)' }}>
+{`INSERT INTO questions (
+  game_id, type, category, question_text,
+  options, correct_answer, explanation,
+  difficulty, points, is_procedure, is_active
+) VALUES (
+  '<game-uuid>',
+  'payout',
+  'straight_up',           -- bet type category
+  'Player bets straight up. Calculate the payout.',
+  NULL,                    -- no options for payout drills
+  '35',                    -- payout ratio (35:1)
+  'Straight up pays 35 to 1.',
+  2, 10, false, true
+);`}
+                </pre>
+              </section>
+
+              {/* Chip variants */}
+              <section>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Optional — Custom chip denominations</p>
+                <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>
+                  Leave <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-brand-surface)' }}>chip_variants</code> NULL to use all standard chips (White $1, Red $5, Green $25, Black $100, Purple $500, Pink $1,000).
+                  Override per question:
+                </p>
+                <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono"
+                  style={{ background: 'var(--color-brand-surface)', color: '#86efac', border: '1px solid var(--color-brand-border)' }}>
+{`chip_variants => '[{"color":"Red","denomination":5},{"color":"Green","denomination":25}]'`}
+                </pre>
+              </section>
+
+              {/* Tip */}
+              <div className="flex items-start gap-2 p-3 rounded-lg"
+                style={{ background: '#0f2f0f', border: '1px solid var(--color-brand-success)', color: 'var(--color-brand-success)' }}>
+                <span className="text-xs leading-relaxed">
+                  <strong>Tip:</strong> Bulk inserts run fastest when batched. Copy multiple <code className="opacity-80">VALUES (...)</code> rows in a single statement, separated by commas. The Question Editor's one-at-a-time form is best for small additions or edits.
+                </span>
+              </div>
+
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Form modal — rendered via portal so position:fixed is always relative to the viewport */}
       {form && createPortal(

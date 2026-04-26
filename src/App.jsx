@@ -23,7 +23,8 @@ const Completion     = lazy(() => import('./pages/management/Completion'))
 const WeakAreas      = lazy(() => import('./pages/management/WeakAreas'))
 const QuestionStats  = lazy(() => import('./pages/management/QuestionStats'))
 const AuditLog       = lazy(() => import('./pages/management/AuditLog'))
-const QuestionEditor = lazy(() => import('./pages/management/QuestionEditor'))
+const QuestionEditor  = lazy(() => import('./pages/management/QuestionEditor'))
+const DeployChecklist = lazy(() => import('./pages/management/DeployChecklist'))
 
 function PageLoader() {
   return (
@@ -68,7 +69,8 @@ export default function App() {
               <Route path="/management/weak-areas"     element={<WeakAreas />} />
               <Route path="/management/question-stats" element={<QuestionStats />} />
               <Route path="/management/audit-log"      element={<AuditLog />} />
-              <Route path="/management/questions"      element={<QuestionEditor />} />
+              <Route path="/management/questions"        element={<QuestionEditor />} />
+              <Route path="/management/deploy"          element={<DeployChecklist />} />
             </Route>
 
             {/* Fallback */}
