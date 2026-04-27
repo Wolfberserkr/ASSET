@@ -21,17 +21,13 @@ function formatCountdown(secs) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
 }
 
-// Fake agent pool — realistic casino surveillance names + varied scores
-const FAKE_AGENTS = [
-  { id: 'fake-1', name: 'Carlos M.',  avgScore: 142, sessions: 18 },
-  { id: 'fake-2', name: 'Diana V.',   avgScore: 137, sessions: 20 },
-  { id: 'fake-3', name: 'Marco R.',   avgScore: 131, sessions: 17 },
-  { id: 'fake-4', name: 'Sophia L.',  avgScore: 126, sessions: 19 },
-  { id: 'fake-5', name: 'James T.',   avgScore: 118, sessions: 15 },
-  { id: 'fake-6', name: 'Priya N.',   avgScore: 111, sessions: 20 },
-  { id: 'fake-7', name: 'Alex B.',    avgScore: 103, sessions: 12 },
-  { id: 'fake-8', name: 'Tommy K.',   avgScore:  91, sessions:  9 },
-]
+// "Carlos Mendez" → "Carlos M." · keeps single-word names as-is
+function formatDisplayName(name) {
+  if (!name) return 'Agent'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
+}
 
 function getRankBadge(rank) {
   if (rank === 1) return { icon: Crown,  color: '#FFD700' }
@@ -40,12 +36,18 @@ function getRankBadge(rank) {
   return null
 }
 
-function Leaderboard({ myName, myAvgScore, mySessions }) {
-  // Merge real user into fake pool and sort
-  const me = { id: 'me', name: myName ?? 'You', avgScore: myAvgScore ?? 0, sessions: mySessions ?? 0, isMe: true }
+function Leaderboard({ agents, myId, loading }) {
   const all = useMemo(() => {
-    return [...FAKE_AGENTS, me].sort((a, b) => b.avgScore - a.avgScore)
-  }, [myAvgScore, myName, mySessions])
+    return (agents ?? [])
+      .map(a => ({
+        id: a.id,
+        name: formatDisplayName(a.name),
+        avgScore: Number(a.avg_score ?? 0),
+        sessions: Number(a.sessions_this_month ?? 0),
+        isMe: a.id === myId,
+      }))
+      .sort((a, b) => b.avgScore - a.avgScore || b.sessions - a.sessions)
+  }, [agents, myId])
 
   return (
     <div
@@ -71,6 +73,11 @@ function Leaderboard({ myName, myAvgScore, mySessions }) {
 
       {/* Rows */}
       <div className="overflow-y-auto flex-1 divide-y" style={{ borderColor: 'var(--color-brand-border)' }}>
+        {!loading && all.length === 0 && (
+          <div className="px-4 py-6 text-center text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+            No agents yet.
+          </div>
+        )}
         {all.map((agent, idx) => {
           const rank  = idx + 1
           const badge = getRankBadge(rank)
@@ -149,7 +156,7 @@ function Leaderboard({ myName, myAvgScore, mySessions }) {
           color: 'var(--color-brand-muted)',
         }}
       >
-        Ranked by average session score · Simulation preview
+        Ranked by average session score this month
       </div>
     </div>
   )
@@ -163,12 +170,14 @@ export default function AgentDashboard() {
   const [recert,          setRecert]          = useState(null)
   const [benchmark,       setBenchmark]       = useState(null)
   const [recentSessions,  setRecentSessions]  = useState([])
+  const [leaderboard,     setLeaderboard]     = useState([])
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true)
   const [loadError,       setLoadError]       = useState(null)
 
   const loadData = useCallback(async () => {
     if (!user) return
     try {
-      const [cooldownRes, recertRes, benchmarkRes, sessionsRes] = await Promise.all([
+      const [cooldownRes, recertRes, benchmarkRes, sessionsRes, leaderboardRes] = await Promise.all([
         supabase.rpc('check_cooldown', { p_user_id: user.id }),
         supabase.rpc('get_recertification_status', { p_user_id: user.id }),
         supabase.rpc('get_team_benchmark'),
@@ -179,6 +188,7 @@ export default function AgentDashboard() {
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
           .limit(10),
+        supabase.rpc('get_team_leaderboard'),
       ])
 
       if (cooldownRes.error)  throw cooldownRes.error
@@ -189,9 +199,14 @@ export default function AgentDashboard() {
       setRecert(recertRes.data)
       setBenchmark(benchmarkRes.data)
       setRecentSessions(sessionsRes.data ?? [])
+      // Leaderboard is non-fatal — log and render empty if the RPC isn't deployed yet.
+      if (leaderboardRes.error) console.error('leaderboard:', leaderboardRes.error)
+      setLeaderboard(leaderboardRes.data ?? [])
+      setLeaderboardLoading(false)
     } catch (err) {
       console.error(err)
       setLoadError('Failed to load dashboard data.')
+      setLeaderboardLoading(false)
     }
   }, [user])
 
@@ -214,13 +229,6 @@ export default function AgentDashboard() {
   const recertPct = recert
     ? Math.min(100, Math.round((recert.completed / recert.required) * 100))
     : 0
-
-  // Compute agent's own avg score from recent sessions for leaderboard
-  const myAvgScore = useMemo(() => {
-    if (!recentSessions.length) return 0
-    const avg = recentSessions.reduce((sum, s) => sum + (s.score ?? 0), 0) / recentSessions.length
-    return Math.round(avg)
-  }, [recentSessions])
 
   // Greeting based on time of day
   const hour = new Date().getHours()
@@ -431,9 +439,9 @@ export default function AgentDashboard() {
         {/* ── RIGHT: leaderboard ── */}
         <div className="w-full lg:w-64 shrink-0">
           <Leaderboard
-            myName={profile?.name?.split(' ')[0] ?? 'You'}
-            myAvgScore={myAvgScore}
-            mySessions={recert?.completed ?? recentSessions.length}
+            agents={leaderboard}
+            myId={user?.id}
+            loading={leaderboardLoading}
           />
         </div>
 
