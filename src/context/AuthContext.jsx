@@ -13,9 +13,10 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)   // public.users row
   const [loading, setLoading] = useState(true)
 
-  const navigate      = useNavigate()
-  const timeoutRef    = useRef(null)
-  const profileRef    = useRef(null)
+  const navigate           = useNavigate()
+  const timeoutRef         = useRef(null)
+  const profileRef         = useRef(null)
+  const pendingLogoutsRef  = useRef(0)   // counts in-flight logout()-initiated signOut() calls
 
   // ── Fetch profile from public.users ──────────────────────────
   const fetchProfile = useCallback(async (authUser) => {
@@ -62,19 +63,25 @@ export function AuthProvider({ children }) {
   // without flipping loading back to true — this prevents ProtectedRoute and
   // Login from flashing the dark loading screen mid-navigation.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // TOKEN_REFRESHED only rotates the JWT — profile and role are unchanged.
       if (event === 'TOKEN_REFRESHED') return
 
-      // Guard against a background signOut() firing AFTER a new sign-in.
-      // Logout calls signOut() without awaiting it so navigation is instant;
-      // if the user logs back in before signOut() resolves, the resulting
-      // SIGNED_OUT event would clear the freshly-authenticated state and kick
-      // the user back to the login page. Check for a live session first and
-      // bail out if one exists — it means a new login already raced ahead.
-      if (event === 'SIGNED_OUT') {
-        const { data: { session: live } } = await supabase.auth.getSession()
-        if (live) return
+      // Guard against a background signOut() firing SIGNED_OUT AFTER a new
+      // sign-in has already raced ahead. logout() bumps pendingLogoutsRef
+      // before kicking off its fire-and-forget signOut(); we decrement here
+      // and bail out so the freshly-authenticated state is preserved.
+      //
+      // CRITICAL: this listener must NOT be async and must NOT call any
+      // supabase.auth.* method (getSession, refreshSession, etc.). Auth
+      // methods invoked inside an onAuthStateChange listener try to acquire
+      // the same internal lock the auth client is currently holding, which
+      // deadlocks the entire auth state machine and freezes the next
+      // signInWithPassword() forever — exactly the "Signing in…" hang we
+      // saw in production after an expired-session SIGNED_OUT fired on boot.
+      if (event === 'SIGNED_OUT' && pendingLogoutsRef.current > 0) {
+        pendingLogoutsRef.current -= 1
+        return
       }
 
       const authUser = session?.user ?? null
@@ -155,6 +162,12 @@ export function AuthProvider({ children }) {
     profileRef.current = null
 
     navigate(reason === 'timeout' ? '/login?reason=timeout' : '/login')
+
+    // Mark this logout so the SIGNED_OUT event our background signOut() will
+    // fire is recognized as locally-initiated. The onAuthStateChange listener
+    // decrements the counter and skips clearing state — important if a new
+    // login races ahead while the background signOut() is still in flight.
+    pendingLogoutsRef.current += 1
 
     // Fire audit log + signOut in the background after state is cleared.
     // Audit RPC is sent while the JWT is still technically valid (signOut
