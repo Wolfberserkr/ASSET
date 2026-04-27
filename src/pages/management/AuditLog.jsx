@@ -85,7 +85,7 @@ export default function AuditLog() {
   const [search,  setSearch]  = useState('')
 
   // Filters
-  const [dateRange,     setDateRange]     = useState('30')
+  const [dateRange,     setDateRange]     = useState('all')
   const [selectedAgent, setSelectedAgent] = useState('all')
   const [actionCat,     setActionCat]     = useState('all')
 
@@ -100,7 +100,8 @@ export default function AuditLog() {
       (() => {
         let q = supabase
           .from('audit_log')
-          .select('id, action, details, ip_address, created_at, user_id, users(name, employee_id)')
+          .select('id, action, details, created_at, user_id, users!inner(name, employee_id, role)')
+          .eq('users.role', 'agent')
           .order('created_at', { ascending: false })
           .limit(500)
         if (dateFrom) q = q.gte('created_at', dateFrom)
@@ -151,13 +152,12 @@ export default function AuditLog() {
       'Employee ID': l.users?.employee_id ?? '—',
       'Action':      l.action,
       'Details':     l.details ? JSON.stringify(l.details) : '',
-      'IP Address':  l.ip_address ?? '—',
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Audit Log')
     ws['!cols'] = [
-      { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 }, { wch: 16 },
+      { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 },
     ]
     XLSX.writeFile(wb, `audit_log_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
@@ -258,7 +258,7 @@ export default function AuditLog() {
             <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-                  {['Timestamp', 'Agent', 'Action', 'Details', 'IP'].map(h => (
+                  {['Timestamp', 'Agent', 'Action', 'Details'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium uppercase tracking-widest"
                       style={{ color: 'var(--color-brand-muted)' }}>{h}</th>
                   ))}
@@ -290,9 +290,6 @@ export default function AuditLog() {
                       </td>
                       <td className="px-4 py-2.5 text-xs max-w-xs" style={{ color: 'var(--color-brand-muted)' }}>
                         {detail ?? '—'}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs font-mono whitespace-nowrap" style={{ color: 'var(--color-brand-muted)' }}>
-                        {log.ip_address ?? '—'}
                       </td>
                     </tr>
                   )
