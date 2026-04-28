@@ -46,8 +46,8 @@ export function useCooldown(userId) {
       const { data, error } = await supabase.rpc('check_cooldown', { p_user_id: userId })
       if (error) throw error
 
-      // RPC returns { on_cooldown: bool, remaining_seconds: int }
-      const secs = data?.on_cooldown ? (data.remaining_seconds ?? 0) : 0
+      // RPC returns INTEGER — remaining cooldown seconds (0 = no cooldown).
+      const secs = Math.max(0, Number(data) || 0)
       setRemaining(secs)
       startTick(secs)
     } catch (err) {
