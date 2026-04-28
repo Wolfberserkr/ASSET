@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { Library, ChevronRight, FileText, Video, Calculator } from 'lucide-react'
+import {
+  Library, ChevronRight, FileText, Video, Calculator,
+  Spade, CircleDot, Layers, Hand, Crown,
+} from 'lucide-react'
 
 const GAME_ICONS = {
-  'Blackjack':              '🂡🂫',
-  'Roulette':               '🎡',
-  'Three Card Poker':       '♠️',
-  'Let It Ride':            '🤙',
-  'Ultimate Texas Hold\'em':'🤠',
+  'Blackjack':               Spade,
+  'Roulette':                CircleDot,
+  'Three Card Poker':        Layers,
+  'Let It Ride':             Hand,
+  'Ultimate Texas Hold\'em': Crown,
 }
 
 export default function Resources() {
@@ -78,9 +81,20 @@ export default function Resources() {
                 transition: 'border-color 150ms ease-out, transform 100ms ease-out',
               }}
             >
-              <span className="text-3xl shrink-0" role="img" aria-hidden>
-                {GAME_ICONS[game.name] ?? '🎲'}
-              </span>
+              {(() => {
+                const Icon = GAME_ICONS[game.name] ?? Library
+                return (
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{
+                      background: 'var(--color-brand-surface)',
+                      border: '1px solid var(--color-brand-border)',
+                    }}
+                  >
+                    <Icon size={22} style={{ color: 'var(--color-brand-gold)' }} />
+                  </div>
+                )
+              })()}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm" style={{ color: 'var(--color-brand-text)' }}>
                   {game.name}

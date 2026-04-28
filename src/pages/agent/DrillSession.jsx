@@ -233,6 +233,18 @@ export default function DrillSession() {
 
     async function init() {
       try {
+        // Server-side cooldown gate — bounce back to dashboard if still locked
+        // out. Without this, an agent could navigate directly to /drill
+        // (URL bar, refresh, browser history) and bypass the Dashboard CTA.
+        const { data: cooldownData, error: cooldownErr } =
+          await supabase.rpc('check_cooldown', { p_user_id: user.id })
+        if (cancelled) return
+        if (cooldownErr) throw cooldownErr
+        if (cooldownData?.on_cooldown) {
+          navigate('/dashboard?reason=cooldown', { replace: true })
+          return
+        }
+
         const drawn = await buildSession(user.id, difficultyMap)
         if (cancelled) return
 
