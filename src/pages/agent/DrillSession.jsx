@@ -314,11 +314,14 @@ export default function DrillSession() {
   useEffect(() => {
     const onUnload = () => {
       if (status === 'active' && sessionIdRef.current) {
-        navigator.sendBeacon(`/api/noop`) // placeholder — actual RPC not available as beacon
         supabase.from('sessions')
           .update({ status: 'abandoned', score: 0 })
           .eq('id', sessionIdRef.current)
-          .then(() => {}).catch(() => {})
+          .then(() => {}, () => {})
+        // Best-effort audit — RPC may not reach the server before the tab
+        // closes, but timer-expiry and manual-quit paths already log via
+        // finalizeSession('abandoned'), so the only gap is hard tab kills.
+        logAudit('SESSION_ABANDONED', { session_id: sessionIdRef.current, reason: 'unload' })
       }
     }
     window.addEventListener('beforeunload', onUnload)

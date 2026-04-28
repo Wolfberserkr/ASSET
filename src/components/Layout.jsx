@@ -3,10 +3,11 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { computeDecay, decayDismissKey } from '../lib/decayUtils'
+import { useCooldown } from '../hooks/useCooldown'
 import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
-  ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Rocket,
+  ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Lock,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -49,10 +50,35 @@ const mgmtNav = [
   { to: '/management/question-stats',   label: 'Question Stats',    icon: ClipboardList },
   { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen },
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText },
-  { to: '/management/deploy',           label: 'Deploy Checklist',  icon: Rocket },
 ]
 
-function NavItem({ to, label, icon: Icon, onClick }) {
+function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        title={badge ? `Available in ${badge}` : 'Unavailable'}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed select-none opacity-50"
+        style={{ color: 'var(--color-brand-muted)' }}
+      >
+        <span className="flex items-center" style={{ color: 'inherit' }}>
+          <Icon size={16} />
+        </span>
+        <span className="relative z-10">{label}</span>
+        {badge ? (
+          <span
+            className="ml-auto text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
+            style={{ background: 'var(--color-brand-border)', color: 'var(--color-brand-muted)' }}
+          >
+            {badge}
+          </span>
+        ) : (
+          <Lock size={12} className="ml-auto relative z-10" />
+        )}
+      </div>
+    )
+  }
+
   return (
     <NavLink
       to={to}
@@ -81,7 +107,7 @@ function NavItem({ to, label, icon: Icon, onClick }) {
 }
 
 export default function Layout({ children, bg }) {
-  const { profile, logout, isManagement } = useAuth()
+  const { user, profile, logout, isManagement } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -89,6 +115,10 @@ export default function Layout({ children, bg }) {
   const [missed,       setMissed]       = useState([])
   const [decayAlerts,  setDecayAlerts]  = useState([])
   const [dismissed,    setDismissed]    = useState(loadDismissed)
+
+  // Cooldown gate for the agent's Drill nav link. Skip the RPC for
+  // management users — they have no Drill link to disable.
+  const cooldown = useCooldown(!isManagement && user?.id ? user.id : null)
 
   useEffect(() => {
     if (!isManagement) return
@@ -141,7 +171,16 @@ export default function Layout({ children, bg }) {
   const undismissed      = missed.filter(a => !dismissed[notifKey(a.id)])
   const undismissedDecay = decayAlerts.filter(a => !dismissed[decayDismissKey(a.id)])
 
-  const navLinks = isManagement ? mgmtNav : agentNav
+  const drillDisabled = !isManagement && !cooldown.canDrill
+  const drillBadge    = !isManagement && cooldown.remainingSeconds > 0 ? cooldown.remainingDisplay : null
+
+  const navLinks = isManagement
+    ? mgmtNav
+    : agentNav.map(link =>
+        link.to === '/drill'
+          ? { ...link, disabled: drillDisabled, badge: drillBadge }
+          : link,
+      )
   const pageKey = useRef(0)
   const prevPath = useRef(location.pathname)
 

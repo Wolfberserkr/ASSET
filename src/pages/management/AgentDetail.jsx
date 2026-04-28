@@ -162,6 +162,7 @@ export default function AgentDetail() {
         .from('sessions')
         .select('id, score, status, completed_at, total_time_seconds, total_questions, started_at, ip_address, user_agent')
         .eq('user_id', id)
+        .in('status', ['completed', 'abandoned'])
         .order('started_at', { ascending: false })
         .limit(50),
       supabase.from('games').select('id, name'),
