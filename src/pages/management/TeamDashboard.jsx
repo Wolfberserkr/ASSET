@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import VantaBackground from '../../components/VantaBackground'
 import StatCard from '../../components/StatCard'
-import * as XLSX from 'xlsx'
 import {
   Users, Trophy, CheckSquare, Download,
   ChevronRight, AlertTriangle, Search, TrendingDown,
@@ -12,7 +11,8 @@ import {
 import { computeDecay } from '../../lib/decayUtils'
 
 // ── Export helpers ─────────────────────────────────────────────
-function exportToExcel(agents, dateRange) {
+async function exportToExcel(agents, dateRange) {
+  const XLSX = await import('xlsx')
   const rows = agents.map(a => ({
     'Employee ID':        a.employee_id,
     'Name':               a.name,

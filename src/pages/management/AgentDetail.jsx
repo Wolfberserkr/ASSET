@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
-import * as XLSX from 'xlsx'
 import { ArrowLeft, Download, Trophy, Clock, CheckSquare, TrendingUp, Target, TrendingDown } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
 
@@ -210,7 +209,8 @@ export default function AgentDetail() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
   }).length
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const rows = sessions.map(s => ({
       'Date': s.completed_at ? new Date(s.completed_at).toLocaleString() : new Date(s.started_at).toLocaleString(),
       'Status': s.status,

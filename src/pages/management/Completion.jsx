@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import * as XLSX from 'xlsx'
 import { CheckSquare, Download, AlertTriangle, Flag, X, FileCheck } from 'lucide-react'
 
 const REQUIRED = 20
@@ -97,7 +96,8 @@ export default function Completion() {
   const onTrackCount     = enriched.filter(a => a.status === 'on-track').length
   const missedLastCount  = enriched.filter(a => a.missedLast).length
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const rows = enriched.map(a => ({
       'Employee ID':         a.employee_id,
       'Name':                a.name,
@@ -118,6 +118,7 @@ export default function Completion() {
 
   const exportComplianceRecords = useCallback(async () => {
     setComplianceLoading(true)
+    const XLSX = await import('xlsx')
     const now = new Date()
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const label = now.toLocaleString('default', { month: 'long', year: 'numeric' })

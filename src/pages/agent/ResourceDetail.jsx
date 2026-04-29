@@ -115,9 +115,91 @@ const CALC = {
 
 function toEmbedUrl(url = '') {
   const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-  if (match) return `https://www.youtube.com/embed/${match[1]}`
+  if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=1`
   if (url.includes('youtube.com/embed/')) return url
   return null
+}
+
+function youtubeId(url = '') {
+  const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/)
+  return match ? match[1] : null
+}
+
+// Click-to-play YouTube poster — defers the ~500KB iframe load until the
+// agent actually clicks play. Massive savings on the Videos tab when there
+// are several clips on a single resource page.
+function LazyVideo({ url, title }) {
+  const [activated, setActivated] = useState(false)
+  const id = youtubeId(url)
+  const embedUrl = toEmbedUrl(url)
+
+  if (!embedUrl) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3">
+        <a href={url} target="_blank" rel="noopener noreferrer"
+          className="text-sm underline" style={{ color: 'var(--color-brand-blue)' }}>
+          {url}
+        </a>
+      </div>
+    )
+  }
+
+  if (activated) {
+    return (
+      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+        <iframe
+          src={embedUrl}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setActivated(true)}
+      aria-label={`Play ${title}`}
+      style={{
+        position: 'relative',
+        paddingBottom: '56.25%',
+        height: 0,
+        width: '100%',
+        display: 'block',
+        cursor: 'pointer',
+        background: '#000',
+        border: 'none',
+      }}
+    >
+      {id && (
+        <img
+          src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+          alt={title}
+          loading="lazy"
+          decoding="async"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      )}
+      <span style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 64, height: 64, borderRadius: '50%',
+        background: 'rgba(0,0,0,0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{
+          width: 0, height: 0,
+          borderLeft: '20px solid #fff',
+          borderTop: '12px solid transparent',
+          borderBottom: '12px solid transparent',
+          marginLeft: 6,
+        }} />
+      </span>
+    </button>
+  )
 }
 
 function fmt(n) {
@@ -649,6 +731,7 @@ export default function ResourceDetail() {
                 <iframe
                   src={`https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`}
                   title={`${game.name} rules`}
+                  loading="lazy"
                   className="w-full"
                   style={{ height: '72vh', display: 'block' }}
                 />
@@ -673,40 +756,20 @@ export default function ResourceDetail() {
         <div>
           {videos.length > 0 ? (
             <div className="space-y-6">
-              {videos.map((v, i) => {
-                const embedUrl = toEmbedUrl(v.url)
-                return (
-                  <div key={i} className="rounded-xl overflow-hidden"
-                    style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-                    {/* Title bar */}
-                    <div className="px-4 py-3 flex items-center gap-2"
-                      style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-                      <Video size={15} style={{ color: 'var(--color-brand-gold)' }} />
-                      <p className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>
-                        {v.title || `Video ${i + 1}`}
-                      </p>
-                    </div>
-                    {embedUrl ? (
-                      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-                        <iframe
-                          src={embedUrl}
-                          title={v.title || `Video ${i + 1}`}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 px-4 py-3">
-                        <a href={v.url} target="_blank" rel="noopener noreferrer"
-                          className="text-sm underline" style={{ color: 'var(--color-brand-blue)' }}>
-                          {v.url}
-                        </a>
-                      </div>
-                    )}
+              {videos.map((v, i) => (
+                <div key={i} className="rounded-xl overflow-hidden"
+                  style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+                  {/* Title bar */}
+                  <div className="px-4 py-3 flex items-center gap-2"
+                    style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
+                    <Video size={15} style={{ color: 'var(--color-brand-gold)' }} />
+                    <p className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>
+                      {v.title || `Video ${i + 1}`}
+                    </p>
                   </div>
-                )
-              })}
+                  <LazyVideo url={v.url} title={v.title || `Video ${i + 1}`} />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl"

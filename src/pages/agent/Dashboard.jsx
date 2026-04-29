@@ -6,6 +6,7 @@ import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import VantaBackground from '../../components/VantaBackground'
 import ElectricBorder from '../../components/ElectricBorder'
+import { useCooldown } from '../../hooks/useCooldown'
 import {
   Clock, CheckCircle, Trophy, PlayCircle,
   TrendingUp, AlertTriangle, ChevronRight, Medal, Crown,
@@ -166,7 +167,10 @@ export default function AgentDashboard() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
 
-  const [cooldownSecs,    setCooldownSecs]    = useState(null)
+  // Cooldown is shared with the sidebar — single source of truth, single ticker.
+  const cooldown = useCooldown(user?.id ?? null)
+  const cooldownSecs = cooldown.remainingSeconds
+
   const [recert,          setRecert]          = useState(null)
   const [benchmark,       setBenchmark]       = useState(null)
   const [recentSessions,  setRecentSessions]  = useState([])
@@ -177,8 +181,7 @@ export default function AgentDashboard() {
   const loadData = useCallback(async () => {
     if (!user) return
     try {
-      const [cooldownRes, recertRes, benchmarkRes, sessionsRes, leaderboardRes] = await Promise.all([
-        supabase.rpc('check_cooldown', { p_user_id: user.id }),
+      const [recertRes, benchmarkRes, sessionsRes, leaderboardRes] = await Promise.all([
         supabase.rpc('get_recertification_status', { p_user_id: user.id }),
         supabase.rpc('get_team_benchmark'),
         supabase
@@ -191,11 +194,9 @@ export default function AgentDashboard() {
         supabase.rpc('get_team_leaderboard'),
       ])
 
-      if (cooldownRes.error)  throw cooldownRes.error
       if (recertRes.error)    throw recertRes.error
       if (benchmarkRes.error) throw benchmarkRes.error
 
-      setCooldownSecs(cooldownRes.data ?? 0)
       setRecert(recertRes.data)
       setBenchmark(benchmarkRes.data)
       setRecentSessions(sessionsRes.data ?? [])
@@ -212,19 +213,7 @@ export default function AgentDashboard() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // Countdown tick
-  useEffect(() => {
-    if (!cooldownSecs) return
-    const tick = setInterval(() => {
-      setCooldownSecs(prev => {
-        if (prev <= 1) { clearInterval(tick); return 0 }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(tick)
-  }, [cooldownSecs])
-
-  const canDrill = cooldownSecs === 0
+  const canDrill = cooldown.canDrill
 
   const recertPct = recert
     ? Math.min(100, Math.round((recert.completed / recert.required) * 100))
@@ -286,7 +275,7 @@ export default function AgentDashboard() {
 
           <button
             onClick={() => navigate('/drill')}
-            disabled={!canDrill || cooldownSecs === null}
+            disabled={!canDrill || cooldown.loading}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-opacity disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
             style={{
               background: canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-border)',
@@ -349,7 +338,7 @@ export default function AgentDashboard() {
             {/* Cooldown */}
             <StatCard
               label="Cooldown"
-              value={cooldownSecs === null ? '…' : cooldownSecs === 0 ? 'Ready' : formatCountdown(cooldownSecs)}
+              value={cooldown.loading ? '…' : cooldownSecs === 0 ? 'Ready' : formatCountdown(cooldownSecs)}
               sub={cooldownSecs ? '4-hour global cooldown' : 'No active cooldown'}
               icon={Clock}
               accent={cooldownSecs ? 'var(--color-brand-warning)' : 'var(--color-brand-success)'}

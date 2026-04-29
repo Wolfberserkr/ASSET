@@ -1,73 +1,26 @@
-import { useEffect, useRef } from 'react'
-
-export default function VantaBackground({ className = '' }) {
-  const containerRef = useRef(null)
-  const vantaRef     = useRef(null)
-
-  useEffect(() => {
-    let threeScript, vantaScript
-
-    const initVanta = () => {
-      if (!window.VANTA || !window.THREE || !containerRef.current) return
-      vantaRef.current = window.VANTA.NET({
-        el:             containerRef.current,
-        mouseControls:  true,
-        touchControls:  true,
-        gyroControls:   false,
-        minHeight:      200.00,
-        minWidth:       200.00,
-        scale:          1.00,
-        scaleMobile:    1.00,
-        color:           0xd4a843,
-        backgroundColor: 0x0b0f1a,
-        points:         10,
-        maxDistance:    20,
-        spacing:        15,
-        showDots:       true,
-      })
-    }
-
-    const loadScript = (src) =>
-      new Promise((resolve, reject) => {
-        const s = document.createElement('script')
-        s.src = src
-        s.onload = resolve
-        s.onerror = reject
-        document.head.appendChild(s)
-        return s
-      })
-
-    const setup = async () => {
-      try {
-        // Three.js must load before Vanta
-        if (!window.THREE) {
-          threeScript = await loadScript(
-            'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js'
-          )
-        }
-        if (!window.VANTA) {
-          vantaScript = await loadScript(
-            'https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js'
-          )
-        }
-        initVanta()
-      } catch (err) {
-        console.error('Vanta failed to load:', err)
-      }
-    }
-
-    setup()
-
-    return () => {
-      if (vantaRef.current) vantaRef.current.destroy()
-    }
-  }, [])
-
+/**
+ * Lightweight ambient background — pure CSS radial gradients.
+ * Replaces the previous Vanta NET (Three.js + WebGL) implementation,
+ * which downloaded ~640KB from CDN per page and ran a continuous GPU
+ * render loop. This version is zero-JS and paints once.
+ */
+export default function VantaBackground({ className = '', style }) {
   return (
     <div
-      ref={containerRef}
       className={className}
-      style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        backgroundColor: '#0b0f1a',
+        backgroundImage: `
+          radial-gradient(circle at 18% 22%, rgba(212, 168, 67, 0.10) 0%, transparent 42%),
+          radial-gradient(circle at 82% 78%, rgba(59, 130, 246, 0.07) 0%, transparent 48%),
+          radial-gradient(circle at 50% 50%, rgba(212, 168, 67, 0.04) 0%, transparent 60%)
+        `,
+        ...style,
+      }}
     />
   )
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import * as XLSX from 'xlsx'
 import { ClipboardList, Download, Search, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react'
 
 const POOL_MIN    = 30
@@ -133,7 +132,8 @@ export default function QuestionStats() {
   })
   const neverShown = activeQs.filter(q => q.times_shown === 0).length
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const rows = displayed.map(q => {
       const pct = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : ''
       const flag = q.times_shown >= EASY_FLOOR ? effectivenessFlag(pct, q.times_shown) : null

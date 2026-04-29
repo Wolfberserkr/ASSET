@@ -122,6 +122,23 @@ export default function Layout({ children, bg }) {
 
   useEffect(() => {
     if (!isManagement) return
+
+    // Cache notifications for 5 min in sessionStorage so navigating between
+    // management pages doesn't re-fire 3 Supabase queries every time.
+    const CACHE_KEY = 'mgmt_notif_cache_v1'
+    const TTL_MS = 5 * 60 * 1000
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY)
+      if (raw) {
+        const cached = JSON.parse(raw)
+        if (cached.t && Date.now() - cached.t < TTL_MS) {
+          setMissed(cached.missed ?? [])
+          setDecayAlerts(cached.decayAlerts ?? [])
+          return
+        }
+      }
+    } catch { /* ignore */ }
+
     const now = new Date()
     const firstLast  = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
     const firstThis  = new Date(now.getFullYear(), now.getMonth(),     1).toISOString()
@@ -136,15 +153,19 @@ export default function Layout({ children, bg }) {
       const agents = uRes.data ?? []
       const counts = {}
       for (const s of sRes.data ?? []) counts[s.user_id] = (counts[s.user_id] ?? 0) + 1
-      setMissed(
-        agents.filter(u => (counts[u.id] ?? 0) < REQUIRED)
-              .map(u => ({ ...u, count: counts[u.id] ?? 0 }))
-      )
+      const missedList = agents.filter(u => (counts[u.id] ?? 0) < REQUIRED)
+        .map(u => ({ ...u, count: counts[u.id] ?? 0 }))
       const decayMap = computeDecay(decayRes.data ?? [])
-      setDecayAlerts(
-        agents.filter(u => decayMap[u.id]?.isDecaying)
-              .map(u => ({ ...u, ...decayMap[u.id] }))
-      )
+      const decayList = agents.filter(u => decayMap[u.id]?.isDecaying)
+        .map(u => ({ ...u, ...decayMap[u.id] }))
+
+      setMissed(missedList)
+      setDecayAlerts(decayList)
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+          t: Date.now(), missed: missedList, decayAlerts: decayList,
+        }))
+      } catch { /* ignore quota */ }
     })
   }, [isManagement])
 

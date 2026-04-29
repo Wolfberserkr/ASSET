@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import * as XLSX from 'xlsx'
 import { BarChart2, Download, AlertTriangle, Users, HelpCircle } from 'lucide-react'
 
 const DATE_RANGES = [
@@ -159,7 +158,8 @@ export default function WeakAreas() {
   useEffect(() => { loadData() }, [loadData])
 
   // ── Export ────────────────────────────────────────────────────────────────
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const wb = XLSX.utils.book_new()
 
     const gameRows = gameStats.map(g => ({

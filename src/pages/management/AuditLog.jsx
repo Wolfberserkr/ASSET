@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import * as XLSX from 'xlsx'
 import { FileText, Download, Search, RefreshCw } from 'lucide-react'
 
 const DATE_RANGES = [
@@ -145,7 +144,8 @@ export default function AuditLog() {
     pwChanges:  displayed.filter(l => l.action === 'PASSWORD_CHANGE').length,
   }), [displayed])
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const rows = displayed.map(l => ({
       'Timestamp':   new Date(l.created_at).toLocaleString(),
       'Agent':       l.users?.name ?? '—',
