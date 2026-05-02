@@ -22,14 +22,6 @@ function formatCountdown(secs) {
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
 }
 
-// "Carlos Mendez" → "Carlos M." · keeps single-word names as-is
-function formatDisplayName(name) {
-  if (!name) return 'Agent'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0]
-  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
-}
-
 function getRankBadge(rank) {
   if (rank === 1) return { icon: Crown,  color: '#FFD700' }
   if (rank === 2) return { icon: Medal,  color: '#C0C0C0' }
@@ -42,7 +34,7 @@ function Leaderboard({ agents, myId, loading }) {
     return (agents ?? [])
       .map(a => ({
         id: a.id,
-        name: formatDisplayName(a.name),
+        employeeId: a.employee_id ?? '—',
         avgScore: Number(a.avg_score ?? 0),
         sessions: Number(a.sessions_this_month ?? 0),
         isMe: a.id === myId,
@@ -110,7 +102,7 @@ function Leaderboard({ agents, myId, loading }) {
                 )}
               </div>
 
-              {/* Avatar initial */}
+              {/* Avatar — digits from employee ID */}
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                 style={{
@@ -118,16 +110,16 @@ function Leaderboard({ agents, myId, loading }) {
                   color:      isMe ? '#0b0f1a' : 'var(--color-brand-muted)',
                 }}
               >
-                {agent.name[0].toUpperCase()}
+                {(agent.employeeId.split('-')[1] ?? agent.employeeId).slice(0, 2)}
               </div>
 
-              {/* Name + sessions */}
+              {/* Employee ID + sessions */}
               <div className="flex-1 min-w-0">
                 <p
-                  className="text-sm font-medium truncate"
+                  className="text-sm font-mono font-medium truncate"
                   style={{ color: isMe ? 'var(--color-brand-gold)' : 'var(--color-brand-text)' }}
                 >
-                  {agent.name}{isMe && <span className="ml-1 text-xs opacity-60">(you)</span>}
+                  {agent.employeeId}{isMe && <span className="ml-1 text-xs opacity-60">(you)</span>}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
                   {agent.sessions} sessions

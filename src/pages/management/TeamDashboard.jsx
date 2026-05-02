@@ -199,20 +199,17 @@ export default function TeamDashboard() {
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                           style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
-                          {agent.name[0]}
+                          {(agent.employee_id.split('-')[1] ?? agent.employee_id).slice(0, 2)}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-medium" style={{ color: 'var(--color-brand-text)' }}>{agent.name}</p>
-                            {decayMap[agent.id]?.isDecaying && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                                title={`Score down ${decayMap[agent.id].dropPct}% over 2 weeks (${decayMap[agent.id].priorAvg} → ${decayMap[agent.id].recentAvg})`}
-                                style={{ background: '#1a0f1f', color: '#c084fc' }}>
-                                ↓{decayMap[agent.id].dropPct}%
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{agent.employee_id}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-mono font-medium" style={{ color: 'var(--color-brand-text)' }}>{agent.employee_id}</p>
+                          {decayMap[agent.id]?.isDecaying && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                              title={`Score down ${decayMap[agent.id].dropPct}% over 2 weeks (${decayMap[agent.id].priorAvg} → ${decayMap[agent.id].recentAvg})`}
+                              style={{ background: '#1a0f1f', color: '#c084fc' }}>
+                              ↓{decayMap[agent.id].dropPct}%
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>

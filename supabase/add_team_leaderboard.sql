@@ -6,10 +6,12 @@
 -- Run once in the Supabase SQL Editor (Rick only).
 -- ============================================================
 
+DROP FUNCTION IF EXISTS public.get_team_leaderboard();
+
 CREATE OR REPLACE FUNCTION public.get_team_leaderboard()
 RETURNS TABLE (
   id                  UUID,
-  name                TEXT,
+  employee_id         TEXT,
   sessions_this_month BIGINT,
   avg_score           NUMERIC
 )
@@ -25,7 +27,7 @@ BEGIN
   RETURN QUERY
   SELECT
     u.id,
-    u.name,
+    u.employee_id,
     COUNT(s.id) FILTER (
       WHERE s.status = 'completed'
         AND date_trunc('month', s.completed_at) = date_trunc('month', NOW())
@@ -44,8 +46,8 @@ BEGIN
   LEFT JOIN public.sessions s ON s.user_id = u.id
   WHERE u.role = 'agent'
     AND u.is_active = true
-  GROUP BY u.id, u.name
-  ORDER BY avg_score DESC, sessions_this_month DESC, u.name ASC;
+  GROUP BY u.id, u.employee_id
+  ORDER BY avg_score DESC, sessions_this_month DESC, u.employee_id ASC;
 END;
 $$;
 
