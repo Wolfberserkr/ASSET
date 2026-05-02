@@ -6,7 +6,7 @@ import Layout from '../../components/Layout'
 import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle } from 'lucide-react'
 
 const CATEGORIES = [
-  'procedure', 'blackjack', 'roulette', 'three_card_poker', 'let_it_ride', 'ultimate_texas_holdem',
+  'procedure', 'basic_strategy', 'blackjack', 'roulette', 'three_card_poker', 'let_it_ride', 'ultimate_texas_holdem',
 ]
 
 const BLANK = {
@@ -350,7 +350,7 @@ export default function QuestionEditor() {
               <div>
                 <label className="block text-xs font-medium mb-1.5 uppercase tracking-widest" style={{ color: 'var(--color-brand-muted)' }}>Category</label>
                 <input type="text" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                  placeholder="e.g. procedure, blackjack, game_protection"
+                  placeholder="e.g. procedure, basic_strategy, blackjack"
                   className={inputCls} style={inputStyle} list="categories" />
                 <datalist id="categories">
                   {CATEGORIES.map(c => <option key={c} value={c} />)}
