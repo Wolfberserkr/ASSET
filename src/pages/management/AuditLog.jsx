@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { FileText, Download, Search, RefreshCw } from 'lucide-react'
+import { FileText, Download, Search, RefreshCw, MessageSquare, X } from 'lucide-react'
 
 const DATE_RANGES = [
   { label: 'Last 24 hours', value: '1'   },
@@ -87,6 +87,9 @@ export default function AuditLog() {
   const [dateRange,     setDateRange]     = useState('all')
   const [selectedAgent, setSelectedAgent] = useState('all')
   const [actionCat,     setActionCat]     = useState('all')
+
+  // Reason modal
+  const [reasonModal, setReasonModal] = useState(null) // { reason, agentName, when } | null
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -268,6 +271,9 @@ export default function AuditLog() {
                 {displayed.map((log, i) => {
                   const { date, time } = formatTs(log.created_at)
                   const detail = formatDetails(log.details)
+                  const abandonReason = log.action === 'SESSION_ABANDONED'
+                    ? (log.details?.abandon_reason ?? null)
+                    : null
                   return (
                     <tr key={log.id}
                       style={{ borderBottom: i < displayed.length - 1 ? '1px solid var(--color-brand-border)' : 'none' }}>
@@ -289,7 +295,28 @@ export default function AuditLog() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-xs max-w-xs" style={{ color: 'var(--color-brand-muted)' }}>
-                        {detail ?? '—'}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{detail ?? '—'}</span>
+                          {abandonReason && (
+                            <button
+                              onClick={() => setReasonModal({
+                                reason:    abandonReason,
+                                agentName: log.users?.name ?? 'Unknown',
+                                empId:     log.users?.employee_id ?? '',
+                                when:      new Date(log.created_at).toLocaleString(),
+                              })}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium active:scale-[0.97]"
+                              style={{
+                                background: 'var(--color-brand-surface)',
+                                border: '1px solid var(--color-brand-border)',
+                                color: 'var(--color-brand-gold)',
+                                transition: 'transform 100ms ease-out',
+                              }}
+                            >
+                              <MessageSquare size={11} /> View reason
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -306,6 +333,73 @@ export default function AuditLog() {
           </p>
         )}
       </div>
+
+      {/* Reason modal */}
+      {reasonModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.65)' }}
+          onClick={() => setReasonModal(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-brand-text)' }}>
+                  Abandon reason
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+                  {reasonModal.agentName}
+                  {reasonModal.empId && (
+                    <span className="font-mono"> · {reasonModal.empId}</span>
+                  )}
+                  <span> · {reasonModal.when}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setReasonModal(null)}
+                className="p-1.5 rounded-lg active:scale-[0.97]"
+                style={{
+                  color: 'var(--color-brand-muted)',
+                  border: '1px solid var(--color-brand-border)',
+                  transition: 'transform 100ms ease-out',
+                }}
+                aria-label="Close"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div
+              className="rounded-lg p-3 text-sm whitespace-pre-wrap break-words"
+              style={{
+                background: 'var(--color-brand-bg)',
+                border: '1px solid var(--color-brand-border)',
+                color: 'var(--color-brand-text)',
+                maxHeight: '40vh',
+                overflowY: 'auto',
+              }}
+            >
+              {reasonModal.reason}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setReasonModal(null)}
+                className="text-xs px-4 py-2 rounded-lg font-semibold active:scale-[0.97]"
+                style={{
+                  background: 'var(--color-brand-gold)',
+                  color: '#0b0f1a',
+                  transition: 'transform 100ms ease-out',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

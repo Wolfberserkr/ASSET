@@ -133,6 +133,7 @@ export default function DrillSession() {
   const [loadError,       setLoadError]       = useState('')
   const [focusedIdx,      setFocusedIdx]      = useState(0)   // keyboard nav for multiple choice
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [leaveReason,     setLeaveReason]     = useState('')
 
   const sessionIdRef  = useRef(null)
   const finalizingRef = useRef(false)
@@ -150,7 +151,7 @@ export default function DrillSession() {
   useEffect(() => { answersRef.current = answers }, [answers])
 
   // Finalize is defined before useSessionTimer so it can be passed as onExpire
-  const finalizeSession = useCallback(async (outcome, finalAnswers) => {
+  const finalizeSession = useCallback(async (outcome, finalAnswers, abandonReason = null) => {
     if (finalizingRef.current) return
     finalizingRef.current = true
     setStatus('finalizing')
@@ -158,6 +159,7 @@ export default function DrillSession() {
     const sessionId      = sessionIdRef.current
     const resolvedAnswers = finalAnswers ?? answersRef.current
     const correctCount   = resolvedAnswers.filter(a => a.is_correct).length
+    const trimmedReason  = typeof abandonReason === 'string' ? abandonReason.trim() : ''
 
     // elapsedSeconds is captured via closure from the timer — read from DOM backup
     const elapsedEl = document.getElementById('__elapsed__')
@@ -186,6 +188,20 @@ export default function DrillSession() {
         .eq('id', sessionId)
       if (sessErr) console.error('sessions update error:', sessErr)
 
+      // Best-effort: persist abandon_reason on its own. Done as a separate
+      // request so the core status update above can never be blocked by a
+      // missing column (the migration is optional — the audit_log details
+      // already carry the reason for the management viewer).
+      if (outcome === 'abandoned' && trimmedReason) {
+        const { error: reasonErr } = await supabase
+          .from('sessions')
+          .update({ abandon_reason: trimmedReason })
+          .eq('id', sessionId)
+        if (reasonErr && import.meta.env.DEV) {
+          console.warn('abandon_reason update skipped:', reasonErr.message)
+        }
+      }
+
       // Update question stats (fire-and-forget). PostgrestBuilder lacks
       // .catch, so fire via .then(noop, noop) which is supported.
       for (const a of resolvedAnswers) {
@@ -195,9 +211,13 @@ export default function DrillSession() {
         }).then(() => {}, () => {})
       }
 
+      const auditDetails = { session_id: sessionId, score, correct: correctCount }
+      if (outcome === 'abandoned' && trimmedReason) {
+        auditDetails.abandon_reason = trimmedReason
+      }
       logAudit(
         outcome === 'completed' ? 'SESSION_COMPLETED' : 'SESSION_ABANDONED',
-        { session_id: sessionId, score, correct: correctCount },
+        auditDetails,
       )
 
     } catch (err) {
@@ -446,34 +466,17 @@ export default function DrillSession() {
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3"
            style={{ background: 'var(--color-brand-card)', borderBottom: '1px solid var(--color-brand-border)' }}>
 
-        {/* Leave button / inline confirmation */}
-        {!showLeaveConfirm ? (
-          <button
-            onClick={() => setShowLeaveConfirm(true)}
-            className="shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-opacity hover:opacity-100 opacity-60"
-            style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}
-          >
-            <X size={12} /> Leave
-          </button>
-        ) : (
-          <div className="alert-enter flex items-center gap-2 shrink-0">
-            <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Leave?</span>
-            <button
-              onClick={() => finalizeSession('abandoned')}
-              className="text-xs px-2.5 py-1.5 rounded-lg font-semibold active:scale-[0.97]"
-              style={{ background: '#2e0a0a', color: 'var(--color-brand-danger)', border: '1px solid var(--color-brand-danger)', transition: 'transform 100ms ease-out' }}
-            >
-              Yes
-            </button>
-            <button
-              onClick={() => setShowLeaveConfirm(false)}
-              className="text-xs px-2.5 py-1.5 rounded-lg active:scale-[0.97]"
-              style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)', transition: 'transform 100ms ease-out' }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+        {/* Leave button (popover rendered below the top bar) */}
+        <button
+          onClick={() => setShowLeaveConfirm(s => !s)}
+          className="shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-opacity hover:opacity-100 opacity-60"
+          style={{
+            color: showLeaveConfirm ? 'var(--color-brand-danger)' : 'var(--color-brand-muted)',
+            border: `1px solid ${showLeaveConfirm ? 'var(--color-brand-danger)' : 'var(--color-brand-border)'}`,
+          }}
+        >
+          <X size={12} /> Leave
+        </button>
 
         <span className="text-sm font-semibold font-mono shrink-0" style={{ color: 'var(--color-brand-text)' }}>
           {currentIdx + 1}<span style={{ color: 'var(--color-brand-muted)' }}>/{questions.length}</span>
@@ -490,6 +493,60 @@ export default function DrillSession() {
           {remainingDisplay}
         </div>
       </div>
+
+      {/* ── Leave confirmation popover ─────────────────────────── */}
+      {showLeaveConfirm && (
+        <div
+          className="alert-enter sticky z-20 px-4 py-3"
+          style={{
+            top: '49px',
+            background: 'var(--color-brand-card)',
+            borderBottom: '1px solid var(--color-brand-danger)',
+          }}
+        >
+          <div className="max-w-xl mx-auto">
+            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-brand-text)' }}>
+              Leave this drill?
+            </p>
+            <p className="text-xs mb-3" style={{ color: 'var(--color-brand-muted)' }}>
+              This session will be marked as abandoned. Optionally, tell management why.
+            </p>
+            <textarea
+              value={leaveReason}
+              onChange={e => setLeaveReason(e.target.value.slice(0, 500))}
+              placeholder="Reason (optional) — e.g. radio call, restroom break, technical issue…"
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none mb-2"
+              style={{
+                background: 'var(--color-brand-bg)',
+                border: '1px solid var(--color-brand-border)',
+                color: 'var(--color-brand-text)',
+              }}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
+                {leaveReason.length}/500
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setShowLeaveConfirm(false); setLeaveReason('') }}
+                  className="text-xs px-3 py-1.5 rounded-lg active:scale-[0.97]"
+                  style={{ color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)', transition: 'transform 100ms ease-out' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => finalizeSession('abandoned', undefined, leaveReason)}
+                  className="text-xs px-3 py-1.5 rounded-lg font-semibold active:scale-[0.97]"
+                  style={{ background: '#2e0a0a', color: 'var(--color-brand-danger)', border: '1px solid var(--color-brand-danger)', transition: 'transform 100ms ease-out' }}
+                >
+                  Leave drill
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Question area ─────────────────────────────────────── */}
       <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isPayout ? 'max-w-3xl' : 'max-w-xl'}`}>
