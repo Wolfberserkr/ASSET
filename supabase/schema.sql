@@ -433,7 +433,10 @@ BEGIN
       WHERE s.status = 'completed'
         AND date_trunc('month', s.completed_at) = date_trunc('month', NOW())
     ) AS sessions_this_month,
-    ROUND(AVG(s.score) FILTER (WHERE s.status = 'completed'), 1) AS avg_score
+    ROUND(AVG(s.score) FILTER (
+      WHERE s.status = 'completed'
+        AND date_trunc('month', s.completed_at) = date_trunc('month', NOW())
+    ), 1) AS avg_score
   FROM public.users u
   LEFT JOIN public.sessions s ON s.user_id = u.id
   WHERE u.role = 'agent'
