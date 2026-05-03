@@ -6,9 +6,23 @@ import VantaBackground from '../../components/VantaBackground'
 import StatCard from '../../components/StatCard'
 import {
   Users, Trophy, CheckSquare, Download,
-  ChevronRight, AlertTriangle, Search, TrendingDown,
+  ChevronRight, AlertTriangle, Search, TrendingDown, X,
 } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
+
+// ── Dismissable banner key helpers ─────────────────────────────
+function currentMonthKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function cohortKey(ids) {
+  return [...ids].sort().join(',')
+}
+
+function makeDismissKey(prefix, ids) {
+  return `${prefix}:${currentMonthKey()}:${cohortKey(ids)}`
+}
 
 // ── Export helpers ─────────────────────────────────────────────
 async function exportToExcel(agents, dateRange) {
@@ -46,6 +60,8 @@ export default function TeamDashboard() {
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
   const [search,    setSearch]    = useState('')
+  const [dismissedRecert, setDismissedRecert] = useState(null)
+  const [dismissedDecay,  setDismissedDecay]  = useState(null)
 
   const loadAgents = useCallback(async () => {
     setLoading(true)
@@ -64,6 +80,11 @@ export default function TeamDashboard() {
 
   useEffect(() => { loadAgents() }, [loadAgents])
 
+  useEffect(() => {
+    setDismissedRecert(localStorage.getItem('dismiss_recert_banner'))
+    setDismissedDecay(localStorage.getItem('dismiss_decay_banner'))
+  }, [])
+
   const filtered = agents.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.employee_id.toLowerCase().includes(search.toLowerCase())
@@ -77,6 +98,20 @@ export default function TeamDashboard() {
   const onTrack       = agents.filter(a => Number(a.sessions_this_month ?? 0) >= 20).length
   const belowTarget   = agents.filter(a => Number(a.sessions_this_month ?? 0) < 20)
   const decayAgents   = agents.filter(a => decayMap[a.id]?.isDecaying)
+
+  const recertDismissKey = makeDismissKey('recert', belowTarget.map(a => a.id))
+  const decayDismissKey  = makeDismissKey('decay',  decayAgents.map(a => a.id))
+  const showRecertBanner = belowTarget.length > 0 && dismissedRecert !== recertDismissKey
+  const showDecayBanner  = decayAgents.length > 0 && dismissedDecay  !== decayDismissKey
+
+  function dismissRecert() {
+    localStorage.setItem('dismiss_recert_banner', recertDismissKey)
+    setDismissedRecert(recertDismissKey)
+  }
+  function dismissDecay() {
+    localStorage.setItem('dismiss_decay_banner', decayDismissKey)
+    setDismissedDecay(decayDismissKey)
+  }
 
   return (
     <Layout bg={<VantaBackground style={{ width: '100%', height: '100%' }} />}>
@@ -100,27 +135,43 @@ export default function TeamDashboard() {
       </div>
 
       {/* Recert warning */}
-      {belowTarget.length > 0 && (
+      {showRecertBanner && (
         <div
           className="flex items-start gap-2 p-3 rounded-lg mb-5 text-sm"
           style={{ background: '#1c1a0f', border: '1px solid var(--color-brand-warning)', color: 'var(--color-brand-warning)' }}
         >
           <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-          <span>
+          <span className="flex-1">
             <strong>{belowTarget.length} agent{belowTarget.length > 1 ? 's are' : ' is'}</strong> below the 20-session monthly target:{' '}
             {belowTarget.map(a => a.name.split(' ')[0]).join(', ')}
           </span>
+          <button
+            onClick={dismissRecert}
+            aria-label="Dismiss recertification warning"
+            className="shrink-0 -mt-0.5 -mr-1 p-1 rounded hover:bg-white/5 transition-colors"
+            style={{ color: 'var(--color-brand-warning)' }}
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
-      {decayAgents.length > 0 && (
+      {showDecayBanner && (
         <div className="flex items-start gap-2 p-3 rounded-lg mb-5 text-sm"
           style={{ background: '#1a0f1f', border: '1px solid #c084fc', color: '#c084fc' }}>
           <TrendingDown size={16} className="shrink-0 mt-0.5" />
-          <span>
+          <span className="flex-1">
             <strong>{decayAgents.length} agent{decayAgents.length > 1 ? 's' : ''}</strong> showing score decay (&gt;15% drop over 2 weeks):{' '}
             {decayAgents.map(a => a.name.split(' ')[0]).join(', ')}
           </span>
+          <button
+            onClick={dismissDecay}
+            aria-label="Dismiss score decay warning"
+            className="shrink-0 -mt-0.5 -mr-1 p-1 rounded hover:bg-white/5 transition-colors"
+            style={{ color: '#c084fc' }}
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
