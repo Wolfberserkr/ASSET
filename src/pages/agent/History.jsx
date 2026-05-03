@@ -32,8 +32,9 @@ export default function History() {
   }, [completed])
 
   const bestScore = completed.length ? Math.max(...completed.map(s => s.score ?? 0)) : null
-  const avgScore  = completed.length
-    ? Math.round(completed.reduce((s, c) => s + (c.score ?? 0), 0) / completed.length)
+  const recentCompleted = completed.slice(0, 10)
+  const avgScore  = recentCompleted.length
+    ? Math.round(recentCompleted.reduce((s, c) => s + (c.score ?? 0), 0) / recentCompleted.length)
     : null
 
   const scoreColor = (score) => {
@@ -111,7 +112,7 @@ export default function History() {
               {avgScore ?? '—'}
             </p>
             <p className="text-xs mt-1" style={{ color: 'var(--color-brand-muted)' }}>
-              {completed.length} completed session{completed.length !== 1 ? 's' : ''}
+              last {recentCompleted.length} of {completed.length} session{completed.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
