@@ -11,7 +11,7 @@ const STEPS = [
     body: (
       <>
         <p>
-          A.S.S.E.T is the Stellaris Surveillance training platform. You'll run short
+          A.S.S.E.T is the Surveillance training platform. You'll run short
           gaming drills to keep your payout math, game protection, and procedure knowledge sharp.
         </p>
         <p className="mt-3">
