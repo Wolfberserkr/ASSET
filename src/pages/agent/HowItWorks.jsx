@@ -56,7 +56,7 @@ export default function HowItWorks() {
 
       <Section icon={Shield} title="What is A.S.S.E.T?">
         <p>
-          The Stellaris Surveillance training platform. Short, repeatable gaming drills keep
+          The Surveillance training platform. Short, repeatable gaming drills keep
           your payout math, game protection, and floor procedures sharp between live shifts.
         </p>
       </Section>
