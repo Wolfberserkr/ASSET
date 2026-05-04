@@ -15,6 +15,7 @@ const History        = lazy(() => import('./pages/agent/History'))
 const Practice       = lazy(() => import('./pages/agent/Practice'))
 const Resources      = lazy(() => import('./pages/agent/Resources'))
 const ResourceDetail = lazy(() => import('./pages/agent/ResourceDetail'))
+const HowItWorks     = lazy(() => import('./pages/agent/HowItWorks'))
 
 // Management pages — lazy loaded
 const TeamDashboard  = lazy(() => import('./pages/management/TeamDashboard'))
@@ -58,6 +59,7 @@ export default function App() {
               <Route path="/practice"           element={<Practice />} />
               <Route path="/resources"          element={<Resources />} />
               <Route path="/resources/:gameId"  element={<ResourceDetail />} />
+              <Route path="/help"               element={<HowItWorks />} />
             </Route>
 
             {/* Management routes */}

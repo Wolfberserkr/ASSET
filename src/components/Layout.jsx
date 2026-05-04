@@ -8,6 +8,7 @@ import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
   ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Lock,
+  HelpCircle,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -40,6 +41,7 @@ const agentNav = [
   { to: '/practice',        label: 'Practice',        icon: GraduationCap },
   { to: '/resources',       label: 'Resources',       icon: Library },
   { to: '/history',         label: 'My History',      icon: FileText },
+  { to: '/help',            label: 'How It Works',    icon: HelpCircle },
   { to: '/change-password', label: 'Change Password', icon: KeyRound },
 ]
 

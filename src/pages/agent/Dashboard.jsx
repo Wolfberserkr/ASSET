@@ -6,10 +6,12 @@ import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import VantaBackground from '../../components/VantaBackground'
 import ElectricBorder from '../../components/ElectricBorder'
+import OnboardingModal from '../../components/OnboardingModal'
 import { useCooldown } from '../../hooks/useCooldown'
+import { computeTrend } from '../../lib/decayUtils'
 import {
   Clock, CheckCircle, Trophy, PlayCircle,
-  TrendingUp, AlertTriangle, ChevronRight, Medal, Crown,
+  TrendingUp, TrendingDown, Minus, AlertTriangle, ChevronRight, Medal, Crown,
 } from 'lucide-react'
 
 // Formats seconds into mm:ss or h:mm:ss
@@ -27,6 +29,128 @@ function getRankBadge(rank) {
   if (rank === 2) return { icon: Medal,  color: '#C0C0C0' }
   if (rank === 3) return { icon: Medal,  color: '#CD7F32' }
   return null
+}
+
+// Tiny inline sparkline. Points are rendered oldest → newest left to right.
+function Sparkline({ values, color, width = 140, height = 32 }) {
+  if (!values || values.length < 2) return null
+  const max = Math.max(...values)
+  const min = Math.min(...values)
+  const range = max - min || 1
+  const stepX = width / (values.length - 1)
+  const points = values
+    .map((v, i) => `${(i * stepX).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`)
+    .join(' ')
+  return (
+    <svg width={width} height={height} className="block">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  )
+}
+
+function TrendCard({ trend, recentSessions }) {
+  // Sparkline shows last 14d of scores in chronological order
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000
+  const sparkData = (recentSessions ?? [])
+    .filter(s => new Date(s.completed_at).getTime() >= cutoff)
+    .slice() // copy before reverse
+    .reverse() // recentSessions is newest-first; sparkline wants oldest-first
+    .map(s => Number(s.score))
+
+  const insufficient = trend?.direction === 'insufficient'
+
+  const accent =
+    trend?.direction === 'up'   ? 'var(--color-brand-success)' :
+    trend?.direction === 'down' ? 'var(--color-brand-warning)' :
+                                  'var(--color-brand-muted)'
+
+  const Arrow =
+    trend?.direction === 'up'   ? TrendingUp :
+    trend?.direction === 'down' ? TrendingDown :
+                                  Minus
+
+  const headline = insufficient
+    ? 'Trend unlocks at 3 sessions per window'
+    : trend.direction === 'up'
+      ? `You're up ${trend.deltaPct}% over the last 14 days`
+      : trend.direction === 'down'
+        ? `You're down ${Math.abs(trend.deltaPct)}% over the last 14 days`
+        : 'Holding steady'
+
+  return (
+    <div
+      className="rounded-xl p-4 mb-6"
+      style={{
+        background: 'var(--color-brand-card)',
+        border: `1px solid ${insufficient ? 'var(--color-brand-border)' : accent}`,
+      }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-brand-muted)' }}>
+          Your Trend
+        </span>
+        <div className="flex items-center gap-1.5" style={{ color: accent }}>
+          <Arrow size={15} />
+          {!insufficient && (
+            <span className="text-xs font-mono font-semibold">
+              {trend.deltaPct > 0 ? '+' : ''}{trend.deltaPct}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {insufficient ? (
+        <div>
+          <p className="text-sm" style={{ color: 'var(--color-brand-text)' }}>
+            Keep drilling — trend unlocks once you have 3 completed sessions in each 14-day window.
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-brand-muted)' }}>
+            Recent: {trend?.recentCount ?? 0} · Prior: {trend?.priorCount ?? 0}
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-5">
+          {/* Two-number compare */}
+          <div className="flex items-end gap-3 shrink-0">
+            <div>
+              <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>2 weeks ago</p>
+              <p className="text-2xl font-bold font-mono" style={{ color: 'var(--color-brand-muted)' }}>
+                {trend.priorAvg}
+              </p>
+            </div>
+            <ChevronRight size={20} style={{ color: 'var(--color-brand-muted)', marginBottom: 6 }} />
+            <div>
+              <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Now</p>
+              <p className="text-2xl font-bold font-mono" style={{ color: accent }}>
+                {trend.recentAvg}
+              </p>
+            </div>
+          </div>
+
+          {/* Sparkline */}
+          {sparkData.length >= 2 && (
+            <div className="flex-1 flex flex-col items-end min-w-0">
+              <Sparkline values={sparkData} color={accent} />
+              <p className="text-xs mt-1" style={{ color: 'var(--color-brand-muted)' }}>
+                {trend.recentCount} sessions · last 14 days
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="text-xs mt-3" style={{ color: 'var(--color-brand-muted)' }}>
+        {headline}
+      </p>
+    </div>
+  )
 }
 
 function Leaderboard({ agents, myId, loading }) {
@@ -166,14 +290,35 @@ export default function AgentDashboard() {
   const [recert,          setRecert]          = useState(null)
   const [benchmark,       setBenchmark]       = useState(null)
   const [recentSessions,  setRecentSessions]  = useState([])
+  const [trendSessions,   setTrendSessions]   = useState([])
   const [leaderboard,     setLeaderboard]     = useState([])
   const [leaderboardLoading, setLeaderboardLoading] = useState(true)
   const [loadError,       setLoadError]       = useState(null)
+  const [onboardingOpen,  setOnboardingOpen]  = useState(false)
+
+  // Show onboarding modal on first login (when onboarding_completed_at is null).
+  useEffect(() => {
+    if (profile && profile.role === 'agent' && !profile.onboarding_completed_at) {
+      setOnboardingOpen(true)
+    }
+  }, [profile])
+
+  const completeOnboarding = useCallback(async () => {
+    setOnboardingOpen(false)
+    if (!user) return
+    const { error } = await supabase
+      .from('users')
+      .update({ onboarding_completed_at: new Date().toISOString() })
+      .eq('id', user.id)
+    if (error) console.error('onboarding completion:', error)
+  }, [user])
 
   const loadData = useCallback(async () => {
     if (!user) return
     try {
-      const [recertRes, benchmarkRes, sessionsRes, leaderboardRes] = await Promise.all([
+      // Pull a 28-day window for the trend math; the recent-sessions list reuses the same query.
+      const trendCutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
+      const [recertRes, benchmarkRes, trendRes, leaderboardRes] = await Promise.all([
         supabase.rpc('get_recertification_status', { p_user_id: user.id }),
         supabase.rpc('get_team_benchmark'),
         supabase
@@ -181,17 +326,20 @@ export default function AgentDashboard() {
           .select('id, score, status, completed_at, total_time_seconds, total_questions')
           .eq('user_id', user.id)
           .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(10),
+          .gte('completed_at', trendCutoff)
+          .order('completed_at', { ascending: false }),
         supabase.rpc('get_team_leaderboard'),
       ])
 
       if (recertRes.error)    throw recertRes.error
       if (benchmarkRes.error) throw benchmarkRes.error
+      if (trendRes.error)     throw trendRes.error
 
       setRecert(recertRes.data)
       setBenchmark(benchmarkRes.data)
-      setRecentSessions(sessionsRes.data ?? [])
+      const all = trendRes.data ?? []
+      setTrendSessions(all)
+      setRecentSessions(all.slice(0, 10))
       // Leaderboard is non-fatal — log and render empty if the RPC isn't deployed yet.
       if (leaderboardRes.error) console.error('leaderboard:', leaderboardRes.error)
       setLeaderboard(leaderboardRes.data ?? [])
@@ -211,12 +359,19 @@ export default function AgentDashboard() {
     ? Math.min(100, Math.round((recert.completed / recert.required) * 100))
     : 0
 
+  const trend = useMemo(() => computeTrend(trendSessions), [trendSessions])
+
   // Greeting based on time of day
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
     <Layout bg={<VantaBackground style={{ width: '100%', height: '100%' }} />}>
+
+      <OnboardingModal
+        open={onboardingOpen}
+        onComplete={completeOnboarding}
+      />
 
       {/* ── Full-width top: header + CTA (above the two-column split) ── */}
       <div className="mb-6">
@@ -345,6 +500,9 @@ export default function AgentDashboard() {
               accent="var(--color-brand-gold)"
             />
           </div>
+
+          {/* Pre/post trend */}
+          <TrendCard trend={trend} recentSessions={recentSessions} />
 
           {/* Recent sessions */}
           <div
