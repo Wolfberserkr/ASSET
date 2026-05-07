@@ -244,7 +244,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs mt-6" style={{ color: 'var(--color-brand-muted)' }}>
-          Forgot your password? Contact your supervisor.
+          Forgot your password? Contact your Supervisor.
         </p>
       </div>
     </div>
