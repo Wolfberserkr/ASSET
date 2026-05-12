@@ -334,16 +334,15 @@ function TCPTable({ chips, activeBet = 'pair_plus' }) {
 // LET IT RIDE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function LIRTable({ chips }) {
+function LIRTable({ chips, perSpotBet }) {
   const W = 420, H = 190
   const spots = [
     { label: '①', sub: 'BET 1', cx: 105 },
     { label: '②', sub: 'BET 2', cx: 210 },
     { label: '$',  sub: 'BET $', cx: 318 },
   ]
-  const perSpotChips = chips
-    ? chips.map(c => ({ ...c, count: Math.max(1, Math.ceil(c.count / 3)) }))
-    : []
+  const spotChips = chips ?? []
+  const perSpotLabel = perSpotBet != null ? `$${perSpotBet.toLocaleString()}` : ''
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 200 }}>
@@ -356,17 +355,23 @@ function LIRTable({ chips }) {
           <g key={label}>
             <circle cx={cx} cy={cy} r={r + 6} fill="#fbbf24" opacity={0.15} />
             <circle cx={cx} cy={cy} r={r} fill="#2d5a2d" stroke="#fbbf24" strokeWidth={2.5} />
-            <text x={cx} y={cy - 8} textAnchor="middle"
-              fontSize={22} fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif">{label}</text>
-            <text x={cx} y={cy + 14} textAnchor="middle"
+            <text x={cx} y={cy - 14} textAnchor="middle"
+              fontSize={20} fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif">{label}</text>
+            <text x={cx} y={cy + 4} textAnchor="middle"
               fontSize={8} fill="#d1fae5" fontFamily="sans-serif" letterSpacing={1}>{sub}</text>
-            <ChipsOnTable chips={perSpotChips} cx={cx} cy={cy - 28} />
+            {perSpotLabel && (
+              <text x={cx} y={cy + 18} textAnchor="middle"
+                fontSize={11} fontWeight="bold" fill="#86efac" fontFamily="monospace">
+                {perSpotLabel}
+              </text>
+            )}
+            <ChipsOnTable chips={spotChips} cx={cx} cy={cy - 32} />
           </g>
         )
       })}
       <text x={W / 2} y={H - 10} textAnchor="middle"
         fontSize={8} fill="#86efac" fontFamily="sans-serif">
-        All active bets highlighted — total wager shown below
+        Three equal active bets — total wager shown below
       </text>
     </svg>
   )
@@ -425,8 +430,9 @@ function UTHTable({ chips }) {
  * Props for Roulette:   gameName + scenario
  * Props for other games: gameName + chips + totalBet
  */
-export default function PayoutTable({ gameName, scenario, chips, totalBet, activeBet }) {
-  const name = (gameName ?? '').toLowerCase()
+export default function PayoutTable({ gameName, scenario, chips, totalBet, perSpotBet, activeBet }) {
+  const name  = (gameName ?? '').toLowerCase()
+  const isLIR = name.includes('let it ride')
 
   if (name.includes('roulette') && scenario) {
     return (
@@ -440,17 +446,24 @@ export default function PayoutTable({ gameName, scenario, chips, totalBet, activ
   return (
     <div className="w-full rounded-2xl overflow-hidden"
       style={{ border: '1px solid var(--color-brand-success)' }}>
-      {name.includes('three card') && <TCPTable chips={chips} activeBet={activeBet ?? 'pair_plus'} />}
-      {name.includes('let it ride') && <LIRTable chips={chips} />}
+      {name.includes('three card')    && <TCPTable chips={chips} activeBet={activeBet ?? 'pair_plus'} />}
+      {isLIR                          && <LIRTable chips={chips} perSpotBet={perSpotBet} />}
       {name.includes('ultimate texas') && <UTHTable chips={chips} />}
-      <div className="flex items-center justify-center gap-2 py-2"
+      <div className="flex flex-col items-center justify-center gap-1 py-3 px-3"
         style={{ background: '#081508', borderTop: '1px solid var(--color-brand-success)' }}>
-        <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
-          Total bet on table:
-        </span>
-        <span className="text-sm font-bold font-mono" style={{ color: 'var(--color-brand-success)' }}>
-          ${totalBet?.toLocaleString()}
-        </span>
+        {isLIR && perSpotBet != null && (
+          <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>
+            3 active bets × <span className="font-bold" style={{ color: '#fbbf24' }}>${perSpotBet.toLocaleString()}</span>
+          </span>
+        )}
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs uppercase tracking-widest font-mono" style={{ color: 'var(--color-brand-muted)' }}>
+            {isLIR ? 'Total Active Wager' : 'Total Bet'}
+          </span>
+          <span className="text-2xl font-bold font-mono" style={{ color: 'var(--color-brand-success)' }}>
+            ${totalBet?.toLocaleString()}
+          </span>
+        </div>
       </div>
     </div>
   )
