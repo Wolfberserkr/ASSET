@@ -591,6 +591,7 @@ export default function DrillSession() {
                 payoutRatio={!isRoulette ? (q?.correct_answer ?? '') : ''}
                 chips={!isRoulette ? betContext?.chips : []}
                 totalBet={!isRoulette ? betContext?.totalBet : 0}
+                perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
                 activeBet={q?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
               />
             </div>

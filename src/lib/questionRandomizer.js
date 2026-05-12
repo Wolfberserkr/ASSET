@@ -234,29 +234,10 @@ const STANDARD_CHIPS = [
   { color: 'Pink',   denomination: 1000 },
 ]
 
-export function randomizeBetAmount(question) {
-  // ── 1. Resolve table limits ───────────────────────────────────────
-  const gameName = (question.games?.name ?? '').toLowerCase().trim()
-  const { min: minBet, max: maxBet } = TABLE_LIMITS[gameName] ?? DEFAULT_LIMITS
-
-  // ── 2. Filter chips to those usable on this table ─────────────────
-  const chipDefs   = question.chip_variants ?? STANDARD_CHIPS
-  const usable     = chipDefs.filter(c => c.denomination <= maxBet)
-
-  if (usable.length === 0) {
-    // Absolute fallback — should never happen with sane data
-    return { chips: [{ color: 'Red', denomination: 5, count: Math.max(1, Math.floor(minBet / 5)) }], totalBet: minBet }
-  }
-
-  // ── 3. Pick a random target in $5 increments ──────────────────────
-  // Round minBet up to the nearest $5 to guarantee at least one valid step
-  const step        = 5
-  const adjMin      = Math.ceil(minBet / step) * step
-  const stepsAvail  = Math.floor((maxBet - adjMin) / step)
-  const targetBet   = adjMin + Math.floor(Math.random() * (stepsAvail + 1)) * step
-
-  // ── 4. Greedy change-making (largest chip first, max 4 per denom) ──
-  let remaining = targetBet
+// Builds a chip stack for a specific bet amount using greedy change-making
+// (largest chip first, max 4 of any single denomination).
+function buildChipStack(target, usable) {
+  let remaining = target
   const result  = []
 
   for (const chip of [...usable].reverse()) {   // largest → smallest
@@ -281,8 +262,48 @@ export function randomizeBetAmount(question) {
     }
   }
 
-  return {
-    chips:    result.filter(c => c.count > 0),
-    totalBet: result.reduce((sum, c) => sum + c.denomination * c.count, 0),
+  return result.filter(c => c.count > 0)
+}
+
+export function randomizeBetAmount(question) {
+  // ── 1. Resolve table limits ───────────────────────────────────────
+  const gameName = (question.games?.name ?? '').toLowerCase().trim()
+  const { min: minBet, max: maxBet } = TABLE_LIMITS[gameName] ?? DEFAULT_LIMITS
+  const isLIR    = gameName === 'let it ride'
+
+  // ── 2. Filter chips to those usable on this table ─────────────────
+  const chipDefs   = question.chip_variants ?? STANDARD_CHIPS
+  const usable     = chipDefs.filter(c => c.denomination <= maxBet)
+
+  if (usable.length === 0) {
+    // Absolute fallback — should never happen with sane data
+    const fallback = { color: 'Red', denomination: 5, count: Math.max(1, Math.floor(minBet / 5)) }
+    return isLIR
+      ? { chips: [fallback], perSpotBet: minBet, totalBet: minBet * 3 }
+      : { chips: [fallback], totalBet: minBet }
   }
+
+  // ── 3. Pick a random target in $5 increments ──────────────────────
+  // For LIR the table min/max applies *per active bet* (real-table semantics):
+  // a player makes 3 equal wagers, so totalBet = 3 × perSpotBet.
+  const step       = 5
+  const adjMin     = Math.ceil(minBet / step) * step
+  const stepsAvail = Math.floor((maxBet - adjMin) / step)
+  const perBet     = adjMin + Math.floor(Math.random() * (stepsAvail + 1)) * step
+
+  // ── 4. Build chip stack(s) ────────────────────────────────────────
+  const chips    = buildChipStack(perBet, usable)
+  const stackSum = chips.reduce((sum, c) => sum + c.denomination * c.count, 0)
+
+  if (isLIR) {
+    // `chips` is the per-spot stack; the LIR table will render it on all
+    // three spots. totalBet drives validation (ratio × totalBet).
+    return {
+      chips,
+      perSpotBet: stackSum,
+      totalBet:   stackSum * 3,
+    }
+  }
+
+  return { chips, totalBet: stackSum }
 }

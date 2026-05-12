@@ -513,6 +513,7 @@ export default function Practice() {
               payoutRatio={!isRoulette ? (currentQ?.correct_answer ?? '') : ''}
               chips={!isRoulette ? betContext?.chips : []}
               totalBet={!isRoulette ? betContext?.totalBet : 0}
+              perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
               activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
             />
           </div>
@@ -591,6 +592,7 @@ export default function Practice() {
             payoutRatio={!isRoulette ? (currentQ?.correct_answer ?? '') : ''}
             chips={!isRoulette ? betContext?.chips : []}
             totalBet={!isRoulette ? betContext?.totalBet : 0}
+            perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
             activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
           />
         </div>
