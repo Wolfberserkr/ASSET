@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
 import Layout from '../../components/Layout'
-import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle } from 'lucide-react'
+import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle, Search } from 'lucide-react'
 
 const CATEGORIES = [
   'procedure', 'basic_strategy', 'blackjack', 'roulette', 'three_card_poker', 'let_it_ride', 'ultimate_texas_holdem',
@@ -24,6 +24,7 @@ export default function QuestionEditor() {
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState('')
   const [filterGame, setFilterGame] = useState('all')
+  const [search, setSearch] = useState('')
   const [guideOpen, setGuideOpen] = useState(false)
 
   const loadActiveCounts = async () => {
@@ -47,9 +48,19 @@ export default function QuestionEditor() {
     })
   }, [])
 
-  const filtered = filterGame === 'all' ? questions :
+  const byGame = filterGame === 'all' ? questions :
     filterGame === 'procedure' ? questions.filter(q => q.is_procedure) :
     questions.filter(q => q.game_id === filterGame)
+
+  const query = search.trim().toLowerCase()
+  const filtered = !query ? byGame : byGame.filter(q => {
+    if (q.question_text?.toLowerCase().includes(query)) return true
+    if (q.category?.toLowerCase().includes(query)) return true
+    if (q.correct_answer?.toLowerCase().includes(query)) return true
+    if (q.explanation?.toLowerCase().includes(query)) return true
+    if (Array.isArray(q.options) && q.options.some(o => o?.toLowerCase().includes(query))) return true
+    return false
+  })
 
   const saveQuestion = async () => {
     if (!form.question_text.trim() || !form.correct_answer.trim() || !form.category) {
@@ -134,6 +145,23 @@ export default function QuestionEditor() {
         </div>
       ))}
 
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ color: 'var(--color-brand-muted)' }} />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search question text, category, answer, options…"
+          className="w-full pl-9 pr-9 py-2 rounded-lg text-sm outline-none"
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }} />
+        {search && (
+          <button onClick={() => setSearch('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded"
+            style={{ color: 'var(--color-brand-muted)' }} aria-label="Clear search">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       {/* Filter */}
       <div className="flex gap-2 mb-4 flex-wrap">
         {[{ label: 'All', value: 'all' }, { label: 'Procedure', value: 'procedure' },
@@ -160,7 +188,7 @@ export default function QuestionEditor() {
           </div>
         ) : filtered.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-brand-muted)' }}>
-            No questions in this filter.
+            {query ? `No questions match “${search.trim()}”.` : 'No questions in this filter.'}
           </p>
         ) : (
           filtered.map((q, i) => (
