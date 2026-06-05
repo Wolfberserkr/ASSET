@@ -38,7 +38,7 @@ export default function QuestionEditor() {
   useEffect(() => {
     Promise.all([
       supabase.from('games').select('*').eq('is_active', true),
-      supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(200),
+      supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(500),
       loadActiveCounts(),
     ]).then(([gamesRes, qRes]) => {
       setGames(gamesRes.data ?? [])
@@ -80,7 +80,7 @@ export default function QuestionEditor() {
     })
 
     // Refresh list
-    const { data } = await supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(200)
+    const { data } = await supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(500)
     setQuestions(data ?? [])
     loadActiveCounts()
     setForm(null)
