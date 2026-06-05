@@ -46,14 +46,15 @@ export default function QuestionEditor() {
       return
     }
     setSaving(true); setError('')
+    const { id, games, created_at, times_shown, times_correct, ...rest } = form
     const payload = {
-      ...form,
+      ...rest,
       game_id: form.is_procedure ? null : (form.game_id || null),
       options: form.type === 'multiple_choice' ? form.options.filter(o => o.trim()) : null,
     }
     let result
-    if (form.id) {
-      result = await supabase.from('questions').update(payload).eq('id', form.id).select().single()
+    if (id) {
+      result = await supabase.from('questions').update(payload).eq('id', id).select().single()
     } else {
       result = await supabase.from('questions').insert(payload).select().single()
     }
