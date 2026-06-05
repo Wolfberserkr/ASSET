@@ -18,6 +18,7 @@ const BLANK = {
 export default function QuestionEditor() {
   const [games,     setGames]     = useState([])
   const [questions, setQuestions] = useState([])
+  const [activeCountByGame, setActiveCountByGame] = useState({})
   const [loading,   setLoading]   = useState(true)
   const [form,      setForm]      = useState(null)  // null = hidden; object = editing/creating
   const [saving,    setSaving]    = useState(false)
@@ -25,10 +26,20 @@ export default function QuestionEditor() {
   const [filterGame, setFilterGame] = useState('all')
   const [guideOpen, setGuideOpen] = useState(false)
 
+  const loadActiveCounts = async () => {
+    const { data } = await supabase.from('questions').select('game_id').eq('is_active', true)
+    const counts = {}
+    ;(data ?? []).forEach(q => {
+      if (q.game_id) counts[q.game_id] = (counts[q.game_id] ?? 0) + 1
+    })
+    setActiveCountByGame(counts)
+  }
+
   useEffect(() => {
     Promise.all([
       supabase.from('games').select('*').eq('is_active', true),
       supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(200),
+      loadActiveCounts(),
     ]).then(([gamesRes, qRes]) => {
       setGames(gamesRes.data ?? [])
       setQuestions(qRes.data ?? [])
@@ -71,6 +82,7 @@ export default function QuestionEditor() {
     // Refresh list
     const { data } = await supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(200)
     setQuestions(data ?? [])
+    loadActiveCounts()
     setForm(null)
     setSaving(false)
   }
@@ -79,16 +91,11 @@ export default function QuestionEditor() {
     await supabase.from('questions').update({ is_active: !q.is_active }).eq('id', q.id)
     logAudit('QUESTION_TOGGLED', { question_id: q.id, is_active: !q.is_active })
     setQuestions(prev => prev.map(x => x.id === q.id ? { ...x, is_active: !x.is_active } : x))
+    loadActiveCounts()
   }
 
   const inputCls = "w-full px-3 py-2 rounded-lg text-sm outline-none"
   const inputStyle = { background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }
-
-  // Count active questions per game for the warning
-  const activeCountByGame = {}
-  games.forEach(g => {
-    activeCountByGame[g.id] = questions.filter(q => q.game_id === g.id && q.is_active).length
-  })
 
   return (
     <Layout>
