@@ -1,5 +1,5 @@
 -- ============================================================
--- LET IT RIDE — 90 Additional Questions (v2)
+-- LET IT RIDE  -  90 Additional Questions (v2)
 -- 20 easy + 30 medium + 20 hard (multiple_choice)
 -- 20 payout drills (extends existing 30 in seed_questions.sql)
 --
@@ -153,8 +153,8 @@ VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
  'multiple_choice',
  'Can a player use cash (paper bills) to play at the Let It Ride table?',
- '["No — money does not play under any circumstances","Yes, for amounts under $100","Yes, with manager approval","Yes, on the first bet only"]',
- 'No — money does not play under any circumstances',
+ '["No  -  money does not play under any circumstances","Yes, for amounts under $100","Yes, with manager approval","Yes, on the first bet only"]',
+ 'No  -  money does not play under any circumstances',
  'Cash does not play under any circumstances. All bets must be placed with gaming chips.',
  'let_it_ride',FALSE,1,10,TRUE),
 
@@ -179,7 +179,7 @@ VALUES
 -- MEDIUM (30)   difficulty 2   type: multiple_choice
 -- ============================================================
 
--- Payout table — higher hands (5 questions)
+-- Payout table  -  higher hands (5 questions)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 
@@ -386,8 +386,8 @@ VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
  'multiple_choice',
  'Are players allowed to show their cards or look at other players'' cards?',
- '["No — not at any point","Yes, after the first community card is revealed","Yes, if the dealer gives permission","Only at showdown"]',
- 'No — not at any point',
+ '["No  -  not at any point","Yes, after the first community card is revealed","Yes, if the dealer gives permission","Only at showdown"]',
+ 'No  -  not at any point',
  'Players are not permitted to show their cards or see other players'' cards at any point.',
  'let_it_ride',FALSE,2,10,TRUE),
 
@@ -432,7 +432,7 @@ VALUES
  'A player bets $25 per spot and lets all three spots ride. They win with a Full House. What is their total payout?',
  '["$825","$275","$1,100","$300"]',
  '$825',
- 'Total active bet = $75 ($25 × 3 spots). Full House pays 11:1. $75 × 11 = $825.',
+ 'Total active bet = $75 ($25 x 3 spots). Full House pays 11:1. $75 x 11 = $825.',
  'let_it_ride',FALSE,2,10,TRUE),
 
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
@@ -464,7 +464,7 @@ VALUES
  'A player''s card is found face up in the shuffle machine while cards are being dealt. What is the correct action?',
  '["Continue with the game","Void all hands","Void only that player''s hand","Pause the game and call surveillance"]',
  'Continue with the game',
- 'A player''s card found face up in the shuffle machine during the deal — the dealer continues with the game. Only a dealer''s card being exposed requires voiding all hands.',
+ 'A player''s card found face up in the shuffle machine during the deal  -  the dealer continues with the game. Only a dealer''s card being exposed requires voiding all hands.',
  'let_it_ride',FALSE,3,10,TRUE),
 
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
@@ -480,14 +480,14 @@ VALUES
  'The shuffle machine fails and stops dealing cards mid-round. What is the correct action?',
  '["The round is voided, all wagers returned, and all cards reshuffled","The dealer finishes the deal by hand","Continue with only the cards already dealt","Only complete hands play out; incomplete hands are voided"]',
  'The round is voided, all wagers returned, and all cards reshuffled',
- 'If the shuffle machine jams or fails to deal all cards, the round is voided, all wagers are returned, and all cards — including those already dealt — are reshuffled.',
+ 'If the shuffle machine jams or fails to deal all cards, the round is voided, all wagers are returned, and all cards  -  including those already dealt  -  are reshuffled.',
  'let_it_ride',FALSE,3,10,TRUE),
 
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
  'multiple_choice',
  'What is the correct sequence when a player requests a marker?',
- '["Dealer informs manager → manager places the lammer → dealer cuts chips after approval → manager processes marker → player signs → dealer signs","Dealer cuts chips, then calls a manager","Player signs the marker first, then chips are issued","Dealer calls surveillance, then issues chips after approval"]',
- 'Dealer informs manager → manager places the lammer → dealer cuts chips after approval → manager processes marker → player signs → dealer signs',
+ '["Dealer informs manager -> manager places the lammer -> dealer cuts chips after approval -> manager processes marker -> player signs -> dealer signs","Dealer cuts chips, then calls a manager","Player signs the marker first, then chips are issued","Dealer calls surveillance, then issues chips after approval"]',
+ 'Dealer informs manager -> manager places the lammer -> dealer cuts chips after approval -> manager processes marker -> player signs -> dealer signs',
  'The lammer must be placed by the manager before any chips are cut. The dealer verifies all marker information (name, game type, table number, amount) before signing.',
  'let_it_ride',FALSE,3,10,TRUE),
 
@@ -512,7 +512,7 @@ VALUES
  'When a fill is delivered, what must the dealer do first with the chips?',
  '["Empty the chips from the racks (highest denomination closest to the dealer) and cut down one stack of the highest denomination","Sign the fill slip, then add chips to the rack","Place chips directly into the rack and call the manager","Verify the fill slip before touching the chips"]',
  'Empty the chips from the racks (highest denomination closest to the dealer) and cut down one stack of the highest denomination',
- 'The dealer empties the chips — highest denomination closest to the dealer — then cuts down one stack of the highest denomination and sizes it into the remaining stacks before the manager verifies.',
+ 'The dealer empties the chips  -  highest denomination closest to the dealer  -  then cuts down one stack of the highest denomination and sizes it into the remaining stacks before the manager verifies.',
  'let_it_ride',FALSE,3,10,TRUE),
 
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
@@ -542,8 +542,8 @@ VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),
  'multiple_choice',
  'Who is the only person authorized to drop the closer slip at table closing?',
- '["The dealer — unless two managers conduct the closing","The table manager","Any licensed casino employee","The security officer"]',
- 'The dealer — unless two managers conduct the closing',
+ '["The dealer  -  unless two managers conduct the closing","The table manager","Any licensed casino employee","The security officer"]',
+ 'The dealer  -  unless two managers conduct the closing',
  'Only the dealer drops the Closer slip, unless 2 managers conduct the closing process.',
  'let_it_ride',FALSE,3,10,TRUE),
 
@@ -638,38 +638,38 @@ VALUES
 
 -- Royal Flush  1000:1  (difficulty 3)
 -- IMPORTANT: $25,000 maximum payout applies per hand.
--- Keep chip_variants for these questions to low denominations (e.g. $5–$25/spot)
--- so the randomised bet × 1000 stays at or under $25,000.
+-- Keep chip_variants for these questions to low denominations (e.g. $5-$25/spot)
+-- so the randomised bet x 1000 stays at or under $25,000.
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Player''s final hand is a Royal Flush in Let It Ride. Calculate the payout on the total active wager shown.',NULL,'1000','A Royal Flush pays 1000 to 1. Total payout is capped at $25,000 per hand.','let_it_ride',FALSE,3,10,TRUE),
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','A Royal Flush wins in Let It Ride. What is the correct payout on the total active wager shown?',NULL,'1000','Royal Flush: 1000 to 1 per active bet in Let It Ride. Maximum payout is $25,000 per hand.','let_it_ride',FALSE,3,10,TRUE);
 
--- Flush  8:1  (additional — difficulty 2)
+-- Flush  8:1  (additional  -  difficulty 2)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Let It Ride dealer calls a Flush winner. Calculate the payout on the total active wager shown.',NULL,'8','A Flush pays 8 to 1 on all active bets in Let It Ride.','let_it_ride',FALSE,2,10,TRUE),
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Winning Flush hand revealed in Let It Ride. What is the correct payout on the wager shown?',NULL,'8','Flush: 8 to 1 per active bet in Let It Ride.','let_it_ride',FALSE,2,10,TRUE);
 
--- Straight  5:1  (additional — difficulty 2)
+-- Straight  5:1  (additional  -  difficulty 2)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Let It Ride dealer calls a Straight. Calculate the payout on the total active wager shown.',NULL,'5','A Straight pays 5 to 1 in Let It Ride.','let_it_ride',FALSE,2,10,TRUE),
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Player wins Let It Ride with a Straight. What is the total correct payout on the active wager shown?',NULL,'5','Straight: 5 to 1 per active bet.','let_it_ride',FALSE,2,10,TRUE);
 
--- Three of a Kind  3:1  (additional — difficulty 2)
+-- Three of a Kind  3:1  (additional  -  difficulty 2)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Let It Ride dealer reveals Three of a Kind. Calculate the payout on the total active wager shown.',NULL,'3','Three of a Kind pays 3 to 1 on all active bets.','let_it_ride',FALSE,2,10,TRUE),
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Player wins with Three of a Kind in Let It Ride. Calculate the correct payout on the wager shown.',NULL,'3','Three of a Kind: 3 to 1 per active bet in Let It Ride.','let_it_ride',FALSE,2,10,TRUE);
 
--- Two Pair  2:1  (additional — difficulty 1)
+-- Two Pair  2:1  (additional  -  difficulty 1)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Let It Ride dealer reveals Two Pair. What is the correct payout on the active wager shown?',NULL,'2','Two Pair pays 2 to 1 in Let It Ride.','let_it_ride',FALSE,1,10,TRUE),
-((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Winning Two Pair in Let It Ride — calculate the correct total payout on the wager shown.',NULL,'2','Two Pair: 2 to 1 per active bet.','let_it_ride',FALSE,1,10,TRUE);
+((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Winning Two Pair in Let It Ride  -  calculate the correct total payout on the wager shown.',NULL,'2','Two Pair: 2 to 1 per active bet.','let_it_ride',FALSE,1,10,TRUE);
 
--- Pair of Tens or better  1:1  (additional — difficulty 1)
+-- Pair of Tens or better  1:1  (additional  -  difficulty 1)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
 ((SELECT id FROM public.games WHERE name='Let It Ride'),'payout','Let It Ride: player holds a Pair of Queens. Calculate the payout on the total active wager shown.',NULL,'1','A Pair of Tens or better pays 1 to 1 (even money).','let_it_ride',FALSE,1,10,TRUE),
