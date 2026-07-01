@@ -135,13 +135,13 @@ VALUES
 ((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','A Straight Flush wins on the Three Card Poker Pair Plus side bet. Calculate the payout.',NULL,'40','Pair Plus: Straight Flush pays 40 to 1.','three_card_poker',FALSE,3,10,TRUE),
 ((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Player wins Pair Plus with a Straight Flush. What is the correct payout?',NULL,'40','Pair Plus Straight Flush payout: 40:1.','three_card_poker',FALSE,3,10,TRUE);
 
--- Mini Royal (A-K-Q suited)  50:1  (difficulty 3)
+-- Mini Royal (A-K-Q suited)  200:1  (difficulty 3)
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
 VALUES
-((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Player has a Mini Royal on their Pair Plus bet. Calculate the correct payout.',NULL,'50','Mini Royal (A-K-Q suited) on Pair Plus pays 50 to 1.','three_card_poker',FALSE,3,10,TRUE),
-((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Pair Plus bet results in a Mini Royal. What is the payout?',NULL,'50','Pair Plus: Mini Royal (A-K-Q suited) pays 50:1.','three_card_poker',FALSE,3,10,TRUE),
-((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','A-K-Q suited wins on the Three Card Poker Pair Plus. Calculate the payout.',NULL,'50','Pair Plus: Mini Royal pays 50 to 1.','three_card_poker',FALSE,3,10,TRUE),
-((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Player wins Pair Plus with a Mini Royal. What is the correct payout?',NULL,'50','Pair Plus Mini Royal payout: 50:1.','three_card_poker',FALSE,3,10,TRUE);
+((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Player has a Mini Royal on their Pair Plus bet. Calculate the correct payout.',NULL,'200','Mini Royal (A-K-Q suited) on Pair Plus pays 200 to 1.','three_card_poker',FALSE,3,10,TRUE),
+((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Pair Plus bet results in a Mini Royal. What is the payout?',NULL,'200','Pair Plus: Mini Royal (A-K-Q suited) pays 200:1.','three_card_poker',FALSE,3,10,TRUE),
+((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','A-K-Q suited wins on the Three Card Poker Pair Plus. Calculate the payout.',NULL,'200','Pair Plus: Mini Royal pays 200 to 1.','three_card_poker',FALSE,3,10,TRUE),
+((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Player wins Pair Plus with a Mini Royal. What is the correct payout?',NULL,'200','Pair Plus Mini Royal payout: 200:1.','three_card_poker',FALSE,3,10,TRUE);
 
 -- ============================================================
 -- THREE CARD POKER — ANTE BONUS  (15 payout questions)
@@ -408,4 +408,4 @@ ORDER BY g.name NULLS LAST;
 
 -- ─── TCP top-up: one extra Mini Royal to reach 30 ───────────
 INSERT INTO public.questions (game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,difficulty,points,is_active)
-VALUES ((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Pair Plus bet wins with a Mini Royal. What is the total payout on the player''s wager?',NULL,'50','Mini Royal (A-K-Q suited) on Pair Plus pays 50 to 1.','three_card_poker',FALSE,3,10,TRUE);
+VALUES ((SELECT id FROM public.games WHERE name='Three Card Poker'),'payout','Pair Plus bet wins with a Mini Royal. What is the total payout on the player''s wager?',NULL,'200','Mini Royal (A-K-Q suited) on Pair Plus pays 200 to 1.','three_card_poker',FALSE,3,10,TRUE);

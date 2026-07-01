@@ -274,19 +274,31 @@ Seeded via `supabase/seed_questions.sql` (run once in Supabase SQL Editor).
 | Game | Questions | Type |
 |---|---|---|
 | Roulette | 31 | Payout drill |
-| Three Card Poker | 30 | Payout drill (Pair Plus) |
+| Three Card Poker | 30 | Payout drill (Pair Plus + Ante Bonus) |
+| Three Card Poker (additional) | 60 | Payout drill (6 Card Bonus, Pair Plus, Ante Bonus) |
 | Let It Ride | 30 | Payout drill |
 | Ultimate Texas Hold'em | 30 | Payout drill (Trips bet) |
 | Blackjack | 30 | Multiple choice |
 | Procedures (shared) | 15 | Multiple choice |
 | Roulette Procedures (shared) | 30 | Multiple choice |
+| TCP Procedures (shared) | 30 | Multiple choice |
 
 Roulette procedure questions are seeded via `supabase/seed_roulette_procedures.sql` (`category = 'roulette_procedure'`, `is_procedure = TRUE`, `game_id = NULL`). They are drawn from the casino's Roulette dealer procedures manual, written at a high-school reading level, and balanced 10 easy / 10 medium / 10 hard. Being shared procedure questions, they are eligible in any drill session and appear under the **Procedures** tab in Practice.
+
+Three Card Poker procedure questions are seeded via `supabase/seed_tcp_procedures.sql` (`category = 'tcp_procedure'`, `is_procedure = TRUE`, `game_id = NULL`), drawn from the TCP dealer procedures manual, high-school reading level, balanced 10 easy / 10 medium / 10 hard.
 
 Angelo can add/edit questions via the management portal Question Editor. Rick plans to add `table_max_bet` per question in a future update to keep chip randomisation within realistic table limits.
 
 ### Roulette payout scenarios (live-generated)
 Roulette payout drills do **not** read the DB question's text/answer — `src/lib/rouletteScenario.js` generates a fresh combination-bet scenario at runtime (rendered on the SVG layout by `PayoutTable.jsx`, validated against the computed total payout). The generator covers all six inside bet types: Straight (35:1), Split (17:1), Street (11:1), Corner (8:1), Top Line / five-number 0-00-1-2-3 (6:1), and Line / six-number (5:1). Each scenario uses White ($1) and/or Red ($5) chips — all $1, all $5, or a mix. The same generator powers both scored Drill sessions and Practice mode.
+
+### Three Card Poker payout drills (DB-driven)
+Unlike Roulette, TCP payout drills **do** use the stored DB question: `correct_answer` holds the payout ratio, `randomizeBetAmount` builds a chip stack, and `PayoutTable.jsx` highlights the active spot. The TCP layout has four spots — ANTE, PLAY, PAIR PLUS, and **6 CARD BONUS** — selected by question `category`:
+- `three_card_poker` → PAIR PLUS spot (Mini Royal 200:1, Straight Flush 40:1, Three of a Kind 30:1, Straight 6:1, Flush 3:1, Pair 1:1)
+- `ante_bonus` → ANTE spot (Straight Flush 5:1, Three of a Kind 4:1, Straight 1:1)
+- `six_card_bonus` → 6 CARD BONUS spot (Royal Flush 1000:1, Straight Flush 200:1, Four of a Kind 50:1, Full House 25:1, Flush 15:1, Straight 10:1, Three of a Kind 5:1)
+
+Additional TCP payout questions are seeded via `supabase/seed_tcp_questions.sql` (60 questions, balanced 20/20/20), which also contains an idempotent `UPDATE` correcting the Pair Plus **Mini Royal** payout from 50:1 to **200:1** per the manual.
 
 ---
 

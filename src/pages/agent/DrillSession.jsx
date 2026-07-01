@@ -592,7 +592,7 @@ export default function DrillSession() {
                 chips={!isRoulette ? betContext?.chips : []}
                 totalBet={!isRoulette ? betContext?.totalBet : 0}
                 perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
-                activeBet={q?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
+                activeBet={q?.category === 'ante_bonus' ? 'ante' : q?.category === 'six_card_bonus' ? 'six_card_bonus' : 'pair_plus'}
               />
             </div>
 

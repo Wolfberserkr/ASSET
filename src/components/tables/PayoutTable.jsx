@@ -287,11 +287,12 @@ function RouletteTable({ scenario }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function TCPTable({ chips, activeBet = 'pair_plus' }) {
-  const W = 420, H = 190
+  const W = 520, H = 190
   const spots = [
-    { label: 'PLAY',      cx: 105, key: 'play'       },
-    { label: 'ANTE',      cx: 210, key: 'ante'       },
-    { label: 'PAIR PLUS', cx: 318, key: 'pair_plus'  },
+    { label: 'ANTE',      cx: 78,  key: 'ante'           },
+    { label: 'PLAY',      cx: 188, key: 'play'           },
+    { label: 'PAIR PLUS', cx: 298, key: 'pair_plus'      },
+    { label: '6 CARD', line2: 'BONUS', cx: 430, key: 'six_card_bonus' },
   ]
 
   return (
@@ -301,23 +302,34 @@ function TCPTable({ chips, activeBet = 'pair_plus' }) {
         fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>
         THREE CARD POKER
       </text>
-      {spots.map(({ label, cx, key }) => {
-        const cy = 105, r = 52
+      {spots.map(({ label, line2, cx, key }) => {
+        const cy = 108, r = 46
         const highlight = key === activeBet
+        const nameColor = highlight ? '#fbbf24' : '#86efac'
         return (
-          <g key={label}>
+          <g key={key}>
             {highlight && <circle cx={cx} cy={cy} r={r + 6} fill="#fbbf24" opacity={0.2} />}
             <circle cx={cx} cy={cy} r={r}
               fill={highlight ? '#2d5a2d' : '#1e3e1e'}
               stroke={highlight ? '#fbbf24' : '#15803d'}
               strokeWidth={highlight ? 2.5 : 1.5} />
-            <text x={cx} y={highlight ? cy - 6 : cy + 5} textAnchor="middle"
-              fontSize={9} fontWeight="bold"
-              fill={highlight ? '#fbbf24' : '#86efac'}
-              fontFamily="sans-serif" letterSpacing={1}>{label}</text>
-            {highlight && <text x={cx} y={cy + 10} textAnchor="middle"
+            {line2 ? (
+              <>
+                <text x={cx} y={highlight ? cy - 8 : cy - 1} textAnchor="middle"
+                  fontSize={9} fontWeight="bold" fill={nameColor}
+                  fontFamily="sans-serif" letterSpacing={1}>{label}</text>
+                <text x={cx} y={highlight ? cy + 3 : cy + 11} textAnchor="middle"
+                  fontSize={9} fontWeight="bold" fill={nameColor}
+                  fontFamily="sans-serif" letterSpacing={1}>{line2}</text>
+              </>
+            ) : (
+              <text x={cx} y={highlight ? cy - 6 : cy + 5} textAnchor="middle"
+                fontSize={9} fontWeight="bold" fill={nameColor}
+                fontFamily="sans-serif" letterSpacing={1}>{label}</text>
+            )}
+            {highlight && <text x={cx} y={line2 ? cy + 17 : cy + 10} textAnchor="middle"
               fontSize={8} fill="#d1fae5" fontFamily="sans-serif">active bet</text>}
-            {highlight && <ChipsOnTable chips={chips} cx={cx} cy={cy - 24} />}
+            {highlight && <ChipsOnTable chips={chips} cx={cx} cy={cy - 26} />}
           </g>
         )
       })}

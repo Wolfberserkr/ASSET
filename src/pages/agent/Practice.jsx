@@ -514,7 +514,7 @@ export default function Practice() {
               chips={!isRoulette ? betContext?.chips : []}
               totalBet={!isRoulette ? betContext?.totalBet : 0}
               perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
-              activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
+              activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : currentQ?.category === 'six_card_bonus' ? 'six_card_bonus' : 'pair_plus'}
             />
           </div>
 
@@ -593,7 +593,7 @@ export default function Practice() {
             chips={!isRoulette ? betContext?.chips : []}
             totalBet={!isRoulette ? betContext?.totalBet : 0}
             perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
-            activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
+            activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : currentQ?.category === 'six_card_bonus' ? 'six_card_bonus' : 'pair_plus'}
           />
         </div>
       )}
