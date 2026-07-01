@@ -279,8 +279,14 @@ Seeded via `supabase/seed_questions.sql` (run once in Supabase SQL Editor).
 | Ultimate Texas Hold'em | 30 | Payout drill (Trips bet) |
 | Blackjack | 30 | Multiple choice |
 | Procedures (shared) | 15 | Multiple choice |
+| Roulette Procedures (shared) | 30 | Multiple choice |
+
+Roulette procedure questions are seeded via `supabase/seed_roulette_procedures.sql` (`category = 'roulette_procedure'`, `is_procedure = TRUE`, `game_id = NULL`). They are drawn from the casino's Roulette dealer procedures manual, written at a high-school reading level, and balanced 10 easy / 10 medium / 10 hard. Being shared procedure questions, they are eligible in any drill session and appear under the **Procedures** tab in Practice.
 
 Angelo can add/edit questions via the management portal Question Editor. Rick plans to add `table_max_bet` per question in a future update to keep chip randomisation within realistic table limits.
+
+### Roulette payout scenarios (live-generated)
+Roulette payout drills do **not** read the DB question's text/answer — `src/lib/rouletteScenario.js` generates a fresh combination-bet scenario at runtime (rendered on the SVG layout by `PayoutTable.jsx`, validated against the computed total payout). The generator covers all six inside bet types: Straight (35:1), Split (17:1), Street (11:1), Corner (8:1), Top Line / five-number 0-00-1-2-3 (6:1), and Line / six-number (5:1). Each scenario uses White ($1) and/or Red ($5) chips — all $1, all $5, or a mix. The same generator powers both scored Drill sessions and Practice mode.
 
 ---
 
