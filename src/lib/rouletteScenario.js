@@ -5,9 +5,13 @@
  * Every bet in a scenario covers the winning number — no losing bets.
  *
  * Chips: White ($1) and Red ($5) only.
- * All bets within a scenario share the same chip denomination.
+ * A scenario is one of three chip modes:
+ *   - all $1   (every bet is a $1 chip)
+ *   - all $5   (every bet is a $5 chip)
+ *   - mixed    (each bet is independently $1 or $5)
  *
- * Bet types: Straight, Split, Street, Corner.
+ * Bet types: Straight (35:1), Split (17:1), Street (11:1), Corner (8:1),
+ *            Top Line / five-number 0-00-1-2-3 (6:1), Line / six-number (5:1).
  *
  * Returns: { winningNumber, bets, correctPayout }
  *
@@ -47,9 +51,22 @@ function chip(denom) {
   return { color: denom === 1 ? 'White' : 'Red', denomination: denom, count: 1 }
 }
 
-// Each scenario picks one denomination — 70 % $5, 30 % $1
-function scenarioChip() {
-  return chip(Math.random() < 0.3 ? 1 : 5)
+// A scenario is one of three chip modes:
+//   all5  — every bet is a $5 chip
+//   all1  — every bet is a $1 chip
+//   mixed — each bet is independently $1 or $5
+function pickChipMode() {
+  const r = Math.random()
+  if (r < 0.38) return 'all5'
+  if (r < 0.70) return 'all1'
+  return 'mixed'
+}
+
+// Returns the chip for a single bet given the scenario's chip mode.
+function chipForMode(mode) {
+  if (mode === 'all1') return chip(1)
+  if (mode === 'all5') return chip(5)
+  return chip(Math.random() < 0.5 ? 1 : 5)   // mixed
 }
 
 // ─── Tiny utilities ───────────────────────────────────────────────────────────
@@ -125,6 +142,18 @@ function posCorner(base) {
   return { cx: (ca.cx + cb.cx) / 2, cy: (cy1 + cy2) / 2 }
 }
 
+function posTopLine() {
+  // Five-number bet (0, 00, 1, 2, 3) — chip on the outer corner where the
+  // zero column meets the top of the 1-2-3 street.
+  return { cx: ZW, cy: 0 }
+}
+
+function posLine(startCol) {
+  // Six-number bet — chip on the bottom border, on the shared vertical edge
+  // between street `startCol` and street `startCol + 1`.
+  return { cx: ZW + (startCol + 1) * CW, cy: CH * 3 }
+}
+
 function posColumn(colIdx) {
   return { cx: ZW + GRID_W + 19, cy: colIdx * CH + CH / 2 }
 }
@@ -189,6 +218,29 @@ function makeCorner(base) {
     numbers: [base, base + 1, base + 3, base + 4],
     payout: 8,
     ...posCorner(base),
+  }
+}
+
+function makeTopLine() {
+  return {
+    type: 'topline',
+    label: 'Top Line — 0 / 00 / 1 / 2 / 3',
+    numbers: [0, '00', 1, 2, 3],
+    payout: 6,
+    ...posTopLine(),
+  }
+}
+
+function makeLine(startCol) {
+  // Covers streets `startCol` and `startCol + 1` — six consecutive numbers.
+  const base = startCol * 3 + 1
+  const nums = [base, base + 1, base + 2, base + 3, base + 4, base + 5]
+  return {
+    type: 'line',
+    label: `Line — ${nums[0]}-${nums[1]}-${nums[2]} / ${nums[3]}-${nums[4]}-${nums[5]}`,
+    numbers: nums,
+    payout: 5,
+    ...posLine(startCol),
   }
 }
 
@@ -267,6 +319,18 @@ function validCornerBasesFor(n) {
   return bases
 }
 
+// ─── Six-line starts that cover a given number ───────────────────────────────
+
+function validLinesFor(n) {
+  // A number's street is column `col`. A six-line joins two adjacent streets,
+  // so n is covered by the line (col-1, col) and/or the line (col, col+1).
+  const col   = Math.floor((n - 1) / 3)
+  const starts = []
+  if (col - 1 >= 0)  starts.push(col - 1)
+  if (col + 1 <= 11) starts.push(col)
+  return starts
+}
+
 // ─── Scenario templates for 0 and 00 ─────────────────────────────────────────
 
 function buildZeroScenario(winner) {
@@ -277,6 +341,14 @@ function buildZeroScenario(winner) {
     () => [makeSplit(0, '00')],
     // Straight + 0/00 split
     () => [makeStraight(winner), makeSplit(0, '00')],
+    // Top line only (five-number 0/00/1/2/3)
+    () => [makeTopLine()],
+    // Straight + top line
+    () => [makeStraight(winner), makeTopLine()],
+    // 0/00 split + top line
+    () => [makeSplit(0, '00'), makeTopLine()],
+    // Straight + 0/00 split + top line
+    () => [makeStraight(winner), makeSplit(0, '00'), makeTopLine()],
   ]
   return pick(templates)()
 }
@@ -291,8 +363,11 @@ function buildZeroScenario(winner) {
 function buildNumberScenario(n) {
   const splitPairs  = allSplitsCovering(n)
   const cornerBases = validCornerBasesFor(n)
+  const lineStarts  = validLinesFor(n)
   const hasSplits   = splitPairs.length > 0
   const hasCorners  = cornerBases.length > 0
+  const hasLines    = lineStarts.length > 0
+  const inTopLine   = n === 1 || n === 2 || n === 3   // covered by 0/00/1/2/3
 
   const allSplitBets  = () => splitPairs.map(([a, b]) => makeSplit(a, b))
   const allCornerBets = () => cornerBases.map(base => makeCorner(base))
@@ -373,6 +448,54 @@ function buildNumberScenario(n) {
     })
   }
 
+  // 13. Line only (six-number)
+  if (hasLines) {
+    candidates.push({ w: 4, build: () => [makeLine(pick(lineStarts))] })
+  }
+
+  // 14. Straight + line
+  if (hasLines) {
+    candidates.push({ w: 6, build: () => [makeStraight(n), makeLine(pick(lineStarts))] })
+  }
+
+  // 15. Street + line
+  if (hasLines) {
+    candidates.push({ w: 4, build: () => [makeStreet(n), makeLine(pick(lineStarts))] })
+  }
+
+  // 16. Straight + street + line (nested three-way, all cover n)
+  if (hasLines) {
+    candidates.push({
+      w: 5,
+      build: () => [makeStraight(n), makeStreet(n), makeLine(pick(lineStarts))],
+    })
+  }
+
+  // 17. Straight + one split + one corner + line (full inside spread)
+  if (hasLines && hasSplits && hasCorners) {
+    candidates.push({
+      w: 4,
+      build: () => [
+        makeStraight(n),
+        makeSplit(...pick(splitPairs)),
+        makeCorner(pick(cornerBases)),
+        makeLine(pick(lineStarts)),
+      ],
+    })
+  }
+
+  // 18. Top-line combos for 1 / 2 / 3 (five-number bet covers them)
+  if (inTopLine) {
+    candidates.push({ w: 3, build: () => [makeTopLine()] })
+    candidates.push({ w: 4, build: () => [makeStraight(n), makeTopLine()] })
+    if (hasLines) {
+      candidates.push({
+        w: 3,
+        build: () => [makeStraight(n), makeTopLine(), makeLine(pick(lineStarts))],
+      })
+    }
+  }
+
   // ── Weighted random pick ─────────────────────────────────────────────────
   const totalW = candidates.reduce((s, c) => s + c.w, 0)
   let r = Math.random() * totalW
@@ -388,7 +511,8 @@ function buildNumberScenario(n) {
 /**
  * Generates a complete American Roulette training scenario.
  * All bets cover the winning number. No losing bets.
- * Chips are White ($1) or Red ($5) — same denomination for all bets.
+ * Chips are White ($1) and/or Red ($5): each scenario is all-$1, all-$5,
+ * or a mix (each bet independently $1 or $5).
  *
  * @returns {{
  *   winningNumber: number | '00',
@@ -406,13 +530,16 @@ export function generateRouletteScenario() {
     ? buildZeroScenario(winner)
     : buildNumberScenario(Number(winner))
 
-  // ── 3. Assign chips — same denomination for every bet in the scenario ────
-  const chipObj = scenarioChip()
-  const bets = rawBets.map(bet => ({
-    ...bet,
-    chip:   chipObj,
-    amount: chipObj.denomination,
-  }))
+  // ── 3. Assign chips per the scenario's chip mode ($1, $5, or mixed) ──────
+  const mode = pickChipMode()
+  const bets = rawBets.map(bet => {
+    const chipObj = chipForMode(mode)
+    return {
+      ...bet,
+      chip:   chipObj,
+      amount: chipObj.denomination,
+    }
+  })
 
   // ── 4. Compute correct payout (winnings only, stake not returned) ─────────
   // Since all bets cover the winner, every bet pays out.
