@@ -72,8 +72,8 @@ async function fetchGameAccuracy(userId) {
 
   const { data, error } = await supabase
     .from('session_answers')
-    .select('game_id, is_correct')
-    .eq('sessions.user_id', userId)   // join guard via RLS — agent sees only their own
+    .select('game_id, is_correct, sessions!inner(user_id)')
+    .eq('sessions.user_id', userId)   // filter on the embedded sessions row (RLS also scopes to own)
     .gte('answered_at', since.toISOString())
 
   if (error) {

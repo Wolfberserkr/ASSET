@@ -15,6 +15,21 @@ const barColor = pct =>
   : pct < 75 ? 'var(--color-brand-warning)'
   : 'var(--color-brand-success)'
 
+// Fetch rows where `column IN ids`, split into chunks so we never blow past
+// PostgREST's .in() list / URL-length limits (which silently truncate results).
+// `buildQuery(chunk)` must return a supabase query for one chunk of ids.
+const IN_CHUNK_SIZE = 200
+async function fetchInChunks(ids, buildQuery) {
+  const out = []
+  for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + IN_CHUNK_SIZE)
+    const { data, error } = await buildQuery(chunk)
+    if (error) throw error
+    if (data) out.push(...data)
+  }
+  return out
+}
+
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }) {
   return (
@@ -38,6 +53,7 @@ export default function WeakAreas() {
   const [gameNames,    setGameNames]    = useState({})   // id → name
   const [agents,       setAgents]       = useState([])   // [{id,name,employee_id}]
   const [loading,      setLoading]      = useState(true)
+  const [loadError,    setLoadError]    = useState(null)
 
   // Filters
   const [dateRange,     setDateRange]     = useState('90')
@@ -46,6 +62,8 @@ export default function WeakAreas() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
+    try {
 
     const dateFrom = dateRange === 'all'
       ? null
@@ -56,6 +74,8 @@ export default function WeakAreas() {
       supabase.from('games').select('id, name'),
       supabase.from('users').select('id, name, employee_id').eq('role', 'agent').eq('is_active', true),
     ])
+    if (gamesRes.error)  throw gamesRes.error
+    if (agentsRes.error) throw agentsRes.error
     const gMap = Object.fromEntries((gamesRes.data ?? []).map(g => [g.id, g.name]))
     setGameNames(gMap)
     const agentList = agentsRes.data ?? []
@@ -65,7 +85,8 @@ export default function WeakAreas() {
     let sQ = supabase.from('sessions').select('id, user_id').eq('status', 'completed')
     if (dateFrom)                    sQ = sQ.gte('completed_at', dateFrom)
     if (selectedAgent !== 'all')     sQ = sQ.eq('user_id', selectedAgent)
-    const { data: sessions } = await sQ
+    const { data: sessions, error: sErr } = await sQ
+    if (sErr) throw sErr
 
     if (!sessions?.length) {
       setGameStats([]); setWorstQs([]); setAgentRows([]); setLoading(false); return
@@ -74,20 +95,23 @@ export default function WeakAreas() {
     const sessionIds  = sessions.map(s => s.id)
     const sessionUser = Object.fromEntries(sessions.map(s => [s.id, s.user_id]))
 
-    // 3. Answers — batch if needed (Supabase .in() supports up to 1000 items)
-    let aQ = supabase
-      .from('session_answers')
-      .select('session_id, question_id, game_id, is_correct')
-      .in('session_id', sessionIds)
-    if (selectedGame !== 'all') aQ = aQ.eq('game_id', selectedGame)
-    const { data: answers } = await aQ
+    // 3. Answers — chunked so large session sets don't overflow the .in() list
+    const answers = await fetchInChunks(sessionIds, (chunk) => {
+      let aQ = supabase
+        .from('session_answers')
+        .select('session_id, question_id, game_id, is_correct')
+        .in('session_id', chunk)
+      if (selectedGame !== 'all') aQ = aQ.eq('game_id', selectedGame)
+      return aQ
+    })
 
-    // 4. Questions (for text + category)
-    const questionIds = [...new Set((answers ?? []).map(a => a.question_id))]
-    const { data: questions } = questionIds.length
-      ? await supabase.from('questions').select('id, question_text, category').in('id', questionIds)
-      : { data: [] }
-    const qMap = Object.fromEntries((questions ?? []).map(q => [q.id, q]))
+    // 4. Questions (for text + category) — chunked for the same reason
+    const questionIds = [...new Set(answers.map(a => a.question_id))]
+    const questions = questionIds.length
+      ? await fetchInChunks(questionIds, (chunk) =>
+          supabase.from('questions').select('id, question_text, category').in('id', chunk))
+      : []
+    const qMap = Object.fromEntries(questions.map(q => [q.id, q]))
 
     // ── Compute game stats ──────────────────────────────────────────────────
     const gBucket = {}
@@ -152,7 +176,13 @@ export default function WeakAreas() {
       })
       .sort((a, b) => (a.overall ?? 100) - (b.overall ?? 100))
     setAgentRows(rows)
-    setLoading(false)
+    } catch (err) {
+      console.error('WeakAreas: failed to load data', err)
+      setLoadError('Could not load weak-area data. Please try again.')
+      setGameStats([]); setWorstQs([]); setAgentRows([])
+    } finally {
+      setLoading(false)
+    }
   }, [dateRange, selectedAgent, selectedGame])
 
   useEffect(() => { loadData() }, [loadData])
@@ -245,6 +275,13 @@ export default function WeakAreas() {
           {gameOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
         </select>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-lg text-sm"
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-danger)', color: 'var(--color-brand-danger)' }}>
+          <AlertTriangle size={14} /> {loadError}
+        </div>
+      )}
 
       {loading ? (
         <div className="py-20 flex justify-center">
