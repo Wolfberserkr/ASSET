@@ -153,9 +153,18 @@ function TrendCard({ trend, recentSessions }) {
   )
 }
 
+// Non-participant agents excluded from the leaderboard (per Rick). Matched on
+// the badge number so padding variants all resolve (B-008 == B-8 == 8).
+const LEADERBOARD_EXCLUDED_BADGES = new Set([8, 9, 10])
+const badgeNumber = (employeeId) => {
+  const m = String(employeeId ?? '').match(/(\d+)\s*$/)
+  return m ? parseInt(m[1], 10) : null
+}
+
 function Leaderboard({ agents, myId, loading }) {
   const all = useMemo(() => {
     return (agents ?? [])
+      .filter(a => !LEADERBOARD_EXCLUDED_BADGES.has(badgeNumber(a.employee_id)))
       .map(a => ({
         id: a.id,
         employeeId: a.employee_id ?? '—',
