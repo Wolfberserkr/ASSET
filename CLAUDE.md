@@ -96,10 +96,14 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 - **Three Card Poker** → payout_drill
 - **Let It Ride** → payout_drill
 - **Ultimate Texas Hold'em** → payout_drill
-- **Craps** → payout_drill (integer-ratio bets are dynamic payout drills; place/buy unit-math, odds ID and game-protection scenarios are multiple choice)
+- **Craps** → payout_drill, **practice-only for now** (integer-ratio bets are dynamic payout drills; place/buy unit-math, odds ID and game-protection scenarios are multiple choice)
 - **Caribbean Stud Poker** → payout_drill (Ante/Bet bonus payouts are payout drills; progressive jackpots and dealer-qualify/surveillance rules are multiple choice)
 
 > A `payout_drill` game may hold both `payout` and `multiple_choice` questions — the UI renders by `question.type`, not by the game's `drill_type`. Craps and CSP use this to mix dynamic chip-stack payouts with fixed-amount rules/procedure questions.
+
+### `practice_only` games
+`games.practice_only` (boolean, default FALSE) gates a game to **Practice mode only** — it appears in the Practice game picker and in Mixed practice, but `buildSession` (scored Drills) excludes its questions. **Craps ships with `practice_only = TRUE`** so agents can drill it without it counting toward scored sessions until the whole team is ready. To promote Craps to scored Drills later:
+> `UPDATE public.games SET practice_only = FALSE WHERE name = 'Craps';`
 
 ### Chip Denominations (used in payout drill randomization)
 White ($1), Red ($5), Green ($25), Black ($100), Purple ($500), Pink ($1,000)

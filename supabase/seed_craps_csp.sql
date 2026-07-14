@@ -31,16 +31,29 @@
 ALTER TABLE public.questions
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
+-- ─── Schema patch: practice_only flag on games ───────────────
+-- practice_only = TRUE  → game appears in Practice mode but is
+-- excluded from scored Drill sessions. Flip to FALSE when the
+-- team is ready to have the game count toward scored drills.
+ALTER TABLE public.games
+  ADD COLUMN IF NOT EXISTS practice_only BOOLEAN NOT NULL DEFAULT FALSE;
+
 
 -- ============================================================
 -- GAMES  (idempotent — only insert if not already present)
 -- ============================================================
-INSERT INTO public.games (name, drill_type, is_active)
-SELECT 'Craps', 'payout_drill', TRUE
+
+-- Craps starts practice-only. To promote it to scored Drills later, run:
+--   UPDATE public.games SET practice_only = FALSE WHERE name = 'Craps';
+INSERT INTO public.games (name, drill_type, is_active, practice_only)
+SELECT 'Craps', 'payout_drill', TRUE, TRUE
 WHERE NOT EXISTS (SELECT 1 FROM public.games WHERE name = 'Craps');
 
-INSERT INTO public.games (name, drill_type, is_active)
-SELECT 'Caribbean Stud Poker', 'payout_drill', TRUE
+-- Keep Craps practice-only even if the row already existed from an earlier run.
+UPDATE public.games SET practice_only = TRUE WHERE name = 'Craps';
+
+INSERT INTO public.games (name, drill_type, is_active, practice_only)
+SELECT 'Caribbean Stud Poker', 'payout_drill', TRUE, FALSE
 WHERE NOT EXISTS (SELECT 1 FROM public.games WHERE name = 'Caribbean Stud Poker');
 
 
