@@ -88,6 +88,80 @@ const CALC = {
     ],
   },
 
+  'Caribbean Stud Poker': {
+    sections: [
+      {
+        id: 'bet',
+        title: 'Bet Bonus (the raise)',
+        inputLabel: 'Bet amount ($)',
+        note: 'Ante pays 1:1 when the player beats a qualifying dealer. Payouts are capped at the $1,000 table max.',
+        outcomes: [
+          { label: 'Royal Flush',       ratio: 100, note: '100:1', highlight: true },
+          { label: 'Straight Flush',    ratio: 50,  note: '50:1',  highlight: true },
+          { label: 'Four of a Kind',    ratio: 20,  note: '20:1',  highlight: true },
+          { label: 'Full House',        ratio: 7,   note: '7:1'   },
+          { label: 'Flush',             ratio: 5,   note: '5:1'   },
+          { label: 'Straight',          ratio: 4,   note: '4:1'   },
+          { label: 'Three of a Kind',   ratio: 3,   note: '3:1'   },
+          { label: 'Two Pair',          ratio: 2,   note: '2:1'   },
+          { label: 'Pair',              ratio: 1,   note: '1:1'   },
+        ],
+      },
+    ],
+  },
+
+  'Craps': {
+    sections: [
+      {
+        id: 'line',
+        title: 'Line & Odds',
+        inputLabel: 'Bet amount ($)',
+        outcomes: [
+          { label: "Pass / Come / Don't (flat)", ratio: 1,   note: '1:1'  },
+          { label: 'Odds — point 4 or 10',       ratio: 2,   note: '2:1'  },
+          { label: 'Odds — point 5 or 9',        ratio: 1.5, note: '3:2'  },
+          { label: 'Odds — point 6 or 8',        ratio: 1.2, note: '6:5'  },
+        ],
+      },
+      {
+        id: 'place',
+        title: 'Place & Buy',
+        inputLabel: 'Bet amount ($)',
+        note: 'Place 6/8 use $6 units; 5/9 and 4/10 use $5 units. Buy bets pay true odds after a 5% vig.',
+        outcomes: [
+          { label: 'Place 4 or 10',   ratio: 1.8,   note: '9:5' },
+          { label: 'Place 5 or 9',    ratio: 1.4,   note: '7:5' },
+          { label: 'Place 6 or 8',    ratio: 7 / 6, note: '7:6' },
+          { label: 'Buy 4 or 10',     ratio: 2,     note: '2:1 (pre-vig)' },
+        ],
+      },
+      {
+        id: 'field',
+        title: 'Field',
+        inputLabel: 'Bet amount ($)',
+        outcomes: [
+          { label: '3, 4, 9, 10, 11', ratio: 1, note: '1:1' },
+          { label: '2 or 12',         ratio: 2, note: '2:1', highlight: true },
+        ],
+      },
+      {
+        id: 'center',
+        title: 'Propositions & Hardways',
+        inputLabel: 'Bet amount ($)',
+        outcomes: [
+          { label: 'Craps 2 (Aces)',        ratio: 30, note: '30:1', highlight: true },
+          { label: 'Craps 12 (Boxcars)',    ratio: 30, note: '30:1', highlight: true },
+          { label: 'Eleven (Yo)',           ratio: 15, note: '15:1' },
+          { label: 'Craps 3 (Ace-Deuce)',   ratio: 15, note: '15:1' },
+          { label: 'Hard 6 or 8',           ratio: 9,  note: '9:1'  },
+          { label: 'Any Craps',             ratio: 7,  note: '7:1'  },
+          { label: 'Hard 4 or 10',          ratio: 7,  note: '7:1'  },
+          { label: 'Any Seven',             ratio: 4,  note: '4:1'  },
+        ],
+      },
+    ],
+  },
+
   "Ultimate Texas Hold'em": {
     specialType: 'uth',
     tripsOutcomes: [

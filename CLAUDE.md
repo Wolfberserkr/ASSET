@@ -90,13 +90,16 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 
 ---
 
-## Games (5 active in V1)
+## Games (7 active)
 - **Blackjack** → quiz (multiple choice: payouts + game protection scenarios)
 - **Roulette** → payout_drill (SVG table + free-type dollar input)
 - **Three Card Poker** → payout_drill
 - **Let It Ride** → payout_drill
 - **Ultimate Texas Hold'em** → payout_drill
-- Craps and Caribbean Stud → deferred for later
+- **Craps** → payout_drill (integer-ratio bets are dynamic payout drills; place/buy unit-math, odds ID and game-protection scenarios are multiple choice)
+- **Caribbean Stud Poker** → payout_drill (Ante/Bet bonus payouts are payout drills; progressive jackpots and dealer-qualify/surveillance rules are multiple choice)
+
+> A `payout_drill` game may hold both `payout` and `multiple_choice` questions — the UI renders by `question.type`, not by the game's `drill_type`. Craps and CSP use this to mix dynamic chip-stack payouts with fixed-amount rules/procedure questions.
 
 ### Chip Denominations (used in payout drill randomization)
 White ($1), Red ($5), Green ($25), Black ($100), Purple ($500), Pink ($1,000)
@@ -251,7 +254,7 @@ Rules:
 ---
 
 ## V2 Ideas (deferred)
-Difficulty tier UI indicators, point leaderboard, email notifications for recertification failures, admin-adjustable scoring multipliers, Game Resources library (videos/articles/bet calcs/rules), editable Knowledge Base (HTML), 2FA for management, shift correlation, time pressure analytics, video clip drills, multi-department support, pre/post training comparison, Craps + Caribbean Stud games.
+Difficulty tier UI indicators, point leaderboard, email notifications for recertification failures, admin-adjustable scoring multipliers, Game Resources library (videos/articles/bet calcs/rules), editable Knowledge Base (HTML), 2FA for management, shift correlation, time pressure analytics, video clip drills, multi-department support, pre/post training comparison.
 
 ---
 
@@ -280,6 +283,12 @@ Seeded via `supabase/seed_questions.sql` (run once in Supabase SQL Editor).
 | Blackjack | 30 | Multiple choice |
 | Procedures (shared) | 15 | Multiple choice |
 | Roulette Procedures (shared) | 30 | Multiple choice |
+| Craps | ~44 | Payout drill + multiple choice |
+| Caribbean Stud Poker | ~48 | Payout drill + multiple choice |
+
+Craps and Caribbean Stud Poker are seeded via `supabase/seed_craps_csp.sql` (run once in the Supabase SQL Editor). The file also inserts the two `games` rows idempotently (`WHERE NOT EXISTS`). Both pools mix `payout` questions (clean integer ratios rendered as dynamic chip stacks) with `multiple_choice` questions:
+- **Craps** — payout drills for Pass/Come, Don't, Field, Odds/Buy on 4/10, Hardways, and the one-roll props (Any Seven 4:1, Any Craps 7:1, Yo 15:1, Ace-Deuce 15:1, Aces/Boxcars 30:1). Multiple choice covers the fractional place/buy unit-math (9:5, 7:5, 7:6), odds identification (6/8 → 6:5, 5/9 → 3:2, 4/10 → 2:1), the 5% buy vig, and dice-security / past-post / no-roll game-protection scenarios. `category` values (`craps_line`, `craps_field`, `craps_prop`, `craps_hardway`, `craps_odds`, `craps_place`, `craps_protection`) drive which felt band the SVG highlights.
+- **Caribbean Stud Poker** — payout drills for the Ante (1:1) and the Bet bonus (Pair 1:1 → Royal Flush 100:1, capped at the $1,000 table max). Multiple choice covers progressive jackpot payoffs (Royal 100%, SF 10%, Quads $500, Full House $100, Flush $50, Straight $25), the Ace/King dealer-qualify rule, tie-breaking, and surveillance triggers (4-of-a-kind+, straight flush cards to Surveillance, $10k win/loss). `category` values `csp_ante` / `csp_bet` pick which spot the SVG highlights; `csp_progressive` / `csp_procedure` are the rules questions.
 
 Roulette procedure questions are seeded via `supabase/seed_roulette_procedures.sql` (`category = 'roulette_procedure'`, `is_procedure = TRUE`, `game_id = NULL`). They are drawn from the casino's Roulette dealer procedures manual, written at a high-school reading level, and balanced 10 easy / 10 medium / 10 hard. Being shared procedure questions, they are eligible in any drill session and appear under the **Procedures** tab in Practice.
 

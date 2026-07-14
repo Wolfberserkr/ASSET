@@ -423,6 +423,152 @@ function UTHTable({ chips }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CARIBBEAN STUD POKER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function CSPTable({ chips, activeBet = 'bet' }) {
+  const W = 440, H = 200
+  const spots = [
+    { label: 'PROG',  sub: '$1', cx: 92,  key: 'progressive', small: true },
+    { label: 'ANTE',  cx: 210, key: 'ante' },
+    { label: 'BET',   cx: 340, key: 'bet'  },
+  ]
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 210 }}>
+      <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
+      <text x={W / 2} y={22} textAnchor="middle" fontSize={11}
+        fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>
+        CARIBBEAN STUD POKER
+      </text>
+      {spots.map(({ label, sub, cx, key, small }) => {
+        const cy = 108
+        const r  = small ? 26 : 52
+        const highlight = key === activeBet
+        return (
+          <g key={label}>
+            {highlight && <circle cx={cx} cy={cy} r={r + 6} fill="#fbbf24" opacity={0.2} />}
+            {small ? (
+              <circle cx={cx} cy={cy} r={r}
+                fill="#3a1e1e" stroke="#b91c1c" strokeWidth={2} />
+            ) : (
+              <circle cx={cx} cy={cy} r={r}
+                fill={highlight ? '#2d5a2d' : '#1e3e1e'}
+                stroke={highlight ? '#fbbf24' : '#15803d'}
+                strokeWidth={highlight ? 2.5 : 1.5} />
+            )}
+            <text x={cx} y={highlight ? cy - 6 : cy + (small ? -1 : 5)} textAnchor="middle"
+              fontSize={small ? 8 : 9} fontWeight="bold"
+              fill={key === 'progressive' ? '#fca5a5' : highlight ? '#fbbf24' : '#86efac'}
+              fontFamily="sans-serif" letterSpacing={1}>{label}</text>
+            {sub && <text x={cx} y={cy + 9} textAnchor="middle"
+              fontSize={7} fill="#d1fae5" fontFamily="sans-serif">{sub}</text>}
+            {highlight && !small && <text x={cx} y={cy + 10} textAnchor="middle"
+              fontSize={8} fill="#d1fae5" fontFamily="sans-serif">active bet</text>}
+            {highlight && <ChipsOnTable chips={chips} cx={cx} cy={cy - 24} />}
+          </g>
+        )
+      })}
+      {['♠', '♥', '♣', '♦'].map((suit, i) => (
+        <text key={i} x={24 + i * 18} y={H - 10} textAnchor="middle"
+          fontSize={11} fill={i % 2 === 0 ? '#6b7280' : '#7f1d1d'}
+          fontFamily="sans-serif" opacity={0.5}>{suit}</text>
+      ))}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRAPS
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// A representative felt with four bands. `activeBet` picks which band the
+// wagered chip stack sits on and highlights it:
+//   'line'   → point boxes + Pass Line   (pass/come/don't/odds/buy)
+//   'field'  → the Field strip
+//   'center' → the Props / Hardways box
+
+function CrapsTable({ chips, activeBet = 'line' }) {
+  const W = 460, H = 214
+  const hl = (z) => z === activeBet
+
+  const boxNums = [4, 5, 'SIX', 8, 'NINE', 10]
+  const boxW = 66, boxX0 = 46, boxY = 34, boxH = 40
+
+  const fieldY = 82, fieldH = 34
+  const propY  = 122, propH = 34
+  const lineY  = 164, lineH = 38
+
+  const lineOn   = hl('line')
+  const fieldOn  = hl('field')
+  const centerOn = hl('center')
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 224 }}>
+      <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
+      <text x={W / 2} y={20} textAnchor="middle" fontSize={11}
+        fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={3}>CRAPS</text>
+
+      {/* Point / box numbers */}
+      {boxNums.map((n, i) => {
+        const x = boxX0 + i * boxW
+        return (
+          <g key={i}>
+            <rect x={x} y={boxY} width={boxW - 4} height={boxH}
+              fill={lineOn ? '#2d5a2d' : '#1e3e1e'}
+              stroke={lineOn ? '#fbbf24' : '#15803d'} strokeWidth={lineOn ? 2 : 1} />
+            <text x={x + (boxW - 4) / 2} y={boxY + boxH / 2 + 5} textAnchor="middle"
+              fontSize={13} fontWeight="bold"
+              fill={lineOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">{n}</text>
+          </g>
+        )
+      })}
+
+      {/* FIELD */}
+      <rect x={46} y={fieldY} width={W - 92} height={fieldH}
+        fill={fieldOn ? '#2d5a2d' : '#183418'}
+        stroke={fieldOn ? '#fbbf24' : '#15803d'} strokeWidth={fieldOn ? 2.5 : 1} />
+      <text x={W / 2} y={fieldY + fieldH / 2 + 4} textAnchor="middle"
+        fontSize={10} fontWeight="bold" letterSpacing={2}
+        fill={fieldOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
+        FIELD · 2 3 4 9 10 11 12
+      </text>
+
+      {/* PROPS / HARDWAYS */}
+      <rect x={46} y={propY} width={W - 92} height={propH}
+        fill={centerOn ? '#2d5a2d' : '#122a12'}
+        stroke={centerOn ? '#fbbf24' : '#15803d'} strokeWidth={centerOn ? 2.5 : 1} />
+      <text x={W / 2} y={propY + propH / 2 + 4} textAnchor="middle"
+        fontSize={10} fontWeight="bold" letterSpacing={2}
+        fill={centerOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
+        PROPOSITIONS · HARDWAYS
+      </text>
+
+      {/* PASS LINE */}
+      <rect x={46} y={lineY} width={W - 92} height={lineH}
+        fill={lineOn ? '#2d5a2d' : '#183418'}
+        stroke={lineOn ? '#fbbf24' : '#15803d'} strokeWidth={lineOn ? 2.5 : 1} />
+      <text x={W / 2} y={lineY + lineH / 2 + 4} textAnchor="middle"
+        fontSize={10} fontWeight="bold" letterSpacing={2}
+        fill={lineOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
+        PASS LINE · COME
+      </text>
+
+      {/* Wagered chip stack on the active band */}
+      {(() => {
+        const cx = W / 2
+        const cy = lineOn
+          ? lineY + lineH / 2 + 4
+          : fieldOn
+            ? fieldY + fieldH / 2 + 4
+            : propY + propH / 2 + 4
+        return <ChipsOnTable chips={chips} cx={cx} cy={cy} />
+      })()}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DISPATCHER
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -449,6 +595,8 @@ export default function PayoutTable({ gameName, scenario, chips, totalBet, perSp
       {name.includes('three card')    && <TCPTable chips={chips} activeBet={activeBet ?? 'pair_plus'} />}
       {isLIR                          && <LIRTable chips={chips} perSpotBet={perSpotBet} />}
       {name.includes('ultimate texas') && <UTHTable chips={chips} />}
+      {name.includes('caribbean')      && <CSPTable chips={chips} activeBet={activeBet ?? 'bet'} />}
+      {name.includes('craps')          && <CrapsTable chips={chips} activeBet={activeBet ?? 'line'} />}
       <div className="flex flex-col items-center justify-center gap-1 py-3 px-3"
         style={{ background: '#081508', borderTop: '1px solid var(--color-brand-success)' }}>
         {isLIR && perSpotBet != null && (

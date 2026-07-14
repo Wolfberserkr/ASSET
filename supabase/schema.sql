@@ -484,5 +484,7 @@ INSERT INTO public.games (name, drill_type, is_active) VALUES
   ('Roulette',             'payout_drill', TRUE),
   ('Three Card Poker',     'payout_drill', TRUE),
   ('Let It Ride',          'payout_drill', TRUE),
-  ('Ultimate Texas Hold''em', 'payout_drill', TRUE)
+  ('Ultimate Texas Hold''em', 'payout_drill', TRUE),
+  ('Craps',                'payout_drill', TRUE),
+  ('Caribbean Stud Poker', 'payout_drill', TRUE)
 ON CONFLICT DO NOTHING;
