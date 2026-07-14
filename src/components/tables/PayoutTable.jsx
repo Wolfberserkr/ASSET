@@ -11,7 +11,44 @@
  *   <PayoutTable gameName="Roulette"          scenario={rouletteScenario} />
  *   <PayoutTable gameName="Three Card Poker"  chips={[...]} totalBet={100} />
  */
+import { lazy, Suspense, useState } from 'react'
 import { ZW, CW, CH, RED_NUMS } from '../../lib/rouletteScenario'
+
+const RouletteTable3D = lazy(() => import('./RouletteTable3D'))
+const CrapsTable3D    = lazy(() => import('./CrapsTable3D'))
+
+// Shared 2D/3D view toggle used by the Roulette and Craps renderers.
+function ViewToggle({ mode, setMode }) {
+  return (
+    <div className="flex items-center justify-end gap-2 px-3 py-2"
+      style={{ background: '#0a1f0a', borderBottom: '1px solid #15803d' }}>
+      <span className="text-xs uppercase tracking-widest font-medium" style={{ color: '#86efac' }}>View:</span>
+      <div className="flex rounded-md overflow-hidden text-xs font-semibold">
+        {['2d', '3d'].map(m => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className="px-3 py-1 transition-colors"
+            style={{
+              background: mode === m ? '#fbbf24' : '#1a3a1a',
+              color:      mode === m ? '#000'    : '#86efac',
+            }}
+          >{m.toUpperCase()}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TableLoading() {
+  return (
+    <div className="flex items-center justify-center text-xs font-mono"
+      style={{ height: 340, color: '#86efac', background: '#06120a' }}>
+      Loading 3D table…
+    </div>
+  )
+}
 
 // ─── Shared chip color map ────────────────────────────────────────────────────
 
@@ -123,10 +160,8 @@ function RouletteTable({ scenario }) {
   ]
 
   return (
-    <div className="flex flex-col" style={{ background: '#0b1a0b' }}>
-      {/* ── SVG table ───────────────────────────────────────── */}
-      <div className="w-full">
-        <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
+    <div className="w-full" style={{ background: '#0b1a0b' }}>
+      <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
 
           {/* Filters */}
           <defs>
@@ -240,44 +275,65 @@ function RouletteTable({ scenario }) {
           <text x={ZW + 19} y={SVG_H - 4} fontSize={7.5} fill="#93c5fd" fontFamily="sans-serif">
             = Winning Number
           </text>
-        </svg>
-      </div>
+      </svg>
+    </div>
+  )
+}
 
-      {/* ── Bet list (below table) ──────────────────────────── */}
-      <div style={{ borderTop: '1px solid #15803d' }}>
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid #1a3a1a' }}>
-          <p className="text-xs font-semibold uppercase tracking-widest"
-            style={{ color: '#86efac' }}>Bets on the Table</p>
-        </div>
-        <div className="grid gap-2 p-3"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
-          {bets.map((bet, i) => {
-            const s = CHIP_COLORS[bet.chip?.color] ?? CHIP_COLORS.Red
-            return (
-              <div key={i} className="flex items-center justify-between px-2.5 py-2 rounded-lg"
-                style={{ background: '#0f2a0f', border: '1px solid #1a3a1a' }}>
-                <span className="text-xs font-medium leading-tight mr-2" style={{ color: '#d1fae5' }}>
-                  {bet.label}
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span style={{
-                    display: 'inline-block', width: 8, height: 8,
-                    borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
-                    flexShrink: 0,
-                  }} />
-                  <span className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>
-                    ${bet.amount}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        <div className="px-3 pb-2.5 flex items-center justify-between">
-          <p className="text-xs font-mono" style={{ color: '#6b7280' }}>Winnings only — enter total below</p>
-          <p className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>???</p>
-        </div>
+// Bet list shown below the Roulette table (2D or 3D).
+function BetListPanel({ bets }) {
+  return (
+    <div style={{ borderTop: '1px solid #15803d', background: '#0b1a0b' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid #1a3a1a' }}>
+        <p className="text-xs font-semibold uppercase tracking-widest"
+          style={{ color: '#86efac' }}>Bets on the Table</p>
       </div>
+      <div className="grid gap-2 p-3"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+        {bets.map((bet, i) => {
+          const s = CHIP_COLORS[bet.chip?.color] ?? CHIP_COLORS.Red
+          return (
+            <div key={i} className="flex items-center justify-between px-2.5 py-2 rounded-lg"
+              style={{ background: '#0f2a0f', border: '1px solid #1a3a1a' }}>
+              <span className="text-xs font-medium leading-tight mr-2" style={{ color: '#d1fae5' }}>
+                {bet.label}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span style={{
+                  display: 'inline-block', width: 8, height: 8,
+                  borderRadius: '50%', background: s.bg, border: `1.5px solid ${s.border}`,
+                  flexShrink: 0,
+                }} />
+                <span className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>
+                  ${bet.amount}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="px-3 pb-2.5 flex items-center justify-between">
+        <p className="text-xs font-mono" style={{ color: '#6b7280' }}>Winnings only — enter total below</p>
+        <p className="text-xs font-mono font-bold" style={{ color: '#fbbf24' }}>???</p>
+      </div>
+    </div>
+  )
+}
+
+// Roulette wrapper with a 2D / 3D view toggle.
+function RouletteRenderer({ scenario }) {
+  const [mode, setMode] = useState('2d')
+  return (
+    <div className="w-full rounded-2xl overflow-hidden" style={{ border: '1px solid #15803d' }}>
+      <ViewToggle mode={mode} setMode={setMode} />
+      {mode === '2d' ? (
+        <RouletteTable scenario={scenario} />
+      ) : (
+        <Suspense fallback={<TableLoading />}>
+          <RouletteTable3D scenario={scenario} />
+        </Suspense>
+      )}
+      <BetListPanel bets={scenario.bets} />
     </div>
   )
 }
@@ -479,92 +535,173 @@ function CSPTable({ chips, activeBet = 'bet' }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CRAPS
+// CRAPS  — half layout (dealer's end of a real craps table)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// A representative felt with four bands. `activeBet` picks which band the
-// wagered chip stack sits on and highlights it:
-//   'line'   → point boxes + Pass Line   (pass/come/don't/odds/buy)
-//   'field'  → the Field strip
-//   'center' → the Props / Hardways box
+// `activeBet` picks which area the wagered chip stack sits on and highlights
+// it in gold:
+//   'line'   → point boxes / Come / Don't / Pass Line  (pass/come/don't/odds/buy)
+//   'field'  → the Field
+//   'center' → the Propositions / Hardways block
+
+// Felt colors — cream outlines over dark green mimic a real layout.
+const C_FELT   = '#123212'
+const C_LINE   = '#e8e2cf'   // cream outline
+const C_TEXT   = '#eaf3ea'
+const C_ON_FILL = '#2d5a2d'
+const C_ON_LINE = '#fbbf24'
+const C_ON_TEXT = '#fbbf24'
+
+function CrapsRegion({ x, y, w, h, rx = 3, active, fill = C_FELT, label, fontSize = 12, letter = 1, labelDy = 0 }) {
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx={rx}
+        fill={active ? C_ON_FILL : fill}
+        stroke={active ? C_ON_LINE : C_LINE} strokeWidth={active ? 2.5 : 1.2} />
+      {label != null && (
+        <text x={x + w / 2} y={y + h / 2 + 4 + labelDy} textAnchor="middle"
+          fontSize={fontSize} fontWeight="bold" letterSpacing={letter}
+          fill={active ? C_ON_TEXT : C_TEXT} fontFamily="sans-serif">{label}</text>
+      )}
+    </g>
+  )
+}
 
 function CrapsTable({ chips, activeBet = 'line' }) {
-  const W = 460, H = 214
-  const hl = (z) => z === activeBet
+  const W = 520, H = 300
+  const lineOn   = activeBet === 'line'
+  const fieldOn  = activeBet === 'field'
+  const centerOn = activeBet === 'center'
 
+  // Main betting area sits between the left (center/DC) column and the right rail.
+  const mainX = 116, mainR = 484, mainW = mainR - mainX
   const boxNums = [4, 5, 'SIX', 8, 'NINE', 10]
-  const boxW = 66, boxX0 = 46, boxY = 34, boxH = 40
+  const boxW = mainW / 6, boxY = 30, boxH = 48
 
-  const fieldY = 82, fieldH = 34
-  const propY  = 122, propH = 34
-  const lineY  = 164, lineH = 38
+  const fieldNums = [
+    { n: '2', dbl: true }, { n: '3' }, { n: '4' }, { n: '9' },
+    { n: '10' }, { n: '11' }, { n: '12', dbl: true },
+  ]
 
-  const lineOn   = hl('line')
-  const fieldOn  = hl('field')
-  const centerOn = hl('center')
+  const stack = lineOn
+    ? { cx: 250, cy: 262 }
+    : fieldOn
+      ? { cx: 300, cy: 176 }
+      : { cx: 60, cy: 168 }
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 224 }}>
-      <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
-      <text x={W / 2} y={20} textAnchor="middle" fontSize={11}
-        fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={3}>CRAPS</text>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 320 }}>
+      {/* Felt */}
+      <rect x={0} y={0} width={W} height={H} rx={12} fill="#0f2c12" />
+      <rect x={4} y={4} width={W - 8} height={H - 8} rx={10} fill="#15441a"
+        stroke="#0b230d" strokeWidth={1} />
 
-      {/* Point / box numbers */}
-      {boxNums.map((n, i) => {
-        const x = boxX0 + i * boxW
+      {/* Right-side Pass Line rail (the sweep up the side) */}
+      <CrapsRegion x={mainR + 2} y={boxY} w={26} h={200 - boxY + 30} active={lineOn} fill="#1a3f1a" />
+
+      {/* Point / box numbers — Place, Buy, Odds & the point marker live here */}
+      {boxNums.map((n, i) => (
+        <g key={i}>
+          <CrapsRegion x={mainX + i * boxW + 1.5} y={boxY} w={boxW - 3} h={boxH}
+            active={lineOn} fill="#123c12" label={String(n)} fontSize={17} />
+        </g>
+      ))}
+
+      {/* Don't Come (top-left) */}
+      <CrapsRegion x={8} y={boxY} w={104} h={72} active={lineOn} fill="#173417" />
+      <text x={60} y={boxY + 30} textAnchor="middle" fontSize={11} fontWeight="bold"
+        fill={lineOn ? C_ON_TEXT : C_TEXT} fontFamily="sans-serif">DON'T</text>
+      <text x={60} y={boxY + 46} textAnchor="middle" fontSize={11} fontWeight="bold"
+        fill={lineOn ? C_ON_TEXT : C_TEXT} fontFamily="sans-serif">COME</text>
+
+      {/* Come */}
+      <CrapsRegion x={mainX} y={82} w={mainW} h={64} active={lineOn} fill="#163216"
+        label="COME" fontSize={18} letter={4} />
+
+      {/* Center — Propositions & Hardways */}
+      <CrapsRegion x={8} y={106} w={104} h={118} active={centerOn} fill="#112a11" />
+      {[['HARD 4', '7:1'], ['HARD 10', '7:1'], ['HARD 6', '9:1'], ['HARD 8', '9:1']].map(([lbl, odd], i) => {
+        const col = i % 2, row = Math.floor(i / 2)
+        const hx = 14 + col * 47, hy = 112 + row * 34
         return (
-          <g key={i}>
-            <rect x={x} y={boxY} width={boxW - 4} height={boxH}
-              fill={lineOn ? '#2d5a2d' : '#1e3e1e'}
-              stroke={lineOn ? '#fbbf24' : '#15803d'} strokeWidth={lineOn ? 2 : 1} />
-            <text x={x + (boxW - 4) / 2} y={boxY + boxH / 2 + 5} textAnchor="middle"
-              fontSize={13} fontWeight="bold"
-              fill={lineOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">{n}</text>
+          <g key={lbl}>
+            <rect x={hx} y={hy} width={44} height={30} rx={2}
+              fill={centerOn ? '#3a5f2f' : '#0f240f'}
+              stroke={centerOn ? C_ON_LINE : '#5b7a4a'} strokeWidth={1} />
+            <text x={hx + 22} y={hy + 13} textAnchor="middle" fontSize={7.5} fontWeight="bold"
+              fill={centerOn ? C_ON_TEXT : '#cfe8c0'} fontFamily="sans-serif">{lbl}</text>
+            <text x={hx + 22} y={hy + 24} textAnchor="middle" fontSize={7} fontFamily="monospace"
+              fill={centerOn ? '#fde68a' : '#9db98c'}>{odd}</text>
+          </g>
+        )
+      })}
+      <text x={60} y={196} textAnchor="middle" fontSize={8} fontWeight="bold"
+        fill={centerOn ? C_ON_TEXT : '#cfe8c0'} fontFamily="sans-serif">ANY 7 · YO · C&amp;E</text>
+      <text x={60} y={210} textAnchor="middle" fontSize={8} fontWeight="bold"
+        fill={centerOn ? C_ON_TEXT : '#cfe8c0'} fontFamily="sans-serif">2 · 3 · 11 · 12</text>
+      <text x={60} y={100} textAnchor="middle" fontSize={7.5} letterSpacing={1}
+        fill="#7f9c6f" fontFamily="sans-serif">PROPOSITIONS</text>
+
+      {/* Field — individual numbers, 2 & 12 pay double */}
+      <CrapsRegion x={mainX} y={150} w={mainW} h={50} active={fieldOn} fill="#163216" />
+      <text x={mainX + 6} y={162} fontSize={8} letterSpacing={1}
+        fill={fieldOn ? C_ON_TEXT : '#9db98c'} fontFamily="sans-serif">FIELD</text>
+      {fieldNums.map((f, i) => {
+        const fw = mainW / fieldNums.length
+        const cx = mainX + i * fw + fw / 2
+        return (
+          <g key={f.n}>
+            {f.dbl && <circle cx={cx} cy={180} r={13}
+              fill="none" stroke={fieldOn ? C_ON_LINE : '#e8e2cf'} strokeWidth={1.2} />}
+            <text x={cx} y={184} textAnchor="middle" fontSize={14} fontWeight="bold"
+              fill={fieldOn ? C_ON_TEXT : C_TEXT} fontFamily="sans-serif">{f.n}</text>
           </g>
         )
       })}
 
-      {/* FIELD */}
-      <rect x={46} y={fieldY} width={W - 92} height={fieldH}
-        fill={fieldOn ? '#2d5a2d' : '#183418'}
-        stroke={fieldOn ? '#fbbf24' : '#15803d'} strokeWidth={fieldOn ? 2.5 : 1} />
-      <text x={W / 2} y={fieldY + fieldH / 2 + 4} textAnchor="middle"
-        fontSize={10} fontWeight="bold" letterSpacing={2}
-        fill={fieldOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
-        FIELD · 2 3 4 9 10 11 12
-      </text>
+      {/* Don't Pass Bar */}
+      <CrapsRegion x={mainX} y={204} w={mainW} h={24} active={lineOn} fill="#142c14"
+        label="DON'T PASS BAR" fontSize={11} letter={1} />
 
-      {/* PROPS / HARDWAYS */}
-      <rect x={46} y={propY} width={W - 92} height={propH}
-        fill={centerOn ? '#2d5a2d' : '#122a12'}
-        stroke={centerOn ? '#fbbf24' : '#15803d'} strokeWidth={centerOn ? 2.5 : 1} />
-      <text x={W / 2} y={propY + propH / 2 + 4} textAnchor="middle"
-        fontSize={10} fontWeight="bold" letterSpacing={2}
-        fill={centerOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
-        PROPOSITIONS · HARDWAYS
-      </text>
+      {/* Pass Line (outer sweep along the bottom) */}
+      <CrapsRegion x={8} y={232} w={W - 16} h={58} active={lineOn} fill="#1a3f1a"
+        label="PASS LINE" fontSize={20} letter={5} />
 
-      {/* PASS LINE */}
-      <rect x={46} y={lineY} width={W - 92} height={lineH}
-        fill={lineOn ? '#2d5a2d' : '#183418'}
-        stroke={lineOn ? '#fbbf24' : '#15803d'} strokeWidth={lineOn ? 2.5 : 1} />
-      <text x={W / 2} y={lineY + lineH / 2 + 4} textAnchor="middle"
-        fontSize={10} fontWeight="bold" letterSpacing={2}
-        fill={lineOn ? '#fbbf24' : '#86efac'} fontFamily="sans-serif">
-        PASS LINE · COME
-      </text>
+      {/* Title */}
+      <text x={W - 14} y={22} textAnchor="end" fontSize={10} fontWeight="bold"
+        fill="#fbbf24" fontFamily="sans-serif" letterSpacing={3} opacity={0.85}>CRAPS</text>
 
-      {/* Wagered chip stack on the active band */}
-      {(() => {
-        const cx = W / 2
-        const cy = lineOn
-          ? lineY + lineH / 2 + 4
-          : fieldOn
-            ? fieldY + fieldH / 2 + 4
-            : propY + propH / 2 + 4
-        return <ChipsOnTable chips={chips} cx={cx} cy={cy} />
-      })()}
+      {/* Wagered chip stack on the active area */}
+      <ChipsOnTable chips={chips} cx={stack.cx} cy={stack.cy} />
     </svg>
+  )
+}
+
+// Craps wrapper with a 2D / 3D view toggle + total-bet footer.
+function CrapsRenderer({ chips, totalBet, activeBet }) {
+  const [mode, setMode] = useState('2d')
+  return (
+    <div className="w-full rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-brand-success)' }}>
+      <ViewToggle mode={mode} setMode={setMode} />
+      {mode === '2d' ? (
+        <CrapsTable chips={chips} activeBet={activeBet ?? 'line'} />
+      ) : (
+        <Suspense fallback={<TableLoading />}>
+          <CrapsTable3D chips={chips} activeBet={activeBet ?? 'line'} />
+        </Suspense>
+      )}
+      <div className="flex flex-col items-center justify-center gap-1 py-3 px-3"
+        style={{ background: '#081508', borderTop: '1px solid var(--color-brand-success)' }}>
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs uppercase tracking-widest font-mono" style={{ color: 'var(--color-brand-muted)' }}>
+            Total Bet
+          </span>
+          <span className="text-2xl font-bold font-mono" style={{ color: 'var(--color-brand-success)' }}>
+            ${totalBet?.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -581,12 +718,11 @@ export default function PayoutTable({ gameName, scenario, chips, totalBet, perSp
   const isLIR = name.includes('let it ride')
 
   if (name.includes('roulette') && scenario) {
-    return (
-      <div className="w-full rounded-2xl overflow-hidden"
-        style={{ border: '1px solid #15803d' }}>
-        <RouletteTable scenario={scenario} />
-      </div>
-    )
+    return <RouletteRenderer scenario={scenario} />
+  }
+
+  if (name.includes('craps')) {
+    return <CrapsRenderer chips={chips} totalBet={totalBet} activeBet={activeBet ?? 'line'} />
   }
 
   return (
@@ -596,7 +732,6 @@ export default function PayoutTable({ gameName, scenario, chips, totalBet, perSp
       {isLIR                          && <LIRTable chips={chips} perSpotBet={perSpotBet} />}
       {name.includes('ultimate texas') && <UTHTable chips={chips} />}
       {name.includes('caribbean')      && <CSPTable chips={chips} activeBet={activeBet ?? 'bet'} />}
-      {name.includes('craps')          && <CrapsTable chips={chips} activeBet={activeBet ?? 'line'} />}
       <div className="flex flex-col items-center justify-center gap-1 py-3 px-3"
         style={{ background: '#081508', borderTop: '1px solid var(--color-brand-success)' }}>
         {isLIR && perSpotBet != null && (

@@ -233,9 +233,17 @@ Rules:
 - Session timeout confirmed at 30 min inactivity (was already correct — no change needed)
 
 ### Phase 3 — Visual Payout Drills ✅ COMPLETE
-- SVG table layouts for Roulette, Three Card Poker, Let It Ride, UTH
+- SVG table layouts for Roulette, Three Card Poker, Let It Ride, UTH, Craps, CSP
 - Highlighted bet positions
 - Randomized bet amounts from chip_variants
+
+### 3D payout tables (Roulette + Craps)
+Roulette and Craps payout drills have a **2D / 3D view toggle** (top-right of the table). The 3D tables use `@react-three/fiber` + `@react-three/drei` (three.js) and are **lazy-loaded** so the three.js bundle only downloads when an agent switches to 3D.
+- `src/components/tables/RouletteTable3D.jsx` — 3D American roulette layout (rendered from the same `rouletteScenario` data as the 2D SVG).
+- `src/components/tables/CrapsTable3D.jsx` — 3D **half** craps layout (dealer's end): point boxes, Come, Field, Don't Come, Don't Pass Bar, Pass Line, and the center Props/Hardways block. The `activeBet` zone (`line` / `field` / `center`) is highlighted in gold with the wagered chip stack on it.
+- `src/components/tables/TableControls.jsx` — shared `OrbitControls` wrapper used by both. `maxPolarAngle` is capped (~66°) so the camera can never rotate **under** the table, and panning is clamped to a small box so the table can't be dragged off-screen.
+- Labels use a **bundled** font (`src/assets/label.ttf`, Space Mono) passed to drei `<Text font=…>`, so troika-three-text does **not** fetch its glyph resolver from a CDN at runtime.
+- The realistic 2D Craps half-table lives in `PayoutTable.jsx` (`CrapsTable`), rendered with cream felt outlines; `CrapsRenderer` / `RouletteRenderer` host the 2D↔3D toggle.
 
 ### Phase 4 — Management Reports + Compliance
 - Agent detail page (score trend, per-game averages, session history with IP/device)
@@ -311,6 +319,7 @@ Roulette payout drills do **not** read the DB question's text/answer — `src/li
 ```
 src/
   components/    — Layout, ProtectedRoute, StatCard
+    tables/      — PayoutTable (2D SVG + dispatch), RouletteTable3D, CrapsTable3D, TableControls
   context/       — AuthContext (login, logout, session timeout, lockout)
   hooks/         — useAdaptiveDifficulty, useSessionTimer, useCooldown
   lib/           — supabase.js client, questionRandomizer.js
