@@ -14,6 +14,19 @@ function isRouletteQuestion(q) {
   return (q?.games?.name ?? '').toLowerCase().includes('roulette')
 }
 
+// Picks which betting spot a payout table should highlight, per game.
+function deriveActiveBet(q) {
+  const name = (q?.games?.name ?? '').toLowerCase()
+  const cat  = q?.category ?? ''
+  if (name.includes('caribbean')) return cat === 'csp_ante' ? 'ante' : 'bet'
+  if (name.includes('craps')) {
+    if (cat === 'craps_field') return 'field'
+    if (cat === 'craps_prop' || cat === 'craps_hardway') return 'center'
+    return 'line'
+  }
+  return cat === 'ante_bonus' ? 'ante' : 'pair_plus'
+}
+
 // ─── Odds injection ───────────────────────────────────────────────────────────
 
 function formatOdds(ratioStr) {
@@ -514,7 +527,7 @@ export default function Practice() {
               chips={!isRoulette ? betContext?.chips : []}
               totalBet={!isRoulette ? betContext?.totalBet : 0}
               perSpotBet={!isRoulette ? betContext?.perSpotBet : undefined}
-              activeBet={currentQ?.category === 'ante_bonus' ? 'ante' : 'pair_plus'}
+              activeBet={deriveActiveBet(currentQ)}
             />
           </div>
 

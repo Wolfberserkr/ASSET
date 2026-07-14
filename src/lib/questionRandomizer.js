@@ -137,12 +137,17 @@ export async function buildSession(userId, difficultyMap = {}) {
       difficulty,
       points,
       times_shown,
-      games(name)
+      games(name, practice_only)
     `)
     .eq('is_active', true)
 
   if (error) throw new Error(`Failed to load question pool: ${error.message}`)
   if (!questions || questions.length === 0) throw new Error('Question pool is empty.')
+
+  // Exclude practice-only games (e.g. a game still ramping up) from scored
+  // drills. Shared procedure questions (game_id NULL) are always eligible.
+  const pool = questions.filter(q => !q.games?.practice_only)
+  if (pool.length === 0) throw new Error('Question pool is empty.')
 
   // 3. Build weight function
   const weightFn = (q) => {
@@ -175,7 +180,7 @@ export async function buildSession(userId, difficultyMap = {}) {
   }
 
   // 4. Weighted draw of SESSION_SIZE questions
-  const drawn = weightedSample(questions, SESSION_SIZE, weightFn)
+  const drawn = weightedSample(pool, SESSION_SIZE, weightFn)
 
   // 5. Shuffle options for multiple-choice questions (anti-gaming)
   return drawn.map(q => {

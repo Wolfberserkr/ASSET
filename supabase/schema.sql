@@ -21,10 +21,13 @@ CREATE TABLE IF NOT EXISTS public.users (
 
 -- Games
 CREATE TABLE IF NOT EXISTS public.games (
-  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name       TEXT NOT NULL,
-  drill_type TEXT NOT NULL CHECK (drill_type IN ('quiz', 'payout_drill')),
-  is_active  BOOLEAN NOT NULL DEFAULT TRUE
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name          TEXT NOT NULL,
+  drill_type    TEXT NOT NULL CHECK (drill_type IN ('quiz', 'payout_drill')),
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+  -- practice_only games appear in Practice mode but are excluded from
+  -- scored Drill sessions (used while agents ramp up on a new game).
+  practice_only BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Questions
@@ -479,10 +482,13 @@ VALUES (20, 4)
 ON CONFLICT DO NOTHING;
 
 -- Games
-INSERT INTO public.games (name, drill_type, is_active) VALUES
-  ('Blackjack',            'quiz',         TRUE),
-  ('Roulette',             'payout_drill', TRUE),
-  ('Three Card Poker',     'payout_drill', TRUE),
-  ('Let It Ride',          'payout_drill', TRUE),
-  ('Ultimate Texas Hold''em', 'payout_drill', TRUE)
+INSERT INTO public.games (name, drill_type, is_active, practice_only) VALUES
+  ('Blackjack',            'quiz',         TRUE,  FALSE),
+  ('Roulette',             'payout_drill', TRUE,  FALSE),
+  ('Three Card Poker',     'payout_drill', TRUE,  FALSE),
+  ('Let It Ride',          'payout_drill', TRUE,  FALSE),
+  ('Ultimate Texas Hold''em', 'payout_drill', TRUE, FALSE),
+  -- Craps is practice-only for now; flip practice_only to FALSE to add it to Drills.
+  ('Craps',                'payout_drill', TRUE,  TRUE),
+  ('Caribbean Stud Poker', 'payout_drill', TRUE,  FALSE)
 ON CONFLICT DO NOTHING;

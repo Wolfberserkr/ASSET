@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import {
   Library, ChevronRight, FileText, Video, Calculator,
-  Spade, CircleDot, Layers, Hand, Crown,
+  Spade, CircleDot, Layers, Hand, Crown, Dice5, Gem,
 } from 'lucide-react'
 
 const GAME_ICONS = {
@@ -13,6 +13,8 @@ const GAME_ICONS = {
   'Three Card Poker':        Layers,
   'Let It Ride':             Hand,
   'Ultimate Texas Hold\'em': Crown,
+  'Craps':                   Dice5,
+  'Caribbean Stud Poker':    Gem,
 }
 
 export default function Resources() {
