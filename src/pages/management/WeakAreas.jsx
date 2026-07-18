@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
 import { BarChart2, Download, AlertTriangle, Users, HelpCircle } from 'lucide-react'
 
@@ -47,6 +48,7 @@ function Section({ title, icon: Icon, children }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function WeakAreas() {
+  const { drillRole } = useAuth()
   const [gameStats,    setGameStats]    = useState([])
   const [worstQs,      setWorstQs]      = useState([])
   const [agentRows,    setAgentRows]    = useState([])
@@ -72,7 +74,7 @@ export default function WeakAreas() {
     // 1. Games + agents (static-ish, always fetch)
     const [gamesRes, agentsRes] = await Promise.all([
       supabase.from('games').select('id, name'),
-      supabase.from('users').select('id, name, employee_id').eq('role', 'agent').eq('is_active', true),
+      supabase.from('users').select('id, name, employee_id').eq('role', drillRole).eq('is_active', true),
     ])
     if (gamesRes.error)  throw gamesRes.error
     if (agentsRes.error) throw agentsRes.error
@@ -183,7 +185,7 @@ export default function WeakAreas() {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, selectedAgent, selectedGame])
+  }, [dateRange, selectedAgent, selectedGame, drillRole])
 
   useEffect(() => { loadData() }, [loadData])
 

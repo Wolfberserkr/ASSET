@@ -307,7 +307,7 @@ export default function AgentDashboard() {
 
   // Show onboarding modal on first login (when onboarding_completed_at is null).
   useEffect(() => {
-    if (profile && profile.role === 'agent' && !profile.onboarding_completed_at) {
+    if (profile && (profile.role === 'agent' || profile.role === 'pit_manager') && !profile.onboarding_completed_at) {
       setOnboardingOpen(true)
     }
   }, [profile])

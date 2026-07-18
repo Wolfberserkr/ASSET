@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
 import { FileText, Download, Search, RefreshCw, MessageSquare, X } from 'lucide-react'
 
@@ -78,6 +79,7 @@ function formatTs(iso) {
 }
 
 export default function AuditLog() {
+  const { drillRole } = useAuth()
   const [logs,    setLogs]    = useState([])
   const [agents,  setAgents]  = useState([])
   const [loading, setLoading] = useState(true)
@@ -103,7 +105,7 @@ export default function AuditLog() {
         let q = supabase
           .from('audit_log')
           .select('id, action, details, created_at, user_id, users!inner(name, employee_id, role)')
-          .eq('users.role', 'agent')
+          .eq('users.role', drillRole)
           .order('created_at', { ascending: false })
           .limit(500)
         if (dateFrom) q = q.gte('created_at', dateFrom)
@@ -112,7 +114,7 @@ export default function AuditLog() {
       supabase
         .from('users')
         .select('id, name, employee_id')
-        .eq('role', 'agent')
+        .eq('role', drillRole)
         .eq('is_active', true)
         .order('name'),
     ])
@@ -120,7 +122,7 @@ export default function AuditLog() {
     setLogs(logsRes.data ?? [])
     setAgents(agentsRes.data ?? [])
     setLoading(false)
-  }, [dateRange])
+  }, [dateRange, drillRole])
 
   useEffect(() => { load() }, [load])
 

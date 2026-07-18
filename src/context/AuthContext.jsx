@@ -178,14 +178,24 @@ export function AuthProvider({ children }) {
     supabase.auth.signOut().catch(() => {})
   }, [navigate, stopActivityTracking])
 
+  // Department is derived from role: agent/supervisor/director are
+  // Surveillance; pit_manager/casino_manager are Pit. drillRole is the
+  // drill-taker role of the caller's department — client-side queries
+  // that list "the team" filter on it.
+  const department = profile?.role === 'pit_manager' || profile?.role === 'casino_manager'
+    ? 'pit'
+    : 'surveillance'
+
   const value = {
     user,
     profile,
     loading,
     login,
     logout,
-    isAgent:      profile?.role === 'agent',
-    isManagement: profile?.role === 'supervisor' || profile?.role === 'director',
+    isAgent:      profile?.role === 'agent' || profile?.role === 'pit_manager',
+    isManagement: profile?.role === 'supervisor' || profile?.role === 'director' || profile?.role === 'casino_manager',
+    department,
+    drillRole:    department === 'pit' ? 'pit_manager' : 'agent',
   }
 
   return (
