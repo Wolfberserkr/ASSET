@@ -50,7 +50,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
 
             {/* Agent routes */}
-            <Route element={<ProtectedRoute allowedRoles={['agent']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['agent', 'pit_manager']} />}>
               <Route path="/dashboard"          element={<AgentDashboard />} />
               <Route path="/change-password"    element={<ChangePassword />} />
               <Route path="/drill"              element={<DrillSession />} />
@@ -63,7 +63,7 @@ export default function App() {
             </Route>
 
             {/* Management routes */}
-            <Route element={<ProtectedRoute allowedRoles={['supervisor', 'director']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['supervisor', 'director', 'casino_manager']} />}>
               <Route path="/management"                element={<TeamDashboard />} />
               <Route path="/management/agent/:id"      element={<AgentDetail />} />
               <Route path="/management/completion"     element={<Completion />} />

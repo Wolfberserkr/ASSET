@@ -21,7 +21,7 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
     // Wrong role — redirect to correct home
-    if (profile.role === 'agent') return <Navigate to="/dashboard" replace />
+    if (profile.role === 'agent' || profile.role === 'pit_manager') return <Navigate to="/dashboard" replace />
     return <Navigate to="/management" replace />
   }
 

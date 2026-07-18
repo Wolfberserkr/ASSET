@@ -109,7 +109,7 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
 }
 
 export default function Layout({ children, bg }) {
-  const { user, profile, logout, isManagement } = useAuth()
+  const { user, profile, logout, isManagement, department, drillRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -127,7 +127,7 @@ export default function Layout({ children, bg }) {
 
     // Cache notifications for 5 min in sessionStorage so navigating between
     // management pages doesn't re-fire 3 Supabase queries every time.
-    const CACHE_KEY = 'mgmt_notif_cache_v1'
+    const CACHE_KEY = `mgmt_notif_cache_v1_${department}`
     const TTL_MS = 5 * 60 * 1000
     try {
       const raw = sessionStorage.getItem(CACHE_KEY)
@@ -148,7 +148,7 @@ export default function Layout({ children, bg }) {
     Promise.all([
       supabase.from('sessions').select('user_id').eq('status', 'completed')
         .gte('completed_at', firstLast).lt('completed_at', firstThis),
-      supabase.from('users').select('id, name, employee_id').eq('role', 'agent').eq('is_active', true),
+      supabase.from('users').select('id, name, employee_id').eq('role', drillRole).eq('is_active', true),
       supabase.from('sessions').select('user_id, score, completed_at')
         .eq('status', 'completed').gte('completed_at', cutoff28),
     ]).then(([sRes, uRes, decayRes]) => {
@@ -169,7 +169,7 @@ export default function Layout({ children, bg }) {
         }))
       } catch { /* ignore quota */ }
     })
-  }, [isManagement])
+  }, [isManagement, department, drillRole])
 
   const dismissOne = (userId) => {
     const next = { ...dismissed, [notifKey(userId)]: true }
@@ -270,7 +270,7 @@ export default function Layout({ children, bg }) {
           <Shield size={20} style={{ color: 'var(--color-brand-gold)' }} />
           <div className="flex-1">
             <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</p>
-            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Surveillance</p>
+            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>{department === 'pit' ? 'Pit Operations' : 'Surveillance'}</p>
           </div>
           {/* Mobile close button */}
           <button

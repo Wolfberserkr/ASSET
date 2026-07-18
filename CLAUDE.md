@@ -7,6 +7,7 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 - **Rick** — Sole admin; manages all user accounts, creates and hands off credentials
 - **Henk** — Director of Surveillance (management portal user)
 - **Angelo** — Supervisor (management portal user; can create and edit questions)
+- **Raquel** — Casino Manager (pit management portal user; tracks Pit Managers, can create and edit questions; does not do drills)
 
 ## Tech Stack
 - **Frontend:** React + Vite, Tailwind CSS v4 (@tailwindcss/vite plugin)
@@ -26,9 +27,21 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 ## Supabase Config
 - **Project URL:** `https://wcrxiyterasmmfhfdwtz.supabase.co`
 - **Auth pattern:** Employee ID login — email is `{employee_id}@stellaris.local`, Rick creates all accounts manually
-- **Roles:** `agent`, `supervisor`, `director`
-- **RLS helper:** `public.get_my_role()` function avoids recursion in policies
-- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`
+- **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `casino_manager` (Pit)
+- **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall
+- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`
+
+### Departments (Surveillance vs Pit)
+Department is **derived from role** — no extra column:
+- `agent`, `supervisor`, `director` → **surveillance**
+- `pit_manager`, `casino_manager` → **pit**
+
+Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_roles.sql`):
+- **Pit Managers** do drills exactly like agents: same session structure, scoring, 4-hour cooldown, 20 sessions/month recert, adaptive difficulty. They use the same agent portal pages (sidebar shows "Pit Operations").
+- **Raquel (casino_manager)** uses the same management portal pages as Henk/Angelo but only ever sees Pit staff. She can create/edit questions in the shared pool.
+- **Department wall (bidirectional):** surveillance staff never see pit staff data (profiles, sessions, answers, audit entries, recert notes) and vice versa. `get_all_agents`, `get_team_leaderboard`, and `get_team_benchmark` are scoped to the caller's department — benchmarks/leaderboards never mix departments.
+- **Shared across departments:** questions, games, resources. `get_my_drill_role()` returns `agent` or `pit_manager` so queries/RPCs list the correct drill-takers; the frontend exposes this as `drillRole` from `AuthContext` (used in Layout notifications, WeakAreas, AuditLog).
+- Rick creates pit accounts the same way (`{employee_id}@stellaris.local`) with the new role in user metadata.
 
 ## Database Tables
 
