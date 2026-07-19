@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Countdown from './Countdown'
 import { supabase } from '../lib/supabase'
 import { computeDecay, decayDismissKey } from '../lib/decayUtils'
 import { useCooldown } from '../hooks/useCooldown'
@@ -59,7 +60,7 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
     return (
       <div
         aria-disabled="true"
-        title={badge ? `Available in ${badge}` : 'Unavailable'}
+        title={badge ? 'Available after cooldown' : 'Unavailable'}
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium cursor-not-allowed select-none opacity-50"
         style={{ color: 'var(--color-brand-muted)' }}
       >
@@ -199,7 +200,9 @@ export default function Layout({ children, bg }) {
   const undismissedDecay = decayAlerts.filter(a => !dismissed[decayDismissKey(a.id)])
 
   const drillDisabled = !isManagement && !cooldown.canDrill
-  const drillBadge    = !isManagement && cooldown.remainingSeconds > 0 ? cooldown.remainingDisplay : null
+  const drillBadge    = !isManagement && cooldown.remainingSeconds > 0
+    ? <Countdown endAt={cooldown.endAt} done="00:00" />
+    : null
 
   const navLinks = isManagement
     ? mgmtNav

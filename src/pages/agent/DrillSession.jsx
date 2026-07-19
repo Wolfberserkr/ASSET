@@ -6,6 +6,7 @@ import { buildSession, randomizeBetAmount } from '../../lib/questionRandomizer'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import { useSessionTimer } from '../../hooks/useSessionTimer'
 import { useAdaptiveDifficulty } from '../../hooks/useAdaptiveDifficulty'
+import { invalidateCooldown } from '../../hooks/useCooldown'
 import { logAudit } from '../../lib/audit'
 import PayoutTable from '../../components/tables/PayoutTable'
 import {
@@ -200,6 +201,10 @@ export default function DrillSession() {
         })
         .eq('id', sessionId)
       if (sessErr) console.error('sessions update error:', sessErr)
+
+      // The session just started (or cleared) a cooldown — drop the cached
+      // check_cooldown result so the dashboard re-checks the server.
+      invalidateCooldown(user.id)
 
       // Best-effort: persist abandon_reason on its own. Done as a separate
       // request so the core status update above can never be blocked by a

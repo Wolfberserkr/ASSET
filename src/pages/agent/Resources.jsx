@@ -48,7 +48,7 @@ export default function Resources() {
       </div>
 
       {/* What's inside callout */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
         {[
           { icon: FileText,    label: 'Rules & Payouts', desc: 'Full PDF reference' },
           { icon: Video,       label: 'Video Tutorials', desc: 'Game walkthroughs' },

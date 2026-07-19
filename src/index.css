@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+/* ── Self-hosted fonts (latin subsets) — no render-blocking third-party CSS ── */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('./assets/fonts/inter-300-700-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/space-mono-400-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/space-mono-700-latin.woff2') format('woff2');
+}
+
 @theme {
   /* Brand colours — navy/electric-blue dashboard theme */
   --color-brand-bg:        #10172e;
@@ -122,8 +145,8 @@ button:not(:disabled) {
   .page-enter { animation: none; }
 }
 
-/* ── Performance hints for animated elements ───────────────── */
-aside {
+/* ── Performance hint — only the sliding sidebar needs a layer ── */
+.sidebar-open, .sidebar-closed {
   will-change: transform;
 }
 

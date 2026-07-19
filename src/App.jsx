@@ -34,7 +34,7 @@ function PageLoader() {
     >
       <div
         className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-        style={{ borderColor: 'var(--color-brand-gold)' }}
+        style={{ borderColor: 'var(--color-brand-cyan)' }}
       />
     </div>
   )
