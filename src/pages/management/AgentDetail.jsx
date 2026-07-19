@@ -51,24 +51,26 @@ function ScoreTrend({ sessions }) {
       {/* Avg line */}
       <line x1={PAD.left} x2={W - PAD.right}
         y1={yOf(avg)} y2={yOf(avg)}
-        stroke="var(--color-brand-gold)" strokeWidth="1"
+        stroke="var(--color-brand-teal)" strokeWidth="1"
         strokeDasharray="4 3" opacity="0.5" />
       <text x={W - PAD.right + 3} y={yOf(avg) + 4}
-        fontSize="8" fill="var(--color-brand-gold)" opacity="0.7">avg</text>
+        fontSize="8" fill="var(--color-brand-teal)" opacity="0.7">avg</text>
 
       {/* Area fill */}
       <polygon
         points={`${PAD.left},${PAD.top + innerH} ${points} ${W - PAD.right},${PAD.top + innerH}`}
-        fill="var(--color-brand-gold)" opacity="0.06" />
+        fill="var(--color-brand-cyan)" opacity="0.08" className="chart-area-fade" />
 
       {/* Line */}
       <polyline points={points} fill="none"
-        stroke="var(--color-brand-gold)" strokeWidth="2" strokeLinejoin="round" />
+        stroke="var(--color-brand-cyan)" strokeWidth="2" strokeLinejoin="round"
+        pathLength="1" className="chart-draw"
+        style={{ filter: 'drop-shadow(0 0 6px rgba(72,118,255,0.6))' }} />
 
       {/* Dots */}
       {completed.map((s, i) => (
         <circle key={s.id} cx={xOf(i)} cy={yOf(s.score)} r="3"
-          fill="var(--color-brand-gold)" stroke="var(--color-brand-card)" strokeWidth="1.5" />
+          fill="var(--color-brand-cyan)" stroke="var(--color-brand-card)" strokeWidth="1.5" className="chart-peak-fade" />
       ))}
 
       {/* X-axis labels — first, last, and every ~5th */}
@@ -114,7 +116,7 @@ function GameAccuracy({ data }) {
             </div>
             <div className="h-2 rounded-full overflow-hidden"
               style={{ background: 'var(--color-brand-border)' }}>
-              <div className="h-full rounded-full transition-all"
+              <div className="h-full rounded-full transition-all bar-fill"
                 style={{ width: `${pct}%`, background: barColor(pct) }} />
             </div>
           </div>
@@ -231,7 +233,7 @@ export default function AgentDetail() {
       <Layout>
         <div className="flex justify-center py-20">
           <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: 'var(--color-brand-gold)' }} />
+            style={{ borderColor: 'var(--color-brand-cyan)' }} />
         </div>
       </Layout>
     )
@@ -254,7 +256,7 @@ export default function AgentDetail() {
         </div>
         <button onClick={exportExcel}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
           <Download size={15} /> Export Excel
         </button>
       </div>
@@ -273,7 +275,7 @@ export default function AgentDetail() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <StatCard label="Avg Score"      value={avgScore}              icon={Trophy}      accent="var(--color-brand-gold)" />
+        <StatCard label="Avg Score"      value={avgScore}              icon={Trophy}      accent="var(--color-brand-cyan)" />
         <StatCard label="This Month"     value={thisMonth}             icon={CheckSquare} accent={thisMonth >= 20 ? 'var(--color-brand-success)' : 'var(--color-brand-warning)'} sub="/ 20 required" />
         <StatCard label="Total Sessions" value={completedSessions.length} icon={Clock} />
       </div>
@@ -284,7 +286,7 @@ export default function AgentDetail() {
         <div className="rounded-xl p-4"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={14} style={{ color: 'var(--color-brand-gold)' }} />
+            <TrendingUp size={14} style={{ color: 'var(--color-brand-cyan)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>Score Trend</span>
             <span className="text-xs ml-auto" style={{ color: 'var(--color-brand-muted)' }}>last 20 sessions</span>
           </div>
@@ -295,7 +297,7 @@ export default function AgentDetail() {
         <div className="rounded-xl p-4"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
           <div className="flex items-center gap-2 mb-4">
-            <Target size={14} style={{ color: 'var(--color-brand-gold)' }} />
+            <Target size={14} style={{ color: 'var(--color-brand-cyan)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>Per-Game Accuracy</span>
           </div>
           <GameAccuracy data={gameAccuracy} />

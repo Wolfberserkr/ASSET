@@ -114,7 +114,7 @@ export default function QuestionEditor() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <BookOpen size={16} style={{ color: 'var(--color-brand-gold)' }} />
+            <BookOpen size={16} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Question Editor</h1>
@@ -130,7 +130,7 @@ export default function QuestionEditor() {
           </button>
           <button onClick={() => { setForm({ ...BLANK }); setError('') }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
-            style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
+            style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}>
             <Plus size={16} /> New Question
           </button>
         </div>
@@ -169,8 +169,8 @@ export default function QuestionEditor() {
           <button key={opt.value} onClick={() => setFilterGame(opt.value)}
             className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
             style={{
-              background: filterGame === opt.value ? 'var(--color-brand-gold)' : 'var(--color-brand-card)',
-              color: filterGame === opt.value ? '#0b0f1a' : 'var(--color-brand-muted)',
+              background: filterGame === opt.value ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'var(--color-brand-card)',
+              color: filterGame === opt.value ? '#fff' : 'var(--color-brand-muted)',
               border: '1px solid var(--color-brand-border)',
             }}>
             {opt.label}
@@ -184,7 +184,7 @@ export default function QuestionEditor() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : filtered.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-brand-muted)' }}>
@@ -248,7 +248,7 @@ export default function QuestionEditor() {
 
               {/* Step 1 */}
               <section>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 1 — Get your Game IDs</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-cyan)' }}>Step 1 — Get your Game IDs</p>
                 <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>Run this in the Supabase SQL Editor to get the UUID for each game:</p>
                 <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono"
                   style={{ background: 'var(--color-brand-surface)', color: '#86efac', border: '1px solid var(--color-brand-border)' }}>
@@ -258,7 +258,7 @@ export default function QuestionEditor() {
 
               {/* Step 2 — MC */}
               <section>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 2A — Multiple Choice question</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-cyan)' }}>Step 2A — Multiple Choice question</p>
                 <pre className="text-xs p-3 rounded-lg overflow-x-auto font-mono leading-relaxed"
                   style={{ background: 'var(--color-brand-surface)', color: '#93c5fd', border: '1px solid var(--color-brand-border)' }}>
 {`INSERT INTO questions (
@@ -283,7 +283,7 @@ export default function QuestionEditor() {
 
               {/* Step 2 — Payout */}
               <section>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Step 2B — Payout Drill question</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-cyan)' }}>Step 2B — Payout Drill question</p>
                 <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>
                   <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-brand-surface)' }}>correct_answer</code>
                   {' '}stores the payout ratio: <strong style={{ color: 'var(--color-brand-text)' }}>"35"</strong> = 35:1, <strong style={{ color: 'var(--color-brand-text)' }}>"1.5"</strong> = 3:2.
@@ -310,7 +310,7 @@ export default function QuestionEditor() {
 
               {/* Chip variants */}
               <section>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-gold)' }}>Optional — Custom chip denominations</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-cyan)' }}>Optional — Custom chip denominations</p>
                 <p className="mb-2" style={{ color: 'var(--color-brand-muted)' }}>
                   Leave <code className="px-1 py-0.5 rounded text-xs" style={{ background: 'var(--color-brand-surface)' }}>chip_variants</code> NULL to use all standard chips (White $1, Red $5, Green $25, Black $100, Purple $500, Pink $1,000).
                   Override per question:
@@ -356,7 +356,7 @@ export default function QuestionEditor() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.is_procedure}
                   onChange={e => setForm(f => ({ ...f, is_procedure: e.target.checked, game_id: e.target.checked ? '' : f.game_id }))}
-                  className="accent-[var(--color-brand-gold)]" />
+                  className="accent-[var(--color-brand-cyan)]" />
                 <span className="text-sm" style={{ color: 'var(--color-brand-text)' }}>Shared procedure question (no specific game)</span>
               </label>
 
@@ -464,7 +464,7 @@ export default function QuestionEditor() {
               <div className="flex gap-2 pt-2">
                 <button onClick={saveQuestion} disabled={saving}
                   className="flex-1 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50"
-                  style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
+                  style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}>
                   {saving ? 'Saving…' : form.id ? 'Update Question' : 'Create Question'}
                 </button>
                 <button onClick={() => setForm(null)}

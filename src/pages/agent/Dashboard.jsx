@@ -304,7 +304,7 @@ export default function AgentDashboard() {
               </span>
               <div className="h-1 rounded-full mt-1" style={{ background: 'rgba(99,130,210,0.15)' }}>
                 <div
-                  className="h-1 rounded-full"
+                  className="h-1 rounded-full bar-fill"
                   style={{
                     width: `${recertPct * 100}%`,
                     transition: 'width 500ms ease-out',

@@ -40,7 +40,7 @@ function actionColor(action) {
   if (action === 'SESSION_STARTED')    return 'var(--color-brand-blue)'
   if (action === 'SESSION_COMPLETED')  return 'var(--color-brand-success)'
   if (action === 'SESSION_ABANDONED')  return 'var(--color-brand-danger)'
-  if (action === 'PRACTICE_STARTED')   return 'var(--color-brand-gold)'
+  if (action === 'PRACTICE_STARTED')   return 'var(--color-brand-cyan)'
   if (action === 'QUESTION_CREATED')   return 'var(--color-brand-success)'
   if (action === 'QUESTION_UPDATED')   return 'var(--color-brand-warning)'
   if (action === 'QUESTION_TOGGLED')   return 'var(--color-brand-muted)'
@@ -174,7 +174,7 @@ export default function AuditLog() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <FileText size={16} style={{ color: 'var(--color-brand-gold)' }} />
+            <FileText size={16} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Audit Log</h1>
@@ -189,7 +189,7 @@ export default function AuditLog() {
           </button>
           <button onClick={exportExcel}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
             <Download size={16} /> Export Excel
           </button>
         </div>
@@ -252,7 +252,7 @@ export default function AuditLog() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : displayed.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm" style={{ color: 'var(--color-brand-muted)' }}>
@@ -311,7 +311,7 @@ export default function AuditLog() {
                               style={{
                                 background: 'var(--color-brand-surface)',
                                 border: '1px solid var(--color-brand-border)',
-                                color: 'var(--color-brand-gold)',
+                                color: 'var(--color-brand-cyan)',
                                 transition: 'transform 100ms ease-out',
                               }}
                             >
@@ -391,8 +391,8 @@ export default function AuditLog() {
                 onClick={() => setReasonModal(null)}
                 className="text-xs px-4 py-2 rounded-lg font-semibold active:scale-[0.97]"
                 style={{
-                  background: 'var(--color-brand-gold)',
-                  color: '#0b0f1a',
+                  background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))',
+                  color: '#fff',
                   transition: 'transform 100ms ease-out',
                 }}
               >

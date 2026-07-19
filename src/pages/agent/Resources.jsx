@@ -37,7 +37,7 @@ export default function Resources() {
       <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-          <Library size={18} style={{ color: 'var(--color-brand-gold)' }} />
+          <Library size={18} style={{ color: 'var(--color-brand-cyan)' }} />
         </div>
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Resources</h1>
@@ -57,7 +57,7 @@ export default function Resources() {
           <div key={label}
             className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <Icon size={18} style={{ color: 'var(--color-brand-gold)' }} />
+            <Icon size={18} style={{ color: 'var(--color-brand-cyan)' }} />
             <p className="text-xs font-semibold" style={{ color: 'var(--color-brand-text)' }}>{label}</p>
             <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>{desc}</p>
           </div>
@@ -68,7 +68,7 @@ export default function Resources() {
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--color-brand-gold)' }} />
+            style={{ borderColor: 'var(--color-brand-cyan)' }} />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -76,7 +76,7 @@ export default function Resources() {
             <button
               key={game.id}
               onClick={() => navigate(`/resources/${game.id}`)}
-              className="text-left p-5 rounded-2xl flex items-center gap-4 hover-gold active:scale-[0.97] group"
+              className="text-left p-5 rounded-2xl flex items-center gap-4 hover-accent active:scale-[0.97] group"
               style={{
                 background: 'var(--color-brand-card)',
                 border: '1px solid var(--color-brand-border)',
@@ -93,7 +93,7 @@ export default function Resources() {
                       border: '1px solid var(--color-brand-border)',
                     }}
                   >
-                    <Icon size={22} style={{ color: 'var(--color-brand-gold)' }} />
+                    <Icon size={22} style={{ color: 'var(--color-brand-cyan)' }} />
                   </div>
                 )
               })()}

@@ -155,12 +155,12 @@ export default function OnboardingModal({ open, onComplete, onClose, allowClose 
         >
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(212,168,67,0.15)', color: 'var(--color-brand-gold)' }}
+            style={{ background: 'rgba(79,168,255,0.15)', color: 'var(--color-brand-cyan)' }}
           >
             <Sparkles size={18} />
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-brand-gold)' }}>
+            <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-brand-cyan)' }}>
               Getting started
             </p>
             <p className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>
@@ -172,7 +172,7 @@ export default function OnboardingModal({ open, onComplete, onClose, allowClose 
         {/* Body */}
         <div className="px-6 pt-6 pb-5">
           <div className="flex items-center gap-3 mb-4">
-            <Icon size={26} style={{ color: 'var(--color-brand-gold)' }} />
+            <Icon size={26} style={{ color: 'var(--color-brand-cyan)' }} />
             <h2
               id="onboarding-title"
               className="text-xl font-bold"
@@ -200,7 +200,7 @@ export default function OnboardingModal({ open, onComplete, onClose, allowClose 
               style={{
                 width: i === step ? 20 : 6,
                 height: 6,
-                background: i === step ? 'var(--color-brand-gold)' : 'var(--color-brand-border)',
+                background: i === step ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)',
               }}
             />
           ))}
@@ -225,7 +225,7 @@ export default function OnboardingModal({ open, onComplete, onClose, allowClose 
             <button
               onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
               className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.97] transition-transform duration-100"
-              style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+              style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}
             >
               Next
               <ChevronRight size={16} />

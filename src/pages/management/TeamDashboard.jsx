@@ -126,7 +126,7 @@ export default function TeamDashboard() {
         <button
           onClick={() => exportToExcel(filtered)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}
           aria-label="Export team dashboard to Excel"
         >
           <Download size={16} />
@@ -186,7 +186,7 @@ export default function TeamDashboard() {
       {/* Summary stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <StatCard label="Total Agents"   value={totalAgents} icon={Users}       accent="var(--color-brand-blue)" />
-        <StatCard label="Team Avg Score" value={avgScore}    icon={Trophy}      accent="var(--color-brand-gold)" />
+        <StatCard label="Team Avg Score" value={avgScore}    icon={Trophy}      accent="var(--color-brand-cyan)" />
         <StatCard label="On Track"       value={`${onTrack}/${totalAgents}`} icon={CheckSquare} accent="var(--color-brand-success)" sub="20 sessions this month" />
       </div>
 
@@ -214,7 +214,7 @@ export default function TeamDashboard() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-10 text-center">
@@ -249,7 +249,7 @@ export default function TeamDashboard() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                          style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
+                          style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}>
                           {(agent.employee_id.split('-')[1] ?? agent.employee_id).slice(0, 2)}
                         </div>
                         <div className="flex items-center gap-1.5">

@@ -102,30 +102,34 @@ export default function ScoreChart({ sessions }) {
           )
         })}
 
-        <path d={area} fill="url(#score-area)" />
+        <path d={area} fill="url(#score-area)" className="chart-area-fade" />
         <path
           d={line}
           fill="none"
           stroke="url(#score-stroke)"
           strokeWidth="2.4"
           strokeLinecap="round"
+          pathLength="1"
+          className="chart-draw"
           style={{ filter: 'drop-shadow(0 0 8px rgba(72,118,255,0.7))' }}
         />
 
-        <line
-          x1={peak.x} x2={peak.x} y1={peak.y} y2={H - PAD}
-          stroke="rgba(79,168,255,0.35)"
-          strokeDasharray="2 4"
-        />
-        <circle cx={peak.x} cy={peak.y} r="8" fill="rgba(79,168,255,0.2)" />
-        <circle
-          cx={peak.x} cy={peak.y} r="3.4" fill="#fff"
-          style={{ filter: 'drop-shadow(0 0 6px var(--color-brand-cyan))' }}
-        />
+        <g className="chart-peak-fade">
+          <line
+            x1={peak.x} x2={peak.x} y1={peak.y} y2={H - PAD}
+            stroke="rgba(79,168,255,0.35)"
+            strokeDasharray="2 4"
+          />
+          <circle cx={peak.x} cy={peak.y} r="8" fill="rgba(79,168,255,0.2)" />
+          <circle
+            cx={peak.x} cy={peak.y} r="3.4" fill="#fff"
+            style={{ filter: 'drop-shadow(0 0 6px var(--color-brand-cyan))' }}
+          />
+        </g>
       </svg>
 
       <div
-        className="absolute flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg pointer-events-none"
+        className="chart-peak-fade absolute flex items-baseline gap-1.5 px-2.5 py-1 rounded-lg pointer-events-none"
         style={{
           left: chipLeft,
           top: Math.max(2, peak.y - 38),

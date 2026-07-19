@@ -9,7 +9,7 @@ export default function ProtectedRoute({ allowedRoles }) {
       <div className="flex items-center justify-center h-screen" style={{ background: 'var(--color-brand-bg)' }}>
         <div
           className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: 'var(--color-brand-gold)' }}
+          style={{ borderColor: 'var(--color-brand-cyan)' }}
         />
       </div>
     )

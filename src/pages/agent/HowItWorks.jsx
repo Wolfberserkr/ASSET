@@ -6,7 +6,7 @@ import {
   Shield, RotateCcw, KeyRound, Library, FileText, AlertTriangle,
 } from 'lucide-react'
 
-function Section({ icon: Icon, title, children, accent = 'var(--color-brand-gold)' }) {
+function Section({ icon: Icon, title, children, accent = 'var(--color-brand-cyan)' }) {
   return (
     <section
       className="rounded-xl p-5 mb-4"
@@ -47,7 +47,7 @@ export default function HowItWorks() {
         <button
           onClick={() => setTourOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 active:scale-[0.97] transition-transform duration-100 shrink-0"
-          style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+          style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}
         >
           <RotateCcw size={15} />
           Replay tour

@@ -309,7 +309,7 @@ export default function Completion() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <CheckSquare size={16} style={{ color: 'var(--color-brand-gold)' }} />
+            <CheckSquare size={16} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Completion Tracker</h1>
@@ -333,7 +333,7 @@ export default function Completion() {
           </button>
           <button onClick={exportExcel}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
             <Download size={16} /> Export Excel
           </button>
         </div>
@@ -400,7 +400,7 @@ export default function Completion() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : (
           <div className="table-responsive">
@@ -440,7 +440,7 @@ export default function Completion() {
                       </td>
                       <td className="px-4 py-3 w-44">
                         <div className="h-1.5 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
-                          <div className="h-1.5 rounded-full transition-all"
+                          <div className="h-1.5 rounded-full transition-all bar-fill"
                             style={{ width: `${pct}%`, background: meta.color }} />
                         </div>
                         <p className="text-xs mt-1" style={{ color: 'var(--color-brand-muted)' }}>{pct}%</p>
@@ -471,7 +471,7 @@ export default function Completion() {
                               {a.currentNote.reason}
                             </p>
                             <p className="text-xs mt-0.5 inline-flex items-center gap-1 group-hover:opacity-100 opacity-60"
-                              style={{ color: 'var(--color-brand-gold)' }}>
+                              style={{ color: 'var(--color-brand-cyan)' }}>
                               <MessageSquare size={10} /> Edit
                             </p>
                           </button>
@@ -589,8 +589,8 @@ export default function Completion() {
                     disabled={noteSaving || !trimmed}
                     className="inline-flex items-center gap-1 text-xs px-4 py-1.5 rounded-lg font-semibold active:scale-[0.97]"
                     style={{
-                      background: trimmed ? 'var(--color-brand-gold)' : 'var(--color-brand-border)',
-                      color: trimmed ? '#0b0f1a' : 'var(--color-brand-muted)',
+                      background: trimmed ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'var(--color-brand-border)',
+                      color: trimmed ? '#fff' : 'var(--color-brand-muted)',
                       transition: 'transform 100ms ease-out',
                       opacity: noteSaving ? 0.6 : 1,
                     }}
@@ -617,7 +617,7 @@ export default function Completion() {
                       {history.map(n => (
                         <div key={n.id} className="rounded-md p-2 text-xs"
                           style={{ background: 'var(--color-brand-bg)', border: '1px solid var(--color-brand-border)' }}>
-                          <p className="font-mono mb-1" style={{ color: 'var(--color-brand-gold)' }}>
+                          <p className="font-mono mb-1" style={{ color: 'var(--color-brand-cyan)' }}>
                             {monthName(n.period_year, n.period_month)}
                           </p>
                           <p className="whitespace-pre-wrap break-words" style={{ color: 'var(--color-brand-text)' }}>

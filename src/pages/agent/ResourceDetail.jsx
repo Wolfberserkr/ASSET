@@ -293,9 +293,9 @@ function TabButton({ active, onClick, icon: Icon, label }) {
       onClick={onClick}
       className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors active:scale-[0.97]"
       style={{
-        background: active ? 'var(--color-brand-gold)' : 'var(--color-brand-surface)',
-        color:      active ? '#0b0f1a' : 'var(--color-brand-muted)',
-        border:     `1px solid ${active ? 'var(--color-brand-gold)' : 'var(--color-brand-border)'}`,
+        background: active ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'var(--color-brand-surface)',
+        color:      active ? '#fff' : 'var(--color-brand-muted)',
+        border:     `1px solid ${active ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)'}`,
         transition: 'background-color 120ms ease-out, color 120ms ease-out, transform 100ms ease-out',
       }}
     >
@@ -309,7 +309,7 @@ function PayoutRow({ label, note, payout, highlight, muted }) {
   const color = muted
     ? 'var(--color-brand-muted)'
     : highlight
-      ? 'var(--color-brand-gold)'
+      ? 'var(--color-brand-teal)'
       : 'var(--color-brand-success)'
 
   return (
@@ -347,8 +347,8 @@ function BlackjackCalc({ config }) {
                 onClick={() => setMode(opt)}
                 className="px-2.5 py-1 text-xs font-mono font-semibold transition-colors"
                 style={{
-                  background: mode === opt ? 'var(--color-brand-gold)' : 'transparent',
-                  color: mode === opt ? '#0b0f1a' : 'var(--color-brand-muted)',
+                  background: mode === opt ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'transparent',
+                  color: mode === opt ? '#fff' : 'var(--color-brand-muted)',
                   borderRight: opt === '3:2' ? '1px solid var(--color-brand-border)' : 'none',
                 }}
               >
@@ -365,7 +365,7 @@ function BlackjackCalc({ config }) {
             value={bet} onChange={e => setBet(e.target.value)}
             className="w-32 pl-7 pr-3 py-2 rounded-lg text-sm font-mono outline-none text-right"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }}
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
             onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
           />
         </div>
@@ -425,7 +425,7 @@ function SectionCalc({ section }) {
               border: '1px solid var(--color-brand-border)',
               color: 'var(--color-brand-text)',
             }}
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
             onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
           />
         </div>
@@ -479,7 +479,7 @@ function LetItRideCalc({ config }) {
                 border: '1px solid var(--color-brand-border)',
                 color: 'var(--color-brand-text)',
               }}
-              onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+              onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
               onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
             />
           </div>
@@ -493,9 +493,9 @@ function LetItRideCalc({ config }) {
               <button key={n} onClick={() => setActive(n)}
                 className="w-10 h-9 rounded-lg text-sm font-bold active:scale-[0.95]"
                 style={{
-                  background: activeBets === n ? 'var(--color-brand-gold)' : 'var(--color-brand-card)',
-                  color:      activeBets === n ? '#0b0f1a' : 'var(--color-brand-muted)',
-                  border:     `1px solid ${activeBets === n ? 'var(--color-brand-gold)' : 'var(--color-brand-border)'}`,
+                  background: activeBets === n ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'var(--color-brand-card)',
+                  color:      activeBets === n ? '#fff' : 'var(--color-brand-muted)',
+                  border:     `1px solid ${activeBets === n ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)'}`,
                   transition: 'background-color 100ms ease-out, transform 100ms ease-out',
                 }}>
                 {n}
@@ -505,7 +505,7 @@ function LetItRideCalc({ config }) {
         </div>
         <div className="ml-auto text-right">
           <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Total at risk</p>
-          <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-brand-gold)' }}>
+          <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-brand-teal)' }}>
             {fmt(total)}
           </p>
         </div>
@@ -551,7 +551,7 @@ function UTHBetInput({ label, value, onChange, note }) {
             border: '1px solid var(--color-brand-border)',
             color: 'var(--color-brand-text)',
           }}
-          onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+          onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
           onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
         />
       </div>
@@ -587,9 +587,9 @@ function UTHCalc({ config }) {
                 <button key={m} onClick={() => setPlay(m)}
                   className="w-10 h-9 rounded-lg text-sm font-bold active:scale-[0.95]"
                   style={{
-                    background: play === m ? 'var(--color-brand-gold)' : 'var(--color-brand-card)',
-                    color:      play === m ? '#0b0f1a' : 'var(--color-brand-muted)',
-                    border:     `1px solid ${play === m ? 'var(--color-brand-gold)' : 'var(--color-brand-border)'}`,
+                    background: play === m ? 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' : 'var(--color-brand-card)',
+                    color:      play === m ? '#fff' : 'var(--color-brand-muted)',
+                    border:     `1px solid ${play === m ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)'}`,
                     transition: 'background-color 100ms ease-out, transform 100ms ease-out',
                   }}>
                   {m}×
@@ -617,7 +617,7 @@ function UTHCalc({ config }) {
             ))}
             <div className="ml-auto text-right">
               <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>Total at risk</p>
-              <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-brand-gold)' }}>
+              <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-brand-teal)' }}>
                 {fmt(anteAmt * 2 + playAmt + tripsAmt)}
               </p>
             </div>
@@ -690,7 +690,7 @@ function UTHCalc({ config }) {
                   <span className="text-xs ml-2 font-mono" style={{ color: 'var(--color-brand-muted)' }}>{o.note}</span>
                 </div>
                 <div className="flex items-center gap-4 font-mono text-sm font-bold">
-                  <span style={{ color: o.muted ? 'var(--color-brand-muted)' : o.highlight ? 'var(--color-brand-gold)' : 'var(--color-brand-success)' }}>
+                  <span style={{ color: o.muted ? 'var(--color-brand-muted)' : o.highlight ? 'var(--color-brand-teal)' : 'var(--color-brand-success)' }}>
                     {o.muted ? '—' : fmt(blindWin)}
                   </span>
                   <span className="w-24 text-right" style={{ color: o.muted ? 'var(--color-brand-muted)' : 'var(--color-brand-text)' }}>
@@ -731,7 +731,7 @@ export default function ResourceDetail() {
     <Layout>
       <div className="flex justify-center py-24">
         <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--color-brand-gold)' }} />
+          style={{ borderColor: 'var(--color-brand-cyan)' }} />
       </div>
     </Layout>
   )
@@ -836,7 +836,7 @@ export default function ResourceDetail() {
                   {/* Title bar */}
                   <div className="px-4 py-3 flex items-center gap-2"
                     style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-                    <Video size={15} style={{ color: 'var(--color-brand-gold)' }} />
+                    <Video size={15} style={{ color: 'var(--color-brand-cyan)' }} />
                     <p className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>
                       {v.title || `Video ${i + 1}`}
                     </p>

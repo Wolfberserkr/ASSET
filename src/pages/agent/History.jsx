@@ -59,7 +59,7 @@ export default function History() {
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-          <FileText size={18} style={{ color: 'var(--color-brand-gold)' }} />
+          <FileText size={18} style={{ color: 'var(--color-brand-cyan)' }} />
         </div>
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Session History</h1>
@@ -125,7 +125,7 @@ export default function History() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : sessions.length === 0 ? (
           <div className="py-12 text-center">

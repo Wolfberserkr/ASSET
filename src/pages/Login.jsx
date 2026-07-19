@@ -71,7 +71,7 @@ export default function Login() {
             style={{
               width: 88,
               height: 88,
-              background: 'var(--color-brand-gold)',
+              background: 'var(--color-brand-grad-a)',
               animationDuration: '1.4s',
             }}
           />
@@ -83,10 +83,10 @@ export default function Login() {
               height: 72,
               background: 'var(--color-brand-card)',
               border: '1px solid var(--color-brand-border)',
-              boxShadow: '0 0 32px 4px rgba(212,175,55,0.15)',
+              boxShadow: '0 0 32px 4px rgba(72,118,255,0.25)',
             }}
           >
-            <Shield size={36} style={{ color: 'var(--color-brand-gold)' }} />
+            <Shield size={36} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
         </div>
 
@@ -116,9 +116,12 @@ export default function Login() {
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}
+            style={{
+              background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))',
+              boxShadow: '0 0 28px rgba(72, 118, 255, 0.45)',
+            }}
           >
-            <Shield size={32} style={{ color: 'var(--color-brand-gold)' }} />
+            <Shield size={32} color="#fff" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--color-brand-text)' }}>
             A.S.S.E.T.
@@ -174,7 +177,7 @@ export default function Login() {
                   border: '1px solid var(--color-brand-border)',
                   color: 'var(--color-brand-text)',
                 }}
-                onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+                onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
                 onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
               />
             </div>
@@ -202,7 +205,7 @@ export default function Login() {
                     border: '1px solid var(--color-brand-border)',
                     color: 'var(--color-brand-text)',
                   }}
-                  onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+                  onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
                   onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
                 />
                 <button
@@ -234,8 +237,9 @@ export default function Login() {
               disabled={submitting || !employeeId || !password}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50 active:scale-[0.98] transition-transform duration-100"
               style={{
-                background: 'var(--color-brand-gold)',
-                color: '#0b0f1a',
+                background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))',
+                color: '#fff',
+                boxShadow: '0 6px 22px rgba(58, 98, 255, 0.35)',
               }}
             >
               {submitting ? 'Signing in…' : 'Sign in'}
