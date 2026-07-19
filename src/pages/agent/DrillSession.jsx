@@ -419,7 +419,7 @@ export default function DrillSession() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4"
            style={{ background: 'var(--color-brand-bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-             style={{ borderColor: 'var(--color-brand-gold)', borderTopColor: 'transparent' }} />
+             style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
         <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Preparing your session…</p>
       </div>
     )
@@ -447,7 +447,7 @@ export default function DrillSession() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4"
            style={{ background: 'var(--color-brand-bg)' }}>
         <div className="w-8 h-8 rounded-full border-2 animate-spin"
-             style={{ borderColor: 'var(--color-brand-gold)', borderTopColor: 'transparent' }} />
+             style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
         <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Saving results…</p>
       </div>
     )
@@ -497,7 +497,7 @@ export default function DrillSession() {
 
         <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
           <div className="h-1.5 rounded-full"
-               style={{ width: `${progress}%`, background: 'var(--color-brand-gold)', transition: 'width 300ms ease-out' }} />
+               style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--color-brand-grad-a), var(--color-brand-teal))', transition: 'width 300ms ease-out' }} />
         </div>
 
         <div className="flex items-center gap-1.5 text-sm font-mono font-semibold shrink-0"
@@ -568,7 +568,7 @@ export default function DrillSession() {
         <div className="flex items-center gap-2 mb-4 self-start flex-wrap">
           {q?.games?.name && (
             <span className="text-sm font-semibold px-3 py-1.5 rounded-full"
-                  style={{ background: 'var(--color-brand-card)', color: 'var(--color-brand-gold)', border: '1px solid var(--color-brand-gold)' }}>
+                  style={{ background: 'var(--color-brand-card)', color: 'var(--color-brand-cyan)', border: '1px solid var(--color-brand-cyan)' }}>
               {q.games.name}
             </span>
           )}
@@ -638,7 +638,7 @@ export default function DrillSession() {
               <button
                 type="submit"
                 className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
-                style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a', transition: 'transform 100ms ease-out' }}
+                style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff', transition: 'transform 100ms ease-out' }}
               >
                 Submit Answer <ChevronRight size={16} />
               </button>
@@ -658,8 +658,8 @@ export default function DrillSession() {
                   onMouseEnter={() => setFocusedIdx(i)}
                   className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium active:scale-[0.98]"
                   style={{
-                    background: isFocused ? '#141100' : 'var(--color-brand-card)',
-                    border: `1px solid ${isFocused ? 'var(--color-brand-gold)' : 'var(--color-brand-border)'}`,
+                    background: isFocused ? '#0e1a38' : 'var(--color-brand-card)',
+                    border: `1px solid ${isFocused ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)'}`,
                     color: 'var(--color-brand-text)',
                     transition: 'background-color 100ms ease-out, border-color 100ms ease-out, transform 100ms ease-out',
                   }}
@@ -667,7 +667,7 @@ export default function DrillSession() {
                   <span
                     className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mr-3 shrink-0"
                     style={{
-                      background: isFocused ? 'var(--color-brand-gold)' : 'var(--color-brand-border)',
+                      background: isFocused ? 'var(--color-brand-cyan)' : 'var(--color-brand-border)',
                       color:      isFocused ? '#0b0f1a'                 : 'var(--color-brand-muted)',
                     }}
                   >

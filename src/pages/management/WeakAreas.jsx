@@ -38,7 +38,7 @@ function Section({ title, icon: Icon, children }) {
       style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
       <div className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-        <Icon size={14} style={{ color: 'var(--color-brand-gold)' }} />
+        <Icon size={14} style={{ color: 'var(--color-brand-cyan)' }} />
         <span className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>{title}</span>
       </div>
       <div className="p-4">{children}</div>
@@ -238,7 +238,7 @@ export default function WeakAreas() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <BarChart2 size={16} style={{ color: 'var(--color-brand-gold)' }} />
+            <BarChart2 size={16} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Weak Areas</h1>
@@ -247,7 +247,7 @@ export default function WeakAreas() {
         </div>
         <button onClick={exportExcel}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
           <Download size={16} /> Export Excel
         </button>
       </div>
@@ -288,7 +288,7 @@ export default function WeakAreas() {
       {loading ? (
         <div className="py-20 flex justify-center">
           <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: 'var(--color-brand-gold)' }} />
+            style={{ borderColor: 'var(--color-brand-cyan)' }} />
         </div>
       ) : gameStats.length === 0 ? (
         <div className="rounded-xl p-10 text-center"
@@ -343,7 +343,7 @@ export default function WeakAreas() {
                       </div>
                     </div>
                     <div className="h-2 rounded-full" style={{ background: 'var(--color-brand-border)' }}>
-                      <div className="h-2 rounded-full" style={{ width: `${pct}%`, background: c, transition: 'width 500ms ease-out' }} />
+                      <div className="h-2 rounded-full bar-fill" style={{ width: `${pct}%`, background: c, transition: 'width 500ms ease-out' }} />
                     </div>
                   </div>
                 )

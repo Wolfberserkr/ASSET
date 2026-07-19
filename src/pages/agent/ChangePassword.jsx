@@ -26,7 +26,7 @@ function PasswordField({ id, label, value, onChange, show, onToggle }) {
           required
           className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm outline-none"
           style={inputStyle}
-          onFocus={e => e.target.style.borderColor = 'var(--color-brand-gold)'}
+          onFocus={e => e.target.style.borderColor = 'var(--color-brand-cyan)'}
           onBlur={e  => e.target.style.borderColor = 'var(--color-brand-border)'}
         />
         <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2"
@@ -97,7 +97,7 @@ export default function ChangePassword() {
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <KeyRound size={18} style={{ color: 'var(--color-brand-gold)' }} />
+            <KeyRound size={18} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Change Password</h1>
@@ -156,7 +156,7 @@ export default function ChangePassword() {
 
             <button type="submit" disabled={!allMet || loading || !current}
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50 mt-2"
-              style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}>
+              style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}>
               {loading ? 'Updating…' : 'Update Password'}
             </button>
           </form>

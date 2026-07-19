@@ -28,7 +28,7 @@ function SortHeader({ label, col, sort, onSort }) {
   const active = sort.col === col
   return (
     <th className="text-left px-4 py-3 text-xs font-medium uppercase tracking-widest cursor-pointer select-none"
-      style={{ color: active ? 'var(--color-brand-gold)' : 'var(--color-brand-muted)' }}
+      style={{ color: active ? 'var(--color-brand-cyan)' : 'var(--color-brand-muted)' }}
       onClick={() => onSort(col)}>
       <span className="flex items-center gap-1">
         {label}
@@ -166,7 +166,7 @@ export default function QuestionStats() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-            <ClipboardList size={16} style={{ color: 'var(--color-brand-gold)' }} />
+            <ClipboardList size={16} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Question Stats</h1>
@@ -175,7 +175,7 @@ export default function QuestionStats() {
         </div>
         <button onClick={exportExcel}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-gold)' }}>
+          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
           <Download size={16} /> Export Excel
         </button>
       </div>
@@ -253,7 +253,7 @@ export default function QuestionStats() {
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: 'var(--color-brand-gold)' }} />
+              style={{ borderColor: 'var(--color-brand-cyan)' }} />
           </div>
         ) : displayed.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm" style={{ color: 'var(--color-brand-muted)' }}>

@@ -1,7 +1,8 @@
-import { useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 /**
  * Donut gauge with a gradient arc and glow, centered text.
+ * The arc animates from empty to its value on mount.
  * pct: 0–1 · colorA/colorB: gradient stops · subText: optional line under the value
  */
 export default function RingGauge({ pct, size = 96, colorA, colorB, centerText, subText }) {
@@ -11,6 +12,17 @@ export default function RingGauge({ pct, size = 96, colorA, colorB, centerText, 
   const c = size / 2
   const circ = 2 * Math.PI * r
   const clamped = Math.max(0, Math.min(1, pct))
+
+  // Start at 0 and transition to the value; skip when the user prefers reduced motion.
+  const reduceMotion = typeof window !== 'undefined'
+    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const [progress, setProgress] = useState(reduceMotion ? clamped : 0)
+
+  useEffect(() => {
+    if (reduceMotion) { setProgress(clamped); return }
+    const raf = requestAnimationFrame(() => requestAnimationFrame(() => setProgress(clamped)))
+    return () => cancelAnimationFrame(raf)
+  }, [clamped, reduceMotion])
 
   return (
     <svg width={size} height={size} role="img" aria-label={`${centerText}${subText ? ` — ${subText}` : ''}`}>
@@ -26,9 +38,12 @@ export default function RingGauge({ pct, size = 96, colorA, colorB, centerText, 
         stroke={`url(#${gradId})`}
         strokeWidth={stroke}
         strokeLinecap="round"
-        strokeDasharray={`${circ * clamped} ${circ}`}
+        strokeDasharray={`${circ * progress} ${circ}`}
         transform={`rotate(-90 ${c} ${c})`}
-        style={{ filter: `drop-shadow(0 0 6px ${colorA}66)`, transition: 'stroke-dasharray 600ms ease-out' }}
+        style={{
+          filter: `drop-shadow(0 0 6px ${colorA}66)`,
+          transition: reduceMotion ? 'none' : 'stroke-dasharray 900ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
       />
       <text
         x={c} y={c - (subText ? 3 : -5)}

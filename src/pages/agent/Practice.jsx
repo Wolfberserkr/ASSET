@@ -110,14 +110,14 @@ function fmtDollars(n) {
 function GameCard({ name, drillType, count, onClick, disabled }) {
   const typeLabel = drillType === 'payout_drill' ? 'Payout drill' : 'Quiz'
   const typeColor = drillType === 'payout_drill'
-    ? 'var(--color-brand-gold)'
-    : 'var(--color-brand-blue)'
+    ? 'var(--color-brand-teal)'
+    : 'var(--color-brand-cyan)'
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="text-left rounded-2xl p-5 disabled:opacity-50 hover-gold active:scale-[0.97]"
+      className="text-left rounded-2xl p-5 disabled:opacity-50 hover-accent active:scale-[0.97]"
       style={{
         background: 'var(--color-brand-card)',
         border: '1px solid var(--color-brand-border)',
@@ -319,7 +319,7 @@ export default function Practice() {
       <Layout>
         <div className="flex items-center justify-center py-24">
           <div className="w-6 h-6 rounded-full border-2 animate-spin"
-               style={{ borderColor: 'var(--color-brand-gold)', borderTopColor: 'transparent' }} />
+               style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
         </div>
       </Layout>
     )
@@ -337,7 +337,7 @@ export default function Practice() {
             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}
           >
-            <GraduationCap size={18} style={{ color: 'var(--color-brand-gold)' }} />
+            <GraduationCap size={18} style={{ color: 'var(--color-brand-cyan)' }} />
           </div>
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--color-brand-text)' }}>
@@ -408,7 +408,7 @@ export default function Practice() {
         {loading && (
           <div className="flex items-center justify-center py-6 gap-2">
             <div className="w-5 h-5 rounded-full border-2 animate-spin"
-                 style={{ borderColor: 'var(--color-brand-gold)', borderTopColor: 'transparent' }} />
+                 style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
             <span className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Loading questions…</span>
           </div>
         )}
@@ -485,8 +485,8 @@ export default function Practice() {
             className="text-sm font-semibold px-3 py-1.5 rounded-full"
             style={{
               background: 'var(--color-brand-card)',
-              color: 'var(--color-brand-gold)',
-              border: '1px solid var(--color-brand-gold)',
+              color: 'var(--color-brand-cyan)',
+              border: '1px solid var(--color-brand-cyan)',
             }}
           >
             {currentQ.games.name}
@@ -561,7 +561,7 @@ export default function Practice() {
             <button
               type="submit"
               className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
-              style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+              style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}
             >
               Submit <ChevronRight size={16} />
             </button>
@@ -576,7 +576,7 @@ export default function Practice() {
             <button
               key={`${queueIdx}-${i}`}
               onClick={() => submitAnswer(option)}
-              className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium hover-gold active:scale-[0.98]"
+              className="w-full text-left px-4 py-4 rounded-xl text-sm font-medium hover-accent active:scale-[0.98]"
               style={{
                 background: 'var(--color-brand-card)',
                 border: '1px solid var(--color-brand-border)',
@@ -716,7 +716,7 @@ export default function Practice() {
                   <div className="flex items-center justify-between text-sm font-bold mt-3 pt-2"
                     style={{ borderTop: '1px solid var(--color-brand-border)' }}>
                     <span style={{ color: 'var(--color-brand-text)' }}>Total Payout</span>
-                    <span className="font-mono" style={{ color: 'var(--color-brand-gold)' }}>
+                    <span className="font-mono" style={{ color: 'var(--color-brand-teal)' }}>
                       {fmtDollars(scen.correctPayout)}
                     </span>
                   </div>
@@ -729,7 +729,7 @@ export default function Practice() {
           <button
             onClick={nextQuestion}
             className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mt-1"
-            style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+            style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}
           >
             Next Question <ChevronRight size={16} />
           </button>

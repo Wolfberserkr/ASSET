@@ -249,7 +249,7 @@ export default function Results() {
       <Layout>
         <div className="flex items-center justify-center py-24">
           <div className="w-8 h-8 rounded-full border-2 animate-spin"
-               style={{ borderColor: 'var(--color-brand-gold)', borderTopColor: 'transparent' }} />
+               style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
         </div>
       </Layout>
     )
@@ -658,7 +658,7 @@ export default function Results() {
         <button
           onClick={() => navigate('/drill')}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold"
-          style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+          style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff' }}
         >
           <RotateCcw size={16} /> Drill Again
         </button>
