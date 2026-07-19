@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth, DRILL_ROLES } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
@@ -307,7 +307,7 @@ export default function AgentDashboard() {
 
   // Show onboarding modal on first login (when onboarding_completed_at is null).
   useEffect(() => {
-    if (profile && (profile.role === 'agent' || profile.role === 'pit_manager') && !profile.onboarding_completed_at) {
+    if (profile && DRILL_ROLES.includes(profile.role) && !profile.onboarding_completed_at) {
       setOnboardingOpen(true)
     }
   }, [profile])

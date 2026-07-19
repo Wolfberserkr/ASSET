@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, DRILL_ROLES, MANAGEMENT_ROLES } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // Auth — keep eager (first paint)
@@ -50,7 +50,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
 
             {/* Agent routes */}
-            <Route element={<ProtectedRoute allowedRoles={['agent', 'pit_manager']} />}>
+            <Route element={<ProtectedRoute allowedRoles={DRILL_ROLES} />}>
               <Route path="/dashboard"          element={<AgentDashboard />} />
               <Route path="/change-password"    element={<ChangePassword />} />
               <Route path="/drill"              element={<DrillSession />} />
@@ -63,7 +63,7 @@ export default function App() {
             </Route>
 
             {/* Management routes */}
-            <Route element={<ProtectedRoute allowedRoles={['supervisor', 'director', 'casino_manager']} />}>
+            <Route element={<ProtectedRoute allowedRoles={MANAGEMENT_ROLES} />}>
               <Route path="/management"                element={<TeamDashboard />} />
               <Route path="/management/agent/:id"      element={<AgentDetail />} />
               <Route path="/management/completion"     element={<Completion />} />

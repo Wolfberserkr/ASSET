@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, DRILL_ROLES } from '../context/AuthContext'
 
 export default function ProtectedRoute({ allowedRoles }) {
   const { user, profile, loading } = useAuth()
@@ -21,7 +21,7 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
     // Wrong role — redirect to correct home
-    if (profile.role === 'agent' || profile.role === 'pit_manager') return <Navigate to="/dashboard" replace />
+    if (DRILL_ROLES.includes(profile.role)) return <Navigate to="/dashboard" replace />
     return <Navigate to="/management" replace />
   }
 

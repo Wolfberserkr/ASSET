@@ -27,14 +27,23 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 ## Supabase Config
 - **Project URL:** `https://wcrxiyterasmmfhfdwtz.supabase.co`
 - **Auth pattern:** Employee ID login — email is `{employee_id}@stellaris.local`, Rick creates all accounts manually
-- **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `casino_manager` (Pit)
-- **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall
+- **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `shift_manager`, `casino_manager` (Pit)
+- **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall; `is_management()` (added in `supabase/add_shift_manager.sql`) is the single source of truth for which roles are management
 - **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`
 
 ### Departments (Surveillance vs Pit)
 Department is **derived from role** — no extra column:
 - `agent`, `supervisor`, `director` → **surveillance**
-- `pit_manager`, `casino_manager` → **pit**
+- `pit_manager`, `shift_manager`, `casino_manager` → **pit**
+
+Role pairing across departments (each pair has identical features in V1):
+| Surveillance | Pit | Features |
+|---|---|---|
+| `agent` | `pit_manager` | Drill portal (drills, practice, resources, history) |
+| `supervisor` | `shift_manager` | Management portal |
+| `director` | `casino_manager` | Management portal (director/casino_manager split from supervisor/shift_manager deferred to a future version) |
+
+`shift_manager` has no users yet — the role is provisioned and ready (migration `supabase/add_shift_manager.sql`). The frontend role lists live in `AuthContext` (`DRILL_ROLES`, `MANAGEMENT_ROLES`, `PIT_ROLES`); the SQL management list lives in `public.is_management()`.
 
 Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_roles.sql`):
 - **Pit Managers** do drills exactly like agents: same session structure, scoring, 4-hour cooldown, 20 sessions/month recert, adaptive difficulty. They use the same agent portal pages (sidebar shows "Pit Operations").

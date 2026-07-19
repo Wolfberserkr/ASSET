@@ -5,6 +5,10 @@ import { logAudit } from '../lib/audit'
 
 const AuthContext = createContext(null)
 
+export const DRILL_ROLES      = ['agent', 'pit_manager']
+export const MANAGEMENT_ROLES = ['supervisor', 'director', 'casino_manager', 'shift_manager']
+export const PIT_ROLES        = ['pit_manager', 'casino_manager', 'shift_manager']
+
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000  // 30 minutes inactivity
 const ACTIVITY_EVENTS     = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
 
@@ -179,12 +183,12 @@ export function AuthProvider({ children }) {
   }, [navigate, stopActivityTracking])
 
   // Department is derived from role: agent/supervisor/director are
-  // Surveillance; pit_manager/casino_manager are Pit. drillRole is the
-  // drill-taker role of the caller's department — client-side queries
-  // that list "the team" filter on it.
-  const department = profile?.role === 'pit_manager' || profile?.role === 'casino_manager'
-    ? 'pit'
-    : 'surveillance'
+  // Surveillance; pit_manager/shift_manager/casino_manager are Pit.
+  // Role pairing: agent↔pit_manager (drills), supervisor↔shift_manager,
+  // director↔casino_manager (management). drillRole is the drill-taker
+  // role of the caller's department — client-side queries that list
+  // "the team" filter on it.
+  const department = PIT_ROLES.includes(profile?.role) ? 'pit' : 'surveillance'
 
   const value = {
     user,
@@ -192,8 +196,8 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
-    isAgent:      profile?.role === 'agent' || profile?.role === 'pit_manager',
-    isManagement: profile?.role === 'supervisor' || profile?.role === 'director' || profile?.role === 'casino_manager',
+    isAgent:      DRILL_ROLES.includes(profile?.role),
+    isManagement: MANAGEMENT_ROLES.includes(profile?.role),
     department,
     drillRole:    department === 'pit' ? 'pit_manager' : 'agent',
   }
