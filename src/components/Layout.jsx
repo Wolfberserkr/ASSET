@@ -36,22 +36,22 @@ function notifKey(userId) {
 }
 
 const agentNav = [
-  { to: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard },
-  { to: '/drill',           label: 'Drill',           icon: PlayCircle },
-  { to: '/practice',        label: 'Practice',        icon: GraduationCap },
-  { to: '/resources',       label: 'Resources',       icon: Library },
-  { to: '/history',         label: 'My History',      icon: FileText },
-  { to: '/help',            label: 'How It Works',    icon: HelpCircle },
-  { to: '/change-password', label: 'Change Password', icon: KeyRound },
+  { to: '/dashboard',       label: 'Dashboard',       icon: LayoutDashboard, group: 'Main' },
+  { to: '/drill',           label: 'Drill',           icon: PlayCircle,      group: 'Main' },
+  { to: '/practice',        label: 'Practice',        icon: GraduationCap,   group: 'Main' },
+  { to: '/resources',       label: 'Resources',       icon: Library,         group: 'Main' },
+  { to: '/history',         label: 'My History',      icon: FileText,        group: 'Main' },
+  { to: '/help',            label: 'How It Works',    icon: HelpCircle,      group: 'Help' },
+  { to: '/change-password', label: 'Change Password', icon: KeyRound,        group: 'Help' },
 ]
 
 const mgmtNav = [
-  { to: '/management',                  label: 'Team Dashboard',    icon: LayoutDashboard },
-  { to: '/management/completion',       label: 'Completion Tracker',icon: CheckSquare },
-  { to: '/management/weak-areas',       label: 'Weak Areas',        icon: BarChart2 },
-  { to: '/management/question-stats',   label: 'Question Stats',    icon: ClipboardList },
-  { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen },
-  { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText },
+  { to: '/management',                  label: 'Team Dashboard',    icon: LayoutDashboard, group: 'Main' },
+  { to: '/management/completion',       label: 'Completion Tracker',icon: CheckSquare,     group: 'Main' },
+  { to: '/management/weak-areas',       label: 'Weak Areas',        icon: BarChart2,       group: 'Main' },
+  { to: '/management/question-stats',   label: 'Question Stats',    icon: ClipboardList,   group: 'Reports' },
+  { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen,        group: 'Reports' },
+  { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText,        group: 'Reports' },
 ]
 
 function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
@@ -87,12 +87,16 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
       end={to === '/management' || to === '/dashboard'}
       onClick={onClick}
       className={({ isActive }) =>
-        `nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)] ${
-          isActive ? 'nav-item-active bg-[var(--color-brand-card)] text-[var(--color-brand-gold)]' : ''
+        `nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-cyan)] ${
+          isActive ? 'nav-item-active' : ''
         }`
       }
       style={({ isActive }) => ({
-        color: isActive ? 'var(--color-brand-gold)' : 'var(--color-brand-muted)',
+        color: isActive ? 'var(--color-brand-success)' : 'var(--color-brand-muted)',
+        background: isActive
+          ? 'linear-gradient(90deg, rgba(61, 220, 132, 0.10), rgba(61, 220, 132, 0.02))'
+          : undefined,
+        boxShadow: isActive ? 'inset 2px 0 0 var(--color-brand-success)' : undefined,
       })}
     >
       {({ isActive }) => (
@@ -236,14 +240,19 @@ export default function Layout({ children, bg }) {
       >
         <button
           onClick={() => setSidebarOpen(true)}
-          className="p-1.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)]"
+          className="p-1.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-cyan)]"
           style={{ color: 'var(--color-brand-muted)' }}
           aria-label="Open navigation menu"
         >
           <Menu size={20} />
         </button>
-        <Shield size={18} style={{ color: 'var(--color-brand-gold)' }} />
-        <span className="text-sm font-bold" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</span>
+        <div
+          className="w-6 h-6 rounded-md flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }}
+        >
+          <Shield size={13} color="#fff" />
+        </div>
+        <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</span>
       </div>
 
       {/* Mobile overlay — always rendered, fades in/out via CSS */}
@@ -267,15 +276,23 @@ export default function Layout({ children, bg }) {
       >
         {/* Logo */}
         <div className="px-4 py-5 flex items-center gap-2.5" style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
-          <Shield size={20} style={{ color: 'var(--color-brand-gold)' }} />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))',
+              boxShadow: '0 0 16px rgba(72, 118, 255, 0.45)',
+            }}
+          >
+            <Shield size={16} color="#fff" />
+          </div>
           <div className="flex-1">
-            <p className="text-sm font-bold leading-tight" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</p>
-            <p className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>{department === 'pit' ? 'Pit Operations' : 'Surveillance'}</p>
+            <p className="text-sm font-bold leading-tight tracking-wider" style={{ color: 'var(--color-brand-text)' }}>A.S.S.E.T</p>
+            <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-brand-muted)' }}>{department === 'pit' ? 'Pit Operations' : 'Surveillance'}</p>
           </div>
           {/* Mobile close button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1 rounded-lg md:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)]"
+            className="p-1 rounded-lg md:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-cyan)]"
             style={{ color: 'var(--color-brand-muted)' }}
             aria-label="Close navigation menu"
           >
@@ -283,10 +300,20 @@ export default function Layout({ children, bg }) {
           </button>
         </div>
 
-        {/* Nav */}
+        {/* Nav — grouped with section labels */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5" role="navigation" aria-label="Main navigation">
-          {navLinks.map(link => (
-            <NavItem key={link.to} {...link} onClick={() => setSidebarOpen(false)} />
+          {navLinks.map((link, i) => (
+            <div key={link.to}>
+              {link.group !== navLinks[i - 1]?.group && (
+                <p
+                  className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em]"
+                  style={{ color: 'var(--color-brand-muted)', opacity: 0.6, paddingTop: i === 0 ? 4 : 16 }}
+                >
+                  {link.group}
+                </p>
+              )}
+              <NavItem {...link} onClick={() => setSidebarOpen(false)} />
+            </div>
           ))}
         </nav>
 
@@ -296,7 +323,7 @@ export default function Layout({ children, bg }) {
             <button
               onClick={() => setNotifOpen(o => !o)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{ color: (undismissed.length + undismissedDecay.length) ? 'var(--color-brand-gold)' : 'var(--color-brand-muted)' }}
+              style={{ color: (undismissed.length + undismissedDecay.length) ? 'var(--color-brand-cyan)' : 'var(--color-brand-muted)' }}
               aria-label="Notifications"
             >
               <span className="relative">
@@ -420,10 +447,16 @@ export default function Layout({ children, bg }) {
           className="p-3"
           style={{ borderTop: '1px solid var(--color-brand-border)' }}
         >
-          <div className="flex items-center gap-2.5 px-2 py-2 mb-1">
+          <div
+            className="flex items-center gap-2.5 px-3 py-2.5 mb-1 rounded-xl"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}
+          >
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-              style={{ background: 'var(--color-brand-gold)', color: '#0b0f1a' }}
+              style={{
+                background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))',
+                color: '#fff',
+              }}
             >
               {profile?.employee_id?.[0]?.toUpperCase() ?? '?'}
             </div>
@@ -435,7 +468,7 @@ export default function Layout({ children, bg }) {
           </div>
           <button
             onClick={() => logout()}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-gold)]"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-cyan)]"
             style={{ color: 'var(--color-brand-muted)' }}
             aria-label="Sign out"
           >
