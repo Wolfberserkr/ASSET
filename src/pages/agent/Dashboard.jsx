@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
+import Countdown from '../../components/Countdown'
 import ScoreChart from '../../components/ScoreChart'
 import RingGauge from '../../components/RingGauge'
 import OnboardingModal from '../../components/OnboardingModal'
@@ -11,16 +12,6 @@ import { computeTrend } from '../../lib/decayUtils'
 import {
   CheckCircle, TrendingUp, Clock, PlayCircle, AlertTriangle, Bell,
 } from 'lucide-react'
-
-// Formats seconds into mm:ss or h:mm:ss
-function formatCountdown(secs) {
-  if (secs <= 0) return '00:00'
-  const h = Math.floor(secs / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-}
 
 // Non-participant agents excluded from the leaderboard (per Rick). Matched on
 // the badge number so padding variants all resolve (B-008 == B-8 == 8).
@@ -80,7 +71,6 @@ export default function AgentDashboard() {
 
   // Cooldown is shared with the sidebar — single source of truth, single ticker.
   const cooldown = useCooldown(user?.id ?? null)
-  const cooldownSecs = cooldown.remainingSeconds
   const canDrill = cooldown.canDrill
 
   const [recert,          setRecert]          = useState(null)
@@ -272,7 +262,7 @@ export default function AgentDashboard() {
               }}
             >
               <PlayCircle size={16} />
-              {canDrill ? 'Start Drill' : `Cooldown · ${formatCountdown(cooldownSecs)}`}
+              {canDrill ? 'Start Drill' : <>Cooldown · <Countdown endAt={cooldown.endAt} done="00:00" /></>}
             </button>
             <button
               onClick={() => navigate('/practice')}
@@ -477,7 +467,7 @@ export default function AgentDashboard() {
             },
             {
               k: 'Cooldown',
-              v: cooldown.loading ? '…' : canDrill ? 'Ready' : formatCountdown(cooldownSecs),
+              v: cooldown.loading ? '…' : canDrill ? 'Ready' : <Countdown endAt={cooldown.endAt} />,
               color: canDrill ? 'var(--color-brand-success)' : 'var(--color-brand-coral)',
             },
           ]} />
@@ -544,7 +534,7 @@ export default function AgentDashboard() {
               boxShadow: canDrill ? '0 6px 22px rgba(58, 98, 255, 0.4)' : 'none',
             }}
           >
-            {canDrill ? 'Start Drill — 10 Questions' : `Next drill in ${formatCountdown(cooldownSecs)}`}
+            {canDrill ? 'Start Drill — 10 Questions' : <>Next drill in <Countdown endAt={cooldown.endAt} done="00:00" /></>}
           </button>
         </aside>
       </div>

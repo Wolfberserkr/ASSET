@@ -31,6 +31,7 @@ function smoothPath(pts) {
 export default function ScoreChart({ sessions }) {
   const svgRef = useRef(null)
   const hideTimer = useRef(null)
+  const rafRef = useRef(0)
   const [selected, setSelected] = useState(null)  // null = nothing shown
   const [visible,  setVisible]  = useState(false)
 
@@ -62,7 +63,10 @@ export default function ScoreChart({ sessions }) {
     }
   }, [sessions])
 
-  useEffect(() => () => clearTimeout(hideTimer.current), [])
+  useEffect(() => () => {
+    clearTimeout(hideTimer.current)
+    cancelAnimationFrame(rafRef.current)
+  }, [])
 
   if (!chart) {
     return (
@@ -145,7 +149,12 @@ export default function ScoreChart({ sessions }) {
         className="w-full h-[190px] block"
         style={{ cursor: 'pointer', touchAction: 'pan-y' }}
         onPointerDown={e => { e.currentTarget.setPointerCapture?.(e.pointerId); pickNearest(e.clientX) }}
-        onPointerMove={e => { if (e.buttons === 1) pickNearest(e.clientX) }}
+        onPointerMove={e => {
+          // rAF-throttle drag scrubbing — one state update per frame, not per event
+          if (e.buttons !== 1 || rafRef.current) return
+          const x = e.clientX
+          rafRef.current = requestAnimationFrame(() => { rafRef.current = 0; pickNearest(x) })
+        }}
         aria-hidden="true"
       >
         <defs>
