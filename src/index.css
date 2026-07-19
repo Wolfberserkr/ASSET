@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand colours */
-  --color-brand-bg:        #0b0f1a;
-  --color-brand-surface:   #111827;
-  --color-brand-card:      #1a2236;
-  --color-brand-border:    #253047;
+  /* Brand colours — navy/electric-blue dashboard theme */
+  --color-brand-bg:        #10172e;
+  --color-brand-surface:   #0a0f20;
+  --color-brand-card:      #151d38;
+  --color-brand-border:    #223052;
   --color-brand-gold:      #d4a843;
   --color-brand-gold-dim:  #a07c2a;
   --color-brand-blue:      #3b82f6;
@@ -14,6 +14,13 @@
   --color-brand-danger:    #ef4444;
   --color-brand-text:      #e2e8f0;
   --color-brand-muted:     #8694a9;
+
+  /* Dashboard redesign accents (navy/electric-blue reference) */
+  --color-brand-cyan:      #4fa8ff;
+  --color-brand-teal:      #38d6c4;
+  --color-brand-coral:     #ff7a70;
+  --color-brand-grad-a:    #2e6bff;
+  --color-brand-grad-b:    #7a4dff;
 
   /* Fonts */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
@@ -117,7 +124,7 @@ aside {
     top: 18%;
     bottom: 18%;
     width: 2px;
-    background: var(--color-brand-gold);
+    background: var(--color-brand-cyan);
     border-radius: 2px;
     transform: scaleY(0);
     transform-origin: center;
@@ -128,7 +135,7 @@ aside {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, rgba(212, 168, 67, 0.10), transparent 70%);
+    background: linear-gradient(90deg, rgba(79, 168, 255, 0.08), transparent 70%);
     opacity: 0;
     transition: opacity 220ms ease;
     pointer-events: none;
@@ -148,7 +155,7 @@ aside {
   }
   .nav-item:not(.nav-item-active):hover .nav-item-icon {
     transform: translateX(2px);
-    color: var(--color-brand-gold);
+    color: var(--color-brand-cyan);
   }
 }
 
