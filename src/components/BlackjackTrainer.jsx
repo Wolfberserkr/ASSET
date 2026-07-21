@@ -5,6 +5,7 @@ import {
 import {
   DEALER_LABELS, CHART_SECTIONS, generateScenario, explainRule,
 } from '../lib/blackjackStrategy'
+import PlayingCard, { CardBack } from './PlayingCard'
 
 // ─── Action + chart cell styling (mirrors the printed chart's color code) ─────
 
@@ -16,140 +17,6 @@ const ACTION_META = {
 }
 
 const CELL_LABEL = { H: 'H', S: 'S', D: 'D', P: 'SP' }
-
-// ─── Playing card ─────────────────────────────────────────────────────────────
-
-const SUIT_META = {
-  s: { sym: '♠', color: '#1c2233' },
-  c: { sym: '♣', color: '#1c2233' },
-  h: { sym: '♥', color: '#c62828' },
-  d: { sym: '♦', color: '#c62828' },
-}
-
-// Classic pip layouts for 2–10, as [x, y] fractions of the pip area.
-const PIP_LAYOUTS = {
-  2:  [[.5, .12], [.5, .88]],
-  3:  [[.5, .12], [.5, .5], [.5, .88]],
-  4:  [[.28, .12], [.72, .12], [.28, .88], [.72, .88]],
-  5:  [[.28, .12], [.72, .12], [.5, .5], [.28, .88], [.72, .88]],
-  6:  [[.28, .12], [.72, .12], [.28, .5], [.72, .5], [.28, .88], [.72, .88]],
-  7:  [[.28, .12], [.72, .12], [.5, .31], [.28, .5], [.72, .5], [.28, .88], [.72, .88]],
-  8:  [[.28, .12], [.72, .12], [.5, .31], [.28, .5], [.72, .5], [.5, .69], [.28, .88], [.72, .88]],
-  9:  [[.28, .12], [.72, .12], [.28, .37], [.72, .37], [.5, .5], [.28, .63], [.72, .63], [.28, .88], [.72, .88]],
-  10: [[.28, .12], [.72, .12], [.5, .245], [.28, .37], [.72, .37], [.28, .63], [.72, .63], [.5, .755], [.28, .88], [.72, .88]],
-}
-
-const CARD_W = 84
-const CARD_H = 118
-
-function CardBack({ rotate = 0, delay = 0, overlap = false }) {
-  return (
-    <div
-      className="card-deal"
-      style={{
-        width: CARD_W, height: CARD_H, borderRadius: 9, padding: 5,
-        background: 'linear-gradient(160deg, #ffffff 0%, #f0f0e8 100%)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3)',
-        '--deal-rot': `${rotate}deg`,
-        transform: `rotate(${rotate}deg)`,
-        animationDelay: `${delay}ms`,
-        marginLeft: overlap ? -18 : 0,
-        flexShrink: 0,
-      }}
-    >
-      <div style={{
-        width: '100%', height: '100%', borderRadius: 5,
-        background: 'repeating-linear-gradient(45deg, #26418f 0 5px, #1b2f6b 5px 10px)',
-        border: '1px solid #16255a',
-      }} />
-    </div>
-  )
-}
-
-function PlayingCard({ card, rotate = 0, delay = 0, overlap = false }) {
-  const { sym, color } = SUIT_META[card.suit]
-  const isFace = card.rank === 'J' || card.rank === 'Q' || card.rank === 'K'
-  const isAce  = card.rank === 'A'
-  const pips   = PIP_LAYOUTS[parseInt(card.rank, 10)]
-
-  const corner = (bottom) => (
-    <div
-      style={{
-        position: 'absolute',
-        ...(bottom ? { bottom: 5, right: 6, transform: 'rotate(180deg)' } : { top: 5, left: 6 }),
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        color, lineHeight: 1,
-      }}
-    >
-      <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-sans)', letterSpacing: '-0.5px' }}>
-        {card.rank}
-      </span>
-      <span style={{ fontSize: 11, marginTop: 1 }}>{sym}</span>
-    </div>
-  )
-
-  return (
-    <div
-      className="card-deal"
-      style={{
-        width: CARD_W, height: CARD_H, borderRadius: 9, position: 'relative',
-        background: 'linear-gradient(160deg, #ffffff 0%, #f4f4ec 100%)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3)',
-        '--deal-rot': `${rotate}deg`,
-        transform: `rotate(${rotate}deg)`,
-        animationDelay: `${delay}ms`,
-        marginLeft: overlap ? -18 : 0,
-        flexShrink: 0,
-      }}
-    >
-      {corner(false)}
-      {corner(true)}
-
-      {isAce && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color, fontSize: card.suit === 's' ? 46 : 42,
-        }}>
-          {sym}
-        </div>
-      )}
-
-      {isFace && (
-        <div style={{
-          position: 'absolute', inset: '16% 24%',
-          border: `1.5px solid ${color}99`, borderRadius: 6,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 2, color,
-        }}>
-          <span style={{ fontSize: 13 }}>{sym}</span>
-          <span style={{ fontSize: 26, fontWeight: 700, fontFamily: 'Georgia, serif', lineHeight: 1 }}>
-            {card.rank}
-          </span>
-          <span style={{ fontSize: 13, transform: 'rotate(180deg)' }}>{sym}</span>
-        </div>
-      )}
-
-      {pips && (
-        <div style={{ position: 'absolute', inset: '11% 21%' }}>
-          {pips.map(([x, y], i) => (
-            <span
-              key={i}
-              style={{
-                position: 'absolute',
-                left: `${x * 100}%`, top: `${y * 100}%`,
-                transform: `translate(-50%, -50%)${y > 0.55 ? ' rotate(180deg)' : ''}`,
-                color, fontSize: pips.length >= 8 ? 14 : 16, lineHeight: 1,
-              }}
-            >
-              {sym}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ─── Strategy chart pieces ────────────────────────────────────────────────────
 
@@ -289,10 +156,12 @@ export default function BlackjackTrainer() {
   const [feedback,  setFeedback]  = useState(null) // { chosen, isCorrect, rule, text }
   const [stats,     setStats]     = useState({ hands: 0, correct: 0, streak: 0, best: 0 })
   const [showChart, setShowChart] = useState(false)
+  const [dealNum,   setDealNum]   = useState(0) // keys the cards → deal animation runs once per hand
 
   const nextHand = useCallback((m) => {
     setScenario(prev => generateScenario(m ?? mode, prev))
     setFeedback(null)
+    setDealNum(n => n + 1)
   }, [mode])
 
   const changeMode = (m) => {
@@ -419,9 +288,9 @@ export default function BlackjackTrainer() {
             </p>
           </div>
           <div className="flex items-center">
-            <PlayingCard key={`d-${scenario.dealerCard.rank}${scenario.dealerCard.suit}-${stats.hands}`}
+            <PlayingCard key={`d-${scenario.dealerCard.rank}${scenario.dealerCard.suit}-${dealNum}`}
               card={scenario.dealerCard} rotate={-2} delay={0} />
-            <CardBack key={`db-${stats.hands}`} rotate={2} delay={80} overlap />
+            <CardBack key={`db-${dealNum}`} rotate={2} delay={80} overlap />
           </div>
           <div className="w-16 shrink-0">
             <span className="inline-block text-xs font-mono font-bold px-2.5 py-1 rounded-lg"
@@ -439,9 +308,9 @@ export default function BlackjackTrainer() {
             </p>
           </div>
           <div className="flex items-center">
-            <PlayingCard key={`p0-${scenario.playerCards[0].rank}${scenario.playerCards[0].suit}-${stats.hands}`}
+            <PlayingCard key={`p0-${scenario.playerCards[0].rank}${scenario.playerCards[0].suit}-${dealNum}`}
               card={scenario.playerCards[0]} rotate={-3} delay={160} />
-            <PlayingCard key={`p1-${scenario.playerCards[1].rank}${scenario.playerCards[1].suit}-${stats.hands}`}
+            <PlayingCard key={`p1-${scenario.playerCards[1].rank}${scenario.playerCards[1].suit}-${dealNum}`}
               card={scenario.playerCards[1]} rotate={3} delay={240} overlap />
           </div>
           <div className="w-16 shrink-0">

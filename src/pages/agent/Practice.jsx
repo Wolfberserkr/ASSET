@@ -7,10 +7,19 @@ import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
 import BlackjackTrainer from '../../components/BlackjackTrainer'
+import PokerWinnerTrainer from '../../components/PokerWinnerTrainer'
 import {
   CheckCircle, XCircle, ChevronRight, DollarSign,
-  ArrowLeft, GraduationCap, AlertTriangle, Spade,
+  ArrowLeft, GraduationCap, AlertTriangle, Spade, Club,
 } from 'lucide-react'
+
+// Poker games with a winner / hand-recognition trainer in Practice
+const WINNER_GAMES = {
+  'Caribbean Stud Poker':   { key: 'csp', short: 'Caribbean Stud' },
+  "Ultimate Texas Hold'em": { key: 'uth', short: 'Ultimate Hold’em' },
+  'Let It Ride':            { key: 'lir', short: 'Let It Ride' },
+  'Three Card Poker':       { key: 'tcp', short: 'Three Card Poker' },
+}
 
 function isRouletteQuestion(q) {
   return (q?.games?.name ?? '').toLowerCase().includes('roulette')
@@ -144,9 +153,9 @@ function GameCard({ name, drillType, count, onClick, disabled }) {
   )
 }
 
-// ─── Blackjack strategy trainer card ─────────────────────────────────────────
+// ─── Trainer cards (gold-bordered specials in the game picker) ───────────────
 
-function StrategyCard({ onClick, disabled }) {
+function TrainerCard({ icon: Icon, title, subtitle, detail, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
@@ -160,14 +169,14 @@ function StrategyCard({ onClick, disabled }) {
     >
       <p className="font-semibold text-sm mb-1 flex items-center gap-1.5"
         style={{ color: 'var(--color-brand-text)' }}>
-        <Spade size={13} style={{ color: 'var(--color-brand-gold)' }} />
-        Blackjack Strategy
+        <Icon size={13} style={{ color: 'var(--color-brand-gold)' }} />
+        {title}
       </p>
       <p className="text-xs font-medium" style={{ color: 'var(--color-brand-gold)' }}>
-        Basic strategy trainer
+        {subtitle}
       </p>
       <p className="text-xs mt-2" style={{ color: 'var(--color-brand-muted)' }}>
-        Hit · Stand · Double · Split
+        {detail}
       </p>
     </button>
   )
@@ -183,6 +192,7 @@ export default function Practice() {
 
   // Practice session state
   const [selectedGame,     setSelectedGame]     = useState(null)
+  const [winnerGame,       setWinnerGame]       = useState(null) // { key, name } for phase 'winner'
   const [questions,        setQuestions]        = useState([])
   const [queueIdx,         setQueueIdx]         = useState(0)
   const [betContext,       setBetContext]       = useState(null)
@@ -344,6 +354,7 @@ export default function Practice() {
   const backToSelector = () => {
     setPhase('selecting')
     setSelectedGame(null)
+    setWinnerGame(null)
     setQuestions([])
     setFeedback(null)
     setStats({ answered: 0, correct: 0 })
@@ -355,6 +366,16 @@ export default function Practice() {
       scope_name: 'Blackjack Strategy Trainer',
     })
     setPhase('strategy')
+  }
+
+  const startWinnerTrainer = (gameName) => {
+    const { key, short } = WINNER_GAMES[gameName]
+    logAudit('PRACTICE_STARTED', {
+      scope: 'winner_trainer',
+      scope_name: `${gameName} Hand Trainer`,
+    })
+    setWinnerGame({ key, name: short })
+    setPhase('winner')
   }
 
   // ── Loading games ──────────────────────────────────────────────
@@ -431,7 +452,24 @@ export default function Practice() {
                 disabled={loading}
               />
               {game.name === 'Blackjack' && (
-                <StrategyCard onClick={startStrategyTrainer} disabled={loading} />
+                <TrainerCard
+                  icon={Spade}
+                  title="Blackjack Strategy"
+                  subtitle="Basic strategy trainer"
+                  detail="Hit · Stand · Double · Split"
+                  onClick={startStrategyTrainer}
+                  disabled={loading}
+                />
+              )}
+              {WINNER_GAMES[game.name] && (
+                <TrainerCard
+                  icon={Club}
+                  title={`${WINNER_GAMES[game.name].short} Hands`}
+                  subtitle="Hand recognition trainer"
+                  detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
+                  onClick={() => startWinnerTrainer(game.name)}
+                  disabled={loading}
+                />
               )}
             </Fragment>
           ))}
@@ -487,6 +525,33 @@ export default function Practice() {
           </div>
         </div>
         <BlackjackTrainer />
+      </Layout>
+    )
+  }
+
+  // ── Poker winner / hand recognition trainer ────────────────────
+  if (phase === 'winner' && winnerGame) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={backToSelector}
+              className="flex items-center gap-1.5 text-sm"
+              style={{ color: 'var(--color-brand-muted)' }}
+            >
+              <ArrowLeft size={15} />
+              Change game
+            </button>
+            <span style={{ color: 'var(--color-brand-border)' }}>|</span>
+            <span className="text-sm font-medium flex items-center gap-1.5"
+              style={{ color: 'var(--color-brand-text)' }}>
+              <Club size={13} style={{ color: 'var(--color-brand-gold)' }} />
+              {winnerGame.name} — Hand Trainer
+            </span>
+          </div>
+        </div>
+        <PokerWinnerTrainer game={winnerGame.key} />
       </Layout>
     )
   }

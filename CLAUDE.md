@@ -343,6 +343,12 @@ Interactive drill on the house basic strategy chart (sections A–D: hard hittin
 - `src/components/BlackjackTrainer.jsx` — trainer UI: dealt two-card hand vs dealer up-card on a felt table, Hit/Stand/Double/Split actions (keyboard H/S/D/P, Split disabled unless a pair), mode filter (All/Hard/Soft/Pairs), streak + accuracy stats. Wrong answers show the correct play, the house rule, and the matching strategy-chart row with the dealer column highlighted. A collapsible full chart (hard/soft/pairs) renders from the same tables.
 - **Zero database writes** — like Practice mode, no sessions/stats/cooldown; only a `PRACTICE_STARTED` audit event (scope `blackjack_strategy`) when launched from Practice.
 
+### Poker Hand Recognition Trainers (CSP / UTH / LIR / TCP)
+Winner-call drills for the four poker games: a full hand is dealt face up and the agent calls the result. Entry points mirror the blackjack trainer: **Resources → (game) → "Hand Trainer" tab** and a gold **"(game) Hands" card in the Practice picker** next to each game.
+- `src/lib/pokerHands.js` — pure engine (Node-testable): 5-card, best-5-of-7 (UTH), and 3-card (TCP — straight beats flush, A-2-3 lowest straight, A-K-Q Mini Royal) evaluators; hand naming; house qualify rules (CSP Ace-King, TCP Queen-high, UTH pair "opens"); LIR paytable (pays Pair of Tens+); tie-break explanations; weighted scenario generation. Exact ties are constructed (dealer gets the player's ranks with permuted suits) since they're vanishingly rare in random deals; training mixes surface pushes/no-quals far more than real odds.
+- `src/components/PokerWinnerTrainer.jsx` — same aesthetic as the blackjack trainer (shared `PlayingCard.jsx` renderer, felt table, streak/accuracy stats, keyboard shortcuts). Options per game: CSP/TCP `Player · Dealer · Push · No Qualify`, UTH `Player · Dealer · Push`, LIR `Hand Pays · No Pay`. Feedback names both hands and explains the deciding rule/tie-breaker; collapsible per-game rankings + house payout panel.
+- **Zero database writes**; `PRACTICE_STARTED` audit event (scope `winner_trainer`) when launched from Practice.
+
 ---
 
 ## Vite Config
