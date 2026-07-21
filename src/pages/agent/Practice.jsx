@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
+import { hasCoarsePointer } from '../../lib/device'
 import { randomizeBetAmount } from '../../lib/questionRandomizer'
 import { fetchAllRows } from '../../lib/fetchAllRows'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
@@ -692,7 +693,7 @@ export default function Practice() {
                   border: `1px solid ${inputError ? 'var(--color-brand-danger)' : 'var(--color-brand-border)'}`,
                   color: 'var(--color-brand-text)',
                 }}
-                autoFocus
+                autoFocus={!hasCoarsePointer}
               />
             </div>
             {inputError && (

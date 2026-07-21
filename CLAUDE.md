@@ -349,6 +349,10 @@ Winner-call drills for the four poker games: a full hand is dealt face up and th
 - `src/components/PokerWinnerTrainer.jsx` — same aesthetic as the blackjack trainer (shared `PlayingCard.jsx` renderer, felt table, streak/accuracy stats, keyboard shortcuts). Options per game: CSP/TCP `Player · Dealer · Push · No Qualify`, UTH `Player · Dealer · Push`, LIR `Hand Pays · No Pay`. Feedback names both hands and explains the deciding rule/tie-breaker; collapsible per-game rankings + house payout panel.
 - **Zero database writes**; `PRACTICE_STARTED` audit event (scope `winner_trainer`) when launched from Practice.
 
+### Trainer / drill sizing & mobile input behavior
+- Trainer cards auto-scale to the felt width (`useFeltScale` in `PlayingCard.jsx`, ResizeObserver-based): up to ~2× on desktop, shrink-to-fit on phones. 2D SVG payout tables have doubled `maxHeight` caps; the DrillSession payout column is `max-w-4xl`.
+- Payout inputs skip `autoFocus` on touch devices (`hasCoarsePointer` in `src/lib/device.js`) so the on-screen keyboard doesn't cover the table layout — the keyboard only opens when the agent taps the input. Desktop keeps autofocus.
+
 ---
 
 ## Vite Config
