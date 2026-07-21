@@ -351,7 +351,7 @@ function TCPTable({ chips, activeBet = 'pair_plus' }) {
   ]
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 200 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 400 }}>
       <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
       <text x={W / 2} y={22} textAnchor="middle" fontSize={11}
         fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>
@@ -401,7 +401,7 @@ function LIRTable({ chips, perSpotBet }) {
   const perSpotLabel = perSpotBet != null ? `$${perSpotBet.toLocaleString()}` : ''
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 200 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 400 }}>
       <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
       <text x={W / 2} y={22} textAnchor="middle" fontSize={11}
         fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>LET IT RIDE</text>
@@ -447,7 +447,7 @@ function UTHTable({ chips }) {
   const tripsX = 415, tripsY = 100
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 210 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 420 }}>
       <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
       <text x={220} y={22} textAnchor="middle" fontSize={11}
         fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>
@@ -491,7 +491,7 @@ function CSPTable({ chips, activeBet = 'bet' }) {
   ]
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 210 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 420 }}>
       <rect x={0} y={0} width={W} height={H} rx={10} fill="#1a4a1a" />
       <text x={W / 2} y={22} textAnchor="middle" fontSize={11}
         fontWeight="bold" fill="#fbbf24" fontFamily="sans-serif" letterSpacing={2}>
@@ -590,7 +590,7 @@ function CrapsTable({ chips, activeBet = 'line' }) {
       : { cx: 60, cy: 168 }
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 320 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 640 }}>
       {/* Felt */}
       <rect x={0} y={0} width={W} height={H} rx={12} fill="#0f2c12" />
       <rect x={4} y={4} width={W - 8} height={H - 8} rx={10} fill="#15441a"

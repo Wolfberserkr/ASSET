@@ -1,5 +1,33 @@
 // Shared playing-card renderer used by the Blackjack strategy trainer and the
 // poker winner trainers. Accurate corner indices + classic center pip layouts.
+import { useEffect, useRef, useState } from 'react'
+
+// Sizes trainer cards to fill the felt: measures the felt's content width and
+// scales the widest card row to fit it, clamped to [0.45, maxScale]. Cards
+// grow to roughly double on desktop and shrink-to-fit on phones.
+const LABEL_OVERHEAD = 160 // two w-16 label columns + row gaps
+
+export function useFeltScale(widestRowCards, maxScale) {
+  const ref = useRef(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const rowW = widestRowCards * 84 - (widestRowCards - 1) * 18 // row width at scale 1
+    const compute = (w) => {
+      const s = Math.max(0.45, Math.min(maxScale, (w - LABEL_OVERHEAD) / rowW))
+      setScale(Math.round(s * 100) / 100)
+    }
+    compute(el.clientWidth)
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(entries => compute(entries[0].contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [widestRowCards, maxScale])
+
+  return [ref, scale]
+}
 
 export const SUIT_META = {
   s: { sym: '♠', color: '#1c2233' },

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   CheckCircle, XCircle, ChevronRight, RotateCcw, Flame, ListOrdered, ChevronDown,
 } from 'lucide-react'
-import PlayingCard from './PlayingCard'
+import PlayingCard, { useFeltScale } from './PlayingCard'
 import { generatePokerScenario, RANKINGS } from '../lib/pokerHands'
 
 // ─── Per-game configuration ───────────────────────────────────────────────────
@@ -21,25 +21,29 @@ const GAME_CONFIG = {
     options: ['player', 'dealer', 'push', 'noqual'],
     tagline: 'Dealer qualifies with Ace-King or better',
     prompt: 'Who wins this hand?',
-    scale: 0.78,
+    widestRow: 5,  // 5-card hands
+    maxScale: 1.6,
   },
   tcp: {
     options: ['player', 'dealer', 'push', 'noqual'],
     tagline: 'Dealer plays with Queen high or better',
     prompt: 'Who wins this hand?',
-    scale: 0.95,
+    widestRow: 3,
+    maxScale: 1.9,
   },
   uth: {
     options: ['player', 'dealer', 'push'],
     tagline: 'Best five cards of seven play',
     prompt: 'Who wins this hand?',
-    scale: 0.78,
+    widestRow: 5,  // the board
+    maxScale: 1.6,
   },
   lir: {
     options: ['pays', 'nopay'],
     tagline: 'Pays a pair of tens or better',
     prompt: 'Does this hand pay?',
-    scale: 0.95,
+    widestRow: 3,
+    maxScale: 1.9,
   },
 }
 
@@ -112,6 +116,7 @@ export default function PokerWinnerTrainer({ game }) {
   const [stats,        setStats]        = useState({ hands: 0, correct: 0, streak: 0, best: 0 })
   const [showRankings, setShowRankings] = useState(false)
   const [dealNum,      setDealNum]      = useState(0) // keys the cards → deal animation runs once per hand
+  const [feltRef, scale] = useFeltScale(config.widestRow, config.maxScale)
 
   // Re-deal when switching games (Practice keeps one mounted instance)
   useEffect(() => {
@@ -163,7 +168,6 @@ export default function PokerWinnerTrainer({ game }) {
     : accuracy >= 60 ? 'var(--color-brand-warning)'
     : 'var(--color-brand-danger)'
 
-  const { scale } = config
   const dealKey = dealNum
 
   return (
@@ -207,6 +211,7 @@ export default function PokerWinnerTrainer({ game }) {
 
       {/* ── Felt table ── */}
       <div
+        ref={feltRef}
         className="rounded-3xl px-3 sm:px-8 py-6 mb-5 relative overflow-hidden flex flex-col gap-5"
         style={{
           background: 'radial-gradient(ellipse 120% 90% at 50% -10%, #14724a 0%, #0b4f33 55%, #073d27 100%)',

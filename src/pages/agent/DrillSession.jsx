@@ -8,6 +8,7 @@ import { useSessionTimer } from '../../hooks/useSessionTimer'
 import { useAdaptiveDifficulty } from '../../hooks/useAdaptiveDifficulty'
 import { invalidateCooldown } from '../../hooks/useCooldown'
 import { logAudit } from '../../lib/audit'
+import { hasCoarsePointer } from '../../lib/device'
 import PayoutTable from '../../components/tables/PayoutTable'
 import {
   Clock, AlertTriangle, ChevronRight, DollarSign, X,
@@ -570,7 +571,7 @@ export default function DrillSession() {
       )}
 
       {/* ── Question area ─────────────────────────────────────── */}
-      <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isPayout ? 'max-w-3xl' : 'max-w-xl'}`}>
+      <div className={`flex-1 flex flex-col items-center px-4 py-6 w-full mx-auto ${isPayout ? 'max-w-4xl' : 'max-w-xl'}`}>
 
         {/* Category + difficulty tags */}
         <div className="flex items-center gap-2 mb-4 self-start flex-wrap">
@@ -637,7 +638,7 @@ export default function DrillSession() {
                     border: `1px solid ${inputError ? 'var(--color-brand-danger)' : 'var(--color-brand-border)'}`,
                     color: 'var(--color-brand-text)',
                   }}
-                  autoFocus
+                  autoFocus={!hasCoarsePointer}
                 />
               </div>
               {inputError && (

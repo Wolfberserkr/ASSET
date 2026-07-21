@@ -5,7 +5,7 @@ import {
 import {
   DEALER_LABELS, CHART_SECTIONS, generateScenario, explainRule,
 } from '../lib/blackjackStrategy'
-import PlayingCard, { CardBack } from './PlayingCard'
+import PlayingCard, { CardBack, useFeltScale } from './PlayingCard'
 
 // ─── Action + chart cell styling (mirrors the printed chart's color code) ─────
 
@@ -157,6 +157,7 @@ export default function BlackjackTrainer() {
   const [stats,     setStats]     = useState({ hands: 0, correct: 0, streak: 0, best: 0 })
   const [showChart, setShowChart] = useState(false)
   const [dealNum,   setDealNum]   = useState(0) // keys the cards → deal animation runs once per hand
+  const [feltRef, cardScale] = useFeltScale(2, 2) // rows of 2 cards, up to 2× size
 
   const nextHand = useCallback((m) => {
     setScenario(prev => generateScenario(m ?? mode, prev))
@@ -268,6 +269,7 @@ export default function BlackjackTrainer() {
 
       {/* ── Felt table ── */}
       <div
+        ref={feltRef}
         className="rounded-3xl px-4 sm:px-8 py-6 mb-5 relative overflow-hidden"
         style={{
           background: 'radial-gradient(ellipse 120% 90% at 50% -10%, #14724a 0%, #0b4f33 55%, #073d27 100%)',
@@ -289,8 +291,8 @@ export default function BlackjackTrainer() {
           </div>
           <div className="flex items-center">
             <PlayingCard key={`d-${scenario.dealerCard.rank}${scenario.dealerCard.suit}-${dealNum}`}
-              card={scenario.dealerCard} rotate={-2} delay={0} />
-            <CardBack key={`db-${dealNum}`} rotate={2} delay={80} overlap />
+              card={scenario.dealerCard} rotate={-2} delay={0} scale={cardScale} />
+            <CardBack key={`db-${dealNum}`} rotate={2} delay={80} overlap scale={cardScale} />
           </div>
           <div className="w-16 shrink-0">
             <span className="inline-block text-xs font-mono font-bold px-2.5 py-1 rounded-lg"
@@ -309,9 +311,9 @@ export default function BlackjackTrainer() {
           </div>
           <div className="flex items-center">
             <PlayingCard key={`p0-${scenario.playerCards[0].rank}${scenario.playerCards[0].suit}-${dealNum}`}
-              card={scenario.playerCards[0]} rotate={-3} delay={160} />
+              card={scenario.playerCards[0]} rotate={-3} delay={160} scale={cardScale} />
             <PlayingCard key={`p1-${scenario.playerCards[1].rank}${scenario.playerCards[1].suit}-${dealNum}`}
-              card={scenario.playerCards[1]} rotate={3} delay={240} overlap />
+              card={scenario.playerCards[1]} rotate={3} delay={240} overlap scale={cardScale} />
           </div>
           <div className="w-16 shrink-0">
             <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap"
