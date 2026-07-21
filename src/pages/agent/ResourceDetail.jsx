@@ -3,7 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import BlackjackTrainer from '../../components/BlackjackTrainer'
-import { ArrowLeft, FileText, Video, Calculator, ExternalLink, VideoOff, FileX, Spade } from 'lucide-react'
+import PokerWinnerTrainer from '../../components/PokerWinnerTrainer'
+import { ArrowLeft, FileText, Video, Calculator, ExternalLink, VideoOff, FileX, Spade, Club } from 'lucide-react'
+
+// Games with an interactive trainer on the Resources page. Blackjack drills the
+// basic strategy chart; the poker games drill winner / hand recognition.
+const POKER_TRAINERS = {
+  'Caribbean Stud Poker':    'csp',
+  "Ultimate Texas Hold'em":  'uth',
+  'Let It Ride':             'lir',
+  'Three Card Poker':        'tcp',
+}
 
 // ─── Payout calculator configs ────────────────────────────────────────────────
 // Keyed by game.name. Each section has a label, a list of bet inputs, and a
@@ -743,10 +753,11 @@ export default function ResourceDetail() {
     </Layout>
   )
 
-  const calcConfig = CALC[game.name]
-  const hasTrainer = game.name === 'Blackjack'
-  const videos     = resource?.videos ?? []
-  const pdfUrl     = resource?.pdf_url ?? null
+  const calcConfig  = CALC[game.name]
+  const hasTrainer  = game.name === 'Blackjack'
+  const pokerKey    = POKER_TRAINERS[game.name]
+  const videos      = resource?.videos ?? []
+  const pdfUrl      = resource?.pdf_url ?? null
 
   return (
     <Layout>
@@ -780,6 +791,9 @@ export default function ResourceDetail() {
         <TabButton active={tab === 'calculator'} onClick={() => setTab('calculator')} icon={Calculator}  label="Payout Calculator" />
         {hasTrainer && (
           <TabButton active={tab === 'trainer'} onClick={() => setTab('trainer')} icon={Spade} label="Strategy Trainer" />
+        )}
+        {pokerKey && (
+          <TabButton active={tab === 'trainer'} onClick={() => setTab('trainer')} icon={Club} label="Hand Trainer" />
         )}
       </div>
 
@@ -877,6 +891,22 @@ export default function ResourceDetail() {
             </span>
           </div>
           <BlackjackTrainer />
+        </div>
+      )}
+
+      {/* ── Hand trainer tab (poker games) ─────────────────────── */}
+      {tab === 'trainer' && pokerKey && (
+        <div>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg mb-5 text-sm"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+            <Club size={15} className="shrink-0 mt-0.5" style={{ color: 'var(--color-brand-muted)' }} />
+            <span style={{ color: 'var(--color-brand-muted)' }}>
+              A full hand is dealt face up — read both sides and call the result.
+              Wrong answers name each hand and explain the ranking or house rule that decides it.
+              Nothing here counts toward your scores.
+            </span>
+          </div>
+          <PokerWinnerTrainer game={pokerKey} />
         </div>
       )}
 
