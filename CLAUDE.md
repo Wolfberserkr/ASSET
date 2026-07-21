@@ -318,12 +318,16 @@ Seeded via `supabase/seed_questions.sql` (run once in Supabase SQL Editor).
 | Blackjack | 30 | Multiple choice |
 | Procedures (shared) | 15 | Multiple choice |
 | Roulette Procedures (shared) | 30 | Multiple choice |
-| Craps | ~44 | Payout drill + multiple choice |
-| Caribbean Stud Poker | ~48 | Payout drill + multiple choice |
+| Craps | ~74 | Payout drill + multiple choice |
+| Caribbean Stud Poker | ~78 | Payout drill + multiple choice |
+| Craps Procedures (shared) | 30 | Multiple choice |
+| CSP Procedures (shared) | 30 | Multiple choice |
 
 Craps and Caribbean Stud Poker are seeded via `supabase/seed_craps_csp.sql` (run once in the Supabase SQL Editor). The file also inserts the two `games` rows idempotently (`WHERE NOT EXISTS`). Both pools mix `payout` questions (clean integer ratios rendered as dynamic chip stacks) with `multiple_choice` questions:
 - **Craps** — payout drills for Pass/Come, Don't, Field, Odds/Buy on 4/10, Hardways, and the one-roll props (Any Seven 4:1, Any Craps 7:1, Yo 15:1, Ace-Deuce 15:1, Aces/Boxcars 30:1). Multiple choice covers the fractional place/buy unit-math (9:5, 7:5, 7:6), odds identification (6/8 → 6:5, 5/9 → 3:2, 4/10 → 2:1), the 5% buy vig, and dice-security / past-post / no-roll game-protection scenarios. `category` values (`craps_line`, `craps_field`, `craps_prop`, `craps_hardway`, `craps_odds`, `craps_place`, `craps_protection`) drive which felt band the SVG highlights.
 - **Caribbean Stud Poker** — payout drills for the Ante (1:1) and the Bet bonus (Pair 1:1 → Royal Flush 100:1, capped at the $1,000 table max). Multiple choice covers progressive jackpot payoffs (Royal 100%, SF 10%, Quads $500, Full House $100, Flush $50, Straight $25), the Ace/King dealer-qualify rule, tie-breaking, and surveillance triggers (4-of-a-kind+, straight flush cards to Surveillance, $10k win/loss). `category` values `csp_ante` / `csp_bet` pick which spot the SVG highlights; `csp_progressive` / `csp_procedure` are the rules questions.
+
+A second wave of Craps/CSP questions is seeded via `supabase/seed_craps_csp_expansion.sql` (run once; applied to production 2026-07-21). Per game it adds 30 payout questions that **state the odds in the question text** (e.g. "Player bought the 4 (pays 2:1). The shooter rolls a 4. How much does the dealer pay?") and 30 shared procedure questions (`game_id = NULL`, `is_procedure = TRUE`, categories `craps_procedure` / `caribbean_stud_procedure`) drawn from the dealer procedure manuals in `public/resources/`. Each 30-block is balanced 10 easy / 10 medium / 10 hard. Craps payout ratios stay clean against the $5-step bet randomizer (9:5 → `'1.8'`, 7:5 → `'1.4'`, 3:2 → `'1.5'`); the 7:6 place bets on 6/8 remain multiple-choice only.
 
 Roulette procedure questions are seeded via `supabase/seed_roulette_procedures.sql` (`category = 'roulette_procedure'`, `is_procedure = TRUE`, `game_id = NULL`). They are drawn from the casino's Roulette dealer procedures manual, written at a high-school reading level, and balanced 10 easy / 10 medium / 10 hard. Being shared procedure questions, they are eligible in any drill session and appear under the **Procedures** tab in Practice.
 
