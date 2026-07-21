@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
 import { randomizeBetAmount } from '../../lib/questionRandomizer'
+import { fetchAllRows } from '../../lib/fetchAllRows'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
@@ -54,6 +55,9 @@ const HAND_NAMES = [
 
 function injectOddsIntoQuestion(text, ratioStr) {
   if (!text || !ratioStr) return text
+  // Newer seeded questions already state the odds in the text (e.g. "pays 2:1")
+  // — don't inject a second copy.
+  if (/\d+\s*(?::|\s+to\s+)\s*\d+/i.test(text)) return text
   const odds = formatOdds(ratioStr)
   if (!odds) return text
   for (const hand of HAND_NAMES) {
@@ -180,19 +184,21 @@ export default function Practice() {
     setLoadError('')
 
     try {
-      let query = supabase
-        .from('questions')
-        .select('id,game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,chip_variants,difficulty,games(name)')
-        .eq('is_active', true)
+      const buildQuery = () => {
+        let query = supabase
+          .from('questions')
+          .select('id,game_id,type,question_text,options,correct_answer,explanation,category,is_procedure,chip_variants,difficulty,games(name)')
+          .eq('is_active', true)
 
-      if (gameOption.id === 'procedure') {
-        query = query.eq('is_procedure', true)
-      } else if (gameOption.id !== 'mixed') {
-        query = query.eq('game_id', gameOption.id)
+        if (gameOption.id === 'procedure') {
+          query = query.eq('is_procedure', true)
+        } else if (gameOption.id !== 'mixed') {
+          query = query.eq('game_id', gameOption.id)
+        }
+        return query
       }
 
-      const { data, error } = await query.limit(300)
-      if (error) throw error
+      const data = await fetchAllRows(buildQuery)
 
       const prepared = shuffle(data ?? []).map(q => {
         if (q.type === 'multiple_choice' && Array.isArray(q.options)) {

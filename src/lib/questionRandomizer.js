@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { fetchAllRows } from './fetchAllRows'
 import {
   SESSION_SIZE,
   RECENT_SESSION_LOOKBACK,
@@ -117,28 +118,32 @@ export async function buildSession(userId, difficultyMap = {}) {
     fetchRecentQuestionIds(userId),
   ])
 
-  // 2. Fetch all active questions (only fields needed for the drill + validation)
-  const { data: questions, error } = await supabase
-    .from('questions')
-    .select(`
-      id,
-      game_id,
-      type,
-      question_text,
-      options,
-      correct_answer,
-      explanation,
-      category,
-      is_procedure,
-      chip_variants,
-      difficulty,
-      points,
-      times_shown,
-      games(name, practice_only)
-    `)
-    .eq('is_active', true)
-
-  if (error) throw new Error(`Failed to load question pool: ${error.message}`)
+  // 2. Fetch all active questions (paged — the pool is past Supabase's
+  //    single-query row caps, so a plain select would silently drop rows)
+  let questions
+  try {
+    questions = await fetchAllRows(() => supabase
+      .from('questions')
+      .select(`
+        id,
+        game_id,
+        type,
+        question_text,
+        options,
+        correct_answer,
+        explanation,
+        category,
+        is_procedure,
+        chip_variants,
+        difficulty,
+        points,
+        times_shown,
+        games(name, practice_only)
+      `)
+      .eq('is_active', true))
+  } catch (err) {
+    throw new Error(`Failed to load question pool: ${err.message}`)
+  }
   if (!questions || questions.length === 0) throw new Error('Question pool is empty.')
 
   // Exclude practice-only games (e.g. a game still ramping up) from scored

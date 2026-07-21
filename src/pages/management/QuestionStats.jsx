@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
+import { fetchAllRows } from '../../lib/fetchAllRows'
 import Layout from '../../components/Layout'
 import { ClipboardList, Download, Search, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react'
 
@@ -62,13 +63,12 @@ export default function QuestionStats() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('questions')
+      fetchAllRows(() => supabase.from('questions')
         .select('id, question_text, category, difficulty, times_shown, times_correct, is_active, game_id, games(name)')
-        .order('times_shown', { ascending: false })
-        .limit(500),
+        .order('times_shown', { ascending: false })).catch(() => []),
       supabase.from('games').select('id, name').eq('is_active', true),
-    ]).then(([qRes, gRes]) => {
-      setQuestions(qRes.data ?? [])
+    ]).then(([allQuestions, gRes]) => {
+      setQuestions(allQuestions)
       setGames(gRes.data ?? [])
       setLoading(false)
     })

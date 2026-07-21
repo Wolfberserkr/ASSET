@@ -2,11 +2,20 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
+import { fetchAllRows } from '../../lib/fetchAllRows'
 import Layout from '../../components/Layout'
 import { BookOpen, Plus, AlertTriangle, Check, X, Edit2, HelpCircle, Search } from 'lucide-react'
 
+const loadAllQuestions = () =>
+  fetchAllRows(() => supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }))
+    .catch(() => [])
+
 const CATEGORIES = [
-  'procedure', 'basic_strategy', 'blackjack', 'roulette', 'three_card_poker', 'let_it_ride', 'ultimate_texas_holdem',
+  'procedure', 'basic_strategy', 'blackjack', 'roulette', 'roulette_procedure',
+  'three_card_poker', 'ante_bonus', 'let_it_ride', 'ultimate_texas_holdem',
+  'craps_line', 'craps_field', 'craps_place', 'craps_odds', 'craps_prop',
+  'craps_hardway', 'craps_protection', 'craps_procedure',
+  'csp_ante', 'csp_bet', 'csp_progressive', 'csp_procedure', 'caribbean_stud_procedure',
 ]
 
 const BLANK = {
@@ -39,11 +48,11 @@ export default function QuestionEditor() {
   useEffect(() => {
     Promise.all([
       supabase.from('games').select('*').eq('is_active', true),
-      supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(500),
+      loadAllQuestions(),
       loadActiveCounts(),
-    ]).then(([gamesRes, qRes]) => {
+    ]).then(([gamesRes, allQuestions]) => {
       setGames(gamesRes.data ?? [])
-      setQuestions(qRes.data ?? [])
+      setQuestions(allQuestions)
       setLoading(false)
     })
   }, [])
@@ -91,8 +100,7 @@ export default function QuestionEditor() {
     })
 
     // Refresh list
-    const { data } = await supabase.from('questions').select('*, games(name)').order('created_at', { ascending: false }).limit(500)
-    setQuestions(data ?? [])
+    setQuestions(await loadAllQuestions())
     loadActiveCounts()
     setForm(null)
     setSaving(false)

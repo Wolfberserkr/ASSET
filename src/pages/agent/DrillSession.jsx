@@ -117,6 +117,9 @@ const SKIP_HANDS = new Set(['Pair Plus'])
 
 function injectOddsIntoQuestion(text, ratioStr) {
   if (!text || !ratioStr) return text
+  // Newer seeded questions already state the odds in the text (e.g. "pays 2:1")
+  // — don't inject a second copy.
+  if (/\d+\s*(?::|\s+to\s+)\s*\d+/i.test(text)) return text
   const odds = formatOdds(ratioStr)
   if (!odds) return text
   for (const hand of HAND_NAMES) {
