@@ -63,9 +63,13 @@ export default function QuestionStats() {
 
   useEffect(() => {
     Promise.all([
-      fetchAllRows(() => supabase.from('questions')
-        .select('id, question_text, category, difficulty, times_shown, times_correct, is_active, game_id, games(name)')
-        .order('times_shown', { ascending: false })).catch(() => []),
+      // get_question_stats computes times_shown / times_correct from
+      // session_answers scoped to the caller's department (surveillance
+      // for Henk/Angelo, pit for Raquel) — the shared question pool with
+      // per-department counts, not the global questions.* counters.
+      fetchAllRows(() => supabase.rpc('get_question_stats'))
+        .then(rows => rows.map(r => ({ ...r, games: r.game_name ? { name: r.game_name } : null })))
+        .catch(() => []),
       supabase.from('games').select('id, name').eq('is_active', true),
     ]).then(([allQuestions, gRes]) => {
       setQuestions(allQuestions)

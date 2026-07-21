@@ -29,7 +29,7 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 - **Auth pattern:** Employee ID login — email is `{employee_id}@stellaris.local`, Rick creates all accounts manually
 - **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `casino_manager` (Pit)
 - **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall
-- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`
+- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`, `get_question_stats`
 
 ### Departments (Surveillance vs Pit)
 Department is **derived from role** — no extra column:
@@ -41,6 +41,7 @@ Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_ro
 - **Raquel (casino_manager)** uses the same management portal pages as Henk/Angelo but only ever sees Pit staff. She can create/edit questions in the shared pool.
 - **Department wall (bidirectional):** surveillance staff never see pit staff data (profiles, sessions, answers, audit entries, recert notes) and vice versa. `get_all_agents`, `get_team_leaderboard`, and `get_team_benchmark` are scoped to the caller's department — benchmarks/leaderboards never mix departments.
 - **Shared across departments:** questions, games, resources. `get_my_drill_role()` returns `agent` or `pit_manager` so queries/RPCs list the correct drill-takers; the frontend exposes this as `drillRole` from `AuthContext` (used in Layout notifications, WeakAreas, AuditLog).
+- **Question Stats is department-scoped** (migration `supabase/add_department_question_stats.sql`): the `get_question_stats()` RPC recomputes per-question `times_shown` / `times_correct` from `session_answers` restricted to the caller's department, so Raquel sees pit-only accuracy and Henk/Angelo see surveillance-only accuracy over the same shared pool. The global `questions.times_shown` / `times_correct` counters still exist (incremented by `update_question_stats`) but the management Question Stats page no longer reads them.
 - Rick creates pit accounts the same way (`{employee_id}@stellaris.local`) with the new role in user metadata.
 
 ## Database Tables
