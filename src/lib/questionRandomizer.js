@@ -1,64 +1,13 @@
 import { supabase } from './supabase'
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const SESSION_SIZE = 10
-
-// How much to prefer questions at the agent's exact difficulty vs adjacent tiers
-const DIFFICULTY_WEIGHTS = {
-  exact:    3.0,   // matches agent's current level
-  adjacent: 1.5,   // one level off
-  far:      0.5,   // two levels off
-}
-
-// Accuracy assumed for a game the agent has never attempted
-const DEFAULT_ACCURACY = 0.5
-
-// ─── Weighted random sampling (without replacement) ──────────────────────────
-
-/**
- * Picks `n` items from `pool` without replacement, using `weightFn(item)` to
- * bias selection. Items with higher weights are proportionally more likely.
- * Falls back to uniform random if the pool is smaller than `n`.
- */
-function weightedSample(pool, n, weightFn) {
-  if (pool.length === 0) return []
-  if (pool.length <= n)  return shuffle([...pool])
-
-  const remaining = [...pool]
-  const chosen    = []
-
-  while (chosen.length < n && remaining.length > 0) {
-    // Build cumulative weight array
-    const weights = remaining.map(weightFn)
-    const total   = weights.reduce((s, w) => s + w, 0)
-
-    if (total === 0) {
-      // All weights are 0 — fall back to uniform pick
-      const idx = Math.floor(Math.random() * remaining.length)
-      chosen.push(remaining.splice(idx, 1)[0])
-      continue
-    }
-
-    let r   = Math.random() * total
-    let idx = 0
-    for (let i = 0; i < weights.length; i++) {
-      r -= weights[i]
-      if (r <= 0) { idx = i; break }
-    }
-    chosen.push(remaining.splice(idx, 1)[0])
-  }
-
-  return chosen
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
-}
+import {
+  SESSION_SIZE,
+  RECENT_SESSION_LOOKBACK,
+  DIFFICULTY_WEIGHTS,
+  DEFAULT_ACCURACY,
+  gameWeight,
+  shuffle,
+  drawDiverseSession,
+} from './sessionDraw'
 
 // ─── Per-game accuracy ────────────────────────────────────────────────────────
 
@@ -97,6 +46,43 @@ async function fetchGameAccuracy(userId) {
   return map
 }
 
+// ─── Recently-seen questions ─────────────────────────────────────────────────
+
+/**
+ * Fetches the IDs of every question the agent answered in their last
+ * RECENT_SESSION_LOOKBACK completed sessions. These are excluded from the
+ * next draw (soft rule — drawDiverseSession falls back to them if the fresh
+ * pool can't fill the session). Returns Set<questionId>.
+ */
+async function fetchRecentQuestionIds(userId) {
+  const { data: recentSessions, error: sessionsError } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'completed')
+    .order('completed_at', { ascending: false })
+    .limit(RECENT_SESSION_LOOKBACK)
+
+  if (sessionsError || !recentSessions?.length) {
+    if (sessionsError) {
+      console.warn('questionRandomizer: could not fetch recent sessions', sessionsError)
+    }
+    return new Set()
+  }
+
+  const { data: answers, error: answersError } = await supabase
+    .from('session_answers')
+    .select('question_id')
+    .in('session_id', recentSessions.map(s => s.id))
+
+  if (answersError) {
+    console.warn('questionRandomizer: could not fetch recent answers', answersError)
+    return new Set()
+  }
+
+  return new Set((answers ?? []).map(a => a.question_id))
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -105,11 +91,19 @@ async function fetchGameAccuracy(userId) {
  * Draws 10 questions from the full active pool for a drill session.
  *
  * Weighting strategy:
- *   1. Game weight  = inverse of accuracy (weak games surface more)
+ *   1. Game weight = softened inverse accuracy (weak games surface more, but
+ *      blended toward neutral so they can't dominate — see gameWeight()).
  *      Procedure questions get the neutral DEFAULT_ACCURACY weight.
  *   2. Difficulty weight = how well the question's difficulty matches the
  *      agent's current level for that game.
  *   3. Final weight = gameWeight × difficultyWeight
+ *
+ * Diversity harness (see sessionDraw.js):
+ *   - Questions answered in the agent's last 3 completed sessions are
+ *     excluded (soft — relaxed if the fresh pool runs short)
+ *   - Max 4 questions per game; procedures are their own bucket, also max 4
+ *   - Max 2 procedure questions per category per session
+ *   - No two payout questions with the same game + ratio, no duplicate wording
  *
  * @param {string}  userId        — Supabase auth UUID
  * @param {object}  difficultyMap — { [gameId]: { current_difficulty, ... } }
@@ -117,8 +111,11 @@ async function fetchGameAccuracy(userId) {
  * @returns {Promise<Question[]>} — array of 10 question objects, shuffled
  */
 export async function buildSession(userId, difficultyMap = {}) {
-  // 1. Load per-game accuracy
-  const accuracyMap = await fetchGameAccuracy(userId)
+  // 1. Load per-game accuracy + recently-seen question IDs
+  const [accuracyMap, recentIds] = await Promise.all([
+    fetchGameAccuracy(userId),
+    fetchRecentQuestionIds(userId),
+  ])
 
   // 2. Fetch all active questions (only fields needed for the drill + validation)
   const { data: questions, error } = await supabase
@@ -151,7 +148,7 @@ export async function buildSession(userId, difficultyMap = {}) {
 
   // 3. Build weight function
   const weightFn = (q) => {
-    // ── Game weight (inverse accuracy, higher = weaker game) ──
+    // ── Game weight (softened inverse accuracy, higher = weaker game) ──
     let gameAccuracy
     if (q.is_procedure || !q.game_id) {
       gameAccuracy = DEFAULT_ACCURACY   // procedure questions are neutral
@@ -160,9 +157,7 @@ export async function buildSession(userId, difficultyMap = {}) {
         ? accuracyMap.get(q.game_id)
         : DEFAULT_ACCURACY
     }
-    // Clamp to [0.05, 0.95] so no game is completely excluded or monopolises
-    gameAccuracy    = Math.max(0.05, Math.min(0.95, gameAccuracy))
-    const gameWeight = 1 - gameAccuracy   // weaker = higher weight
+    const gWeight = gameWeight(gameAccuracy)
 
     // ── Difficulty weight (match to agent's current level for this game) ──
     let diffWeight = DIFFICULTY_WEIGHTS.adjacent   // default for procedure/no data
@@ -176,11 +171,14 @@ export async function buildSession(userId, difficultyMap = {}) {
           : DIFFICULTY_WEIGHTS.far
     }
 
-    return gameWeight * diffWeight
+    return gWeight * diffWeight
   }
 
-  // 4. Weighted draw of SESSION_SIZE questions
-  const drawn = weightedSample(pool, SESSION_SIZE, weightFn)
+  // 4. Constrained weighted draw — fresh questions first, recently-seen as
+  //    fallback, diversity caps enforced throughout
+  const freshPool  = pool.filter(q => !recentIds.has(q.id))
+  const recentPool = pool.filter(q => recentIds.has(q.id))
+  const drawn = drawDiverseSession(freshPool, recentPool, SESSION_SIZE, weightFn)
 
   // 5. Shuffle options for multiple-choice questions (anti-gaming)
   return drawn.map(q => {

@@ -147,6 +147,16 @@ Questions must cover:
 - Question draw is weighted by the agent's per-game accuracy (weaker areas surface more often)
 - Procedure questions (`is_procedure = true`) are eligible in every session draw
 
+### Diversity harness (`src/lib/sessionDraw.js`)
+Pure selection module (no Supabase imports — unit-testable in plain Node), used by `buildSession` in `questionRandomizer.js`:
+- **Cross-session freshness:** questions answered in the agent's last 3 completed sessions are excluded from the draw (soft rule — relaxed automatically if the fresh pool can't fill the session)
+- **Per-game cap:** max 4 of the 10 questions per game; shared procedure questions (`game_id NULL`) form their own bucket, also capped at 4 — guarantees at least 3 distinct buckets per session
+- **Procedure category cap:** max 2 procedure questions per category per session (e.g. `roulette_procedure` rows read near-identically back to back). Game categories are not capped this way — the bucket cap covers them
+- **Near-duplicate dedupe:** no two payout questions with the same game + ratio in one session; no two questions with identical normalized wording
+- **Softened weak-area weighting:** game weight = `0.5 + 0.5 × (1 − accuracy)` instead of the old `1 − accuracy`, so a 20%-accuracy game is ~1.5× more likely than an 80% one (was ~4×) — weak areas still surface more, but no longer dominate
+- Fallback order when the pool runs short: fresh questions → recently-seen questions → relax dedupe/category rules → relax all caps (a full 10-question session always beats an under-filled one)
+- Practice mode is untouched — it cycles endlessly by design
+
 ---
 
 ## Adaptive Difficulty Engine
@@ -335,7 +345,7 @@ src/
     tables/      — PayoutTable (2D SVG + dispatch), RouletteTable3D, CrapsTable3D, TableControls
   context/       — AuthContext (login, logout, session timeout, lockout)
   hooks/         — useAdaptiveDifficulty, useSessionTimer, useCooldown
-  lib/           — supabase.js client, questionRandomizer.js
+  lib/           — supabase.js client, questionRandomizer.js, sessionDraw.js (pure draw/diversity engine)
   pages/
     Login.jsx
     agent/       — Dashboard, DrillSession, Results, History, ChangePassword, Practice
