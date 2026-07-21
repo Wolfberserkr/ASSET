@@ -337,6 +337,12 @@ Angelo can add/edit questions via the management portal Question Editor. Rick pl
 ### Roulette payout scenarios (live-generated)
 Roulette payout drills do **not** read the DB question's text/answer — `src/lib/rouletteScenario.js` generates a fresh combination-bet scenario at runtime (rendered on the SVG layout by `PayoutTable.jsx`, validated against the computed total payout). The generator covers all six inside bet types: Straight (35:1), Split (17:1), Street (11:1), Corner (8:1), Top Line / five-number 0-00-1-2-3 (6:1), and Line / six-number (5:1). Each scenario uses White ($1) and/or Red ($5) chips — all $1, all $5, or a mix. The same generator powers both scored Drill sessions and Practice mode.
 
+### Blackjack Basic Strategy Trainer
+Interactive drill on the house basic strategy chart (sections A–D: hard hitting, hard doubling, soft doubling, pair splits). Two entry points: **Resources → Blackjack → "Strategy Trainer" tab** (next to the Payout Calculator) and a **"Blackjack Strategy" card in the Practice picker** (next to Blackjack).
+- `src/lib/blackjackStrategy.js` — pure module (no React/Supabase, unit-testable in plain Node like `sessionDraw.js`): hard/soft/pair strategy tables, weighted scenario generator (never repeats the exact same spot twice in a row), and per-cell rule explanations quoting the house chart.
+- `src/components/BlackjackTrainer.jsx` — trainer UI: dealt two-card hand vs dealer up-card on a felt table, Hit/Stand/Double/Split actions (keyboard H/S/D/P, Split disabled unless a pair), mode filter (All/Hard/Soft/Pairs), streak + accuracy stats. Wrong answers show the correct play, the house rule, and the matching strategy-chart row with the dealer column highlighted. A collapsible full chart (hard/soft/pairs) renders from the same tables.
+- **Zero database writes** — like Practice mode, no sessions/stats/cooldown; only a `PRACTICE_STARTED` audit event (scope `blackjack_strategy`) when launched from Practice.
+
 ---
 
 ## Vite Config

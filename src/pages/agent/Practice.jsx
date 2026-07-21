@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
 import { randomizeBetAmount } from '../../lib/questionRandomizer'
@@ -6,9 +6,10 @@ import { fetchAllRows } from '../../lib/fetchAllRows'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
 import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
+import BlackjackTrainer from '../../components/BlackjackTrainer'
 import {
   CheckCircle, XCircle, ChevronRight, DollarSign,
-  ArrowLeft, GraduationCap, AlertTriangle,
+  ArrowLeft, GraduationCap, AlertTriangle, Spade,
 } from 'lucide-react'
 
 function isRouletteQuestion(q) {
@@ -143,12 +144,41 @@ function GameCard({ name, drillType, count, onClick, disabled }) {
   )
 }
 
+// ─── Blackjack strategy trainer card ─────────────────────────────────────────
+
+function StrategyCard({ onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="text-left rounded-2xl p-5 disabled:opacity-50 hover-accent active:scale-[0.97]"
+      style={{
+        background: 'var(--color-brand-card)',
+        border: '1px solid var(--color-brand-gold-dim)',
+        transition: 'border-color 150ms ease-out, transform 100ms ease-out',
+      }}
+    >
+      <p className="font-semibold text-sm mb-1 flex items-center gap-1.5"
+        style={{ color: 'var(--color-brand-text)' }}>
+        <Spade size={13} style={{ color: 'var(--color-brand-gold)' }} />
+        Blackjack Strategy
+      </p>
+      <p className="text-xs font-medium" style={{ color: 'var(--color-brand-gold)' }}>
+        Basic strategy trainer
+      </p>
+      <p className="text-xs mt-2" style={{ color: 'var(--color-brand-muted)' }}>
+        Hit · Stand · Double · Split
+      </p>
+    </button>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function Practice() {
   // ── State ──────────────────────────────────────────────────────
   const [games,       setGames]       = useState([])        // DB game rows
-  const [phase,       setPhase]       = useState('loading') // loading|selecting|fetching|practicing
+  const [phase,       setPhase]       = useState('loading') // loading|selecting|fetching|practicing|strategy
   const [loadError,   setLoadError]   = useState('')
 
   // Practice session state
@@ -319,6 +349,14 @@ export default function Practice() {
     setStats({ answered: 0, correct: 0 })
   }
 
+  const startStrategyTrainer = () => {
+    logAudit('PRACTICE_STARTED', {
+      scope: 'blackjack_strategy',
+      scope_name: 'Blackjack Strategy Trainer',
+    })
+    setPhase('strategy')
+  }
+
   // ── Loading games ──────────────────────────────────────────────
   if (phase === 'loading') {
     return (
@@ -385,13 +423,17 @@ export default function Practice() {
         {/* Game cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
           {games.map(game => (
-            <GameCard
-              key={game.id}
-              name={game.name}
-              drillType={game.drill_type}
-              onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
-              disabled={loading}
-            />
+            <Fragment key={game.id}>
+              <GameCard
+                name={game.name}
+                drillType={game.drill_type}
+                onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
+                disabled={loading}
+              />
+              {game.name === 'Blackjack' && (
+                <StrategyCard onClick={startStrategyTrainer} disabled={loading} />
+              )}
+            </Fragment>
           ))}
 
           {/* Procedures */}
@@ -418,6 +460,33 @@ export default function Practice() {
             <span className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Loading questions…</span>
           </div>
         )}
+      </Layout>
+    )
+  }
+
+  // ── Blackjack strategy trainer ─────────────────────────────────
+  if (phase === 'strategy') {
+    return (
+      <Layout>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={backToSelector}
+              className="flex items-center gap-1.5 text-sm"
+              style={{ color: 'var(--color-brand-muted)' }}
+            >
+              <ArrowLeft size={15} />
+              Change game
+            </button>
+            <span style={{ color: 'var(--color-brand-border)' }}>|</span>
+            <span className="text-sm font-medium flex items-center gap-1.5"
+              style={{ color: 'var(--color-brand-text)' }}>
+              <Spade size={13} style={{ color: 'var(--color-brand-gold)' }} />
+              Blackjack Strategy
+            </span>
+          </div>
+        </div>
+        <BlackjackTrainer />
       </Layout>
     )
   }

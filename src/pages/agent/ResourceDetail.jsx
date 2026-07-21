@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { ArrowLeft, FileText, Video, Calculator, ExternalLink, VideoOff, FileX } from 'lucide-react'
+import BlackjackTrainer from '../../components/BlackjackTrainer'
+import { ArrowLeft, FileText, Video, Calculator, ExternalLink, VideoOff, FileX, Spade } from 'lucide-react'
 
 // ─── Payout calculator configs ────────────────────────────────────────────────
 // Keyed by game.name. Each section has a label, a list of bet inputs, and a
@@ -743,6 +744,7 @@ export default function ResourceDetail() {
   )
 
   const calcConfig = CALC[game.name]
+  const hasTrainer = game.name === 'Blackjack'
   const videos     = resource?.videos ?? []
   const pdfUrl     = resource?.pdf_url ?? null
 
@@ -776,6 +778,9 @@ export default function ResourceDetail() {
         <TabButton active={tab === 'rules'}      onClick={() => setTab('rules')}      icon={FileText}    label="Rules & Payouts" />
         <TabButton active={tab === 'videos'}     onClick={() => setTab('videos')}     icon={Video}       label="Videos" />
         <TabButton active={tab === 'calculator'} onClick={() => setTab('calculator')} icon={Calculator}  label="Payout Calculator" />
+        {hasTrainer && (
+          <TabButton active={tab === 'trainer'} onClick={() => setTab('trainer')} icon={Spade} label="Strategy Trainer" />
+        )}
       </div>
 
       {/* ── Rules tab ──────────────────────────────────────────── */}
@@ -856,6 +861,22 @@ export default function ResourceDetail() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Strategy trainer tab (Blackjack only) ──────────────── */}
+      {tab === 'trainer' && hasTrainer && (
+        <div>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg mb-5 text-sm"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+            <Spade size={15} className="shrink-0 mt-0.5" style={{ color: 'var(--color-brand-muted)' }} />
+            <span style={{ color: 'var(--color-brand-muted)' }}>
+              Drill the house basic strategy chart. You're dealt a hand against a dealer up-card —
+              pick the correct play. Wrong answers show the house rule and the matching chart row.
+              Nothing here counts toward your scores.
+            </span>
+          </div>
+          <BlackjackTrainer />
         </div>
       )}
 

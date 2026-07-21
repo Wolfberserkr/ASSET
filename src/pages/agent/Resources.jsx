@@ -105,7 +105,7 @@ export default function Resources() {
                   {game.drill_type === 'payout_drill' ? 'Payout drill' : 'Quiz'}
                 </p>
                 <div className="flex items-center gap-3 mt-2">
-                  {['Rules', 'Videos', 'Calculator'].map(tag => (
+                  {['Rules', 'Videos', 'Calculator', ...(game.name === 'Blackjack' ? ['Trainer'] : [])].map(tag => (
                     <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
                       style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-muted)' }}>
                       {tag}
