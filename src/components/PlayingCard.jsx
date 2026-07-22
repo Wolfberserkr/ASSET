@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 // Sizes trainer cards to fill the felt: measures the felt's content width and
 // scales the widest card row to fit it, clamped to [0.45, maxScale]. Cards
 // grow to roughly double on desktop and shrink-to-fit on phones.
-const LABEL_OVERHEAD = 160 // two w-16 label columns + row gaps
+const LABEL_OVERHEAD = 192 // two w-20 label columns + row gaps
 
 export function useFeltScale(widestRowCards, maxScale) {
   const ref = useRef(null)
@@ -27,6 +27,24 @@ export function useFeltScale(widestRowCards, maxScale) {
   }, [widestRowCards, maxScale])
 
   return [ref, scale]
+}
+
+// Row label pill ("Dealer", "Player", "Board"…) — dark chip so the label
+// stays readable against the green felt.
+export function FeltLabel({ children }) {
+  return (
+    <span
+      className="inline-block text-[11px] font-mono font-bold uppercase px-2 py-1 rounded-full whitespace-nowrap"
+      style={{
+        background: 'rgba(0,0,0,0.35)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        color: 'rgba(255,255,255,0.9)',
+        letterSpacing: '0.06em',
+      }}
+    >
+      {children}
+    </span>
+  )
 }
 
 export const SUIT_META = {

@@ -5,7 +5,7 @@ import {
 import {
   DEALER_LABELS, CHART_SECTIONS, generateScenario, explainRule,
 } from '../lib/blackjackStrategy'
-import PlayingCard, { CardBack, useFeltScale } from './PlayingCard'
+import PlayingCard, { CardBack, useFeltScale, FeltLabel } from './PlayingCard'
 
 // ─── Action + chart cell styling (mirrors the printed chart's color code) ─────
 
@@ -284,17 +284,15 @@ export default function BlackjackTrainer() {
 
         {/* Dealer */}
         <div className="flex items-center justify-center gap-4 sm:gap-6 mb-6">
-          <div className="w-16 text-right shrink-0">
-            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Dealer
-            </p>
+          <div className="w-20 flex justify-end shrink-0">
+            <FeltLabel>Dealer</FeltLabel>
           </div>
           <div className="flex items-center">
             <PlayingCard key={`d-${scenario.dealerCard.rank}${scenario.dealerCard.suit}-${dealNum}`}
               card={scenario.dealerCard} rotate={-2} delay={0} scale={cardScale} />
             <CardBack key={`db-${dealNum}`} rotate={2} delay={80} overlap scale={cardScale} />
           </div>
-          <div className="w-16 shrink-0">
+          <div className="w-20 shrink-0">
             <span className="inline-block text-xs font-mono font-bold px-2.5 py-1 rounded-lg"
               style={{ background: 'rgba(0,0,0,0.35)', color: 'var(--color-brand-gold)', border: '1px solid rgba(212,168,67,0.4)' }}>
               {DEALER_LABELS[scenario.dealerIdx]}
@@ -304,10 +302,8 @@ export default function BlackjackTrainer() {
 
         {/* Player */}
         <div className="flex items-center justify-center gap-4 sm:gap-6">
-          <div className="w-16 text-right shrink-0">
-            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              You
-            </p>
+          <div className="w-20 flex justify-end shrink-0">
+            <FeltLabel>You</FeltLabel>
           </div>
           <div className="flex items-center">
             <PlayingCard key={`p0-${scenario.playerCards[0].rank}${scenario.playerCards[0].suit}-${dealNum}`}
@@ -315,7 +311,7 @@ export default function BlackjackTrainer() {
             <PlayingCard key={`p1-${scenario.playerCards[1].rank}${scenario.playerCards[1].suit}-${dealNum}`}
               card={scenario.playerCards[1]} rotate={3} delay={240} overlap scale={cardScale} />
           </div>
-          <div className="w-16 shrink-0">
+          <div className="w-20 shrink-0">
             <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap"
               style={{ background: 'rgba(0,0,0,0.35)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
               {scenario.label}

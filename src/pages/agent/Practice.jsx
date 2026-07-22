@@ -205,6 +205,14 @@ export default function Practice() {
 
   const currentQ = questions.length > 0 ? questions[queueIdx % questions.length] : null
 
+  // Layout's <main> is the scroll pane and phase changes replace the whole
+  // page in place — without this, opening a trainer from a scrolled-down
+  // picker keeps the old scroll offset, landing the agent mid-page (and the
+  // area below the shorter page can briefly show stale pixels).
+  useEffect(() => {
+    document.querySelector('main')?.scrollTo(0, 0)
+  }, [phase])
+
   // ── Load games list on mount ───────────────────────────────────
   useEffect(() => {
     supabase

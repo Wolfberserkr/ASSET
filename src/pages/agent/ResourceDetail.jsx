@@ -727,6 +727,12 @@ export default function ResourceDetail() {
   const [loading,  setLoading]  = useState(true)
   const [tab,      setTab]      = useState('rules')
 
+  // Tab switches replace the page body in place — reset Layout's scroll pane
+  // so the new tab starts at the top instead of the old tab's offset.
+  useEffect(() => {
+    document.querySelector('main')?.scrollTo(0, 0)
+  }, [tab])
+
   useEffect(() => {
     Promise.all([
       supabase.from('games').select('*').eq('id', gameId).single(),

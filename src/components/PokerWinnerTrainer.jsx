@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   CheckCircle, XCircle, ChevronRight, RotateCcw, Flame, ListOrdered, ChevronDown,
 } from 'lucide-react'
-import PlayingCard, { useFeltScale } from './PlayingCard'
+import PlayingCard, { useFeltScale, FeltLabel } from './PlayingCard'
 import { generatePokerScenario, RANKINGS } from '../lib/pokerHands'
 
 // ─── Per-game configuration ───────────────────────────────────────────────────
@@ -52,10 +52,8 @@ const GAME_CONFIG = {
 function CardRow({ label, cards, badge, scale, baseDelay, dealKey }) {
   return (
     <div className="flex items-center justify-center gap-3 sm:gap-5">
-      <div className="w-16 text-right shrink-0">
-        <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          {label}
-        </p>
+      <div className="w-20 flex justify-end shrink-0">
+        <FeltLabel>{label}</FeltLabel>
       </div>
       <div className="flex items-center">
         {cards.map((c, i) => (
@@ -69,7 +67,7 @@ function CardRow({ label, cards, badge, scale, baseDelay, dealKey }) {
           />
         ))}
       </div>
-      <div className="w-16 shrink-0">
+      <div className="w-20 shrink-0">
         {badge && (
           <span className="inline-block text-xs font-semibold px-2 py-1 rounded-lg whitespace-nowrap"
             style={{ background: 'rgba(0,0,0,0.35)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
