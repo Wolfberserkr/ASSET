@@ -113,7 +113,13 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
   )
 }
 
-export default function Layout({ children, bg }) {
+// `contentKey`: pages that swap their entire body in place without a route
+// change (Practice phases, ResourceDetail tabs) pass a key for the current
+// view. Changing it remounts the page container — a fresh DOM node — so the
+// browser fully repaints the region the old (possibly taller) view covered.
+// Reusing the node has left stale pixels of the previous view painted below
+// the new page's end on some GPUs.
+export default function Layout({ children, bg, contentKey }) {
   const { user, profile, logout, isManagement, department, drillRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -503,7 +509,7 @@ export default function Layout({ children, bg }) {
           </div>
         )}
 
-        <div key={pageKey.current} className="page-enter relative z-10 max-w-5xl mx-auto p-4 md:p-6">
+        <div key={`${pageKey.current}:${contentKey ?? ''}`} className="page-enter relative z-10 max-w-5xl mx-auto p-4 md:p-6">
           {children}
         </div>
       </main>

@@ -766,7 +766,7 @@ export default function ResourceDetail() {
   const pdfUrl      = resource?.pdf_url ?? null
 
   return (
-    <Layout>
+    <Layout contentKey={tab}>
       {/* Back + header */}
       <div className="flex items-center gap-3 mb-6">
         <button

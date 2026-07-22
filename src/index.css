@@ -150,7 +150,10 @@ button:not(:disabled) {
 }
 
 .page-enter {
-  animation: page-in 0.08s ease-out both;
+  /* No fill-mode: a permanently-filled animation can keep the container on
+     its own compositor layer, which has left stale pixels of the previous
+     page painted below shorter content after an in-place swap. */
+  animation: page-in 0.08s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -205,6 +205,10 @@ export default function Practice() {
 
   const currentQ = questions.length > 0 ? questions[queueIdx % questions.length] : null
 
+  // Remount Layout's page container when the view swaps (see Layout
+  // contentKey). 'fetching' keeps the picker on screen, so it shares its key.
+  const viewKey = phase === 'fetching' ? 'selecting' : phase
+
   // Layout's <main> is the scroll pane and phase changes replace the whole
   // page in place — without this, opening a trainer from a scrolled-down
   // picker keeps the old scroll offset, landing the agent mid-page (and the
@@ -390,7 +394,7 @@ export default function Practice() {
   // ── Loading games ──────────────────────────────────────────────
   if (phase === 'loading') {
     return (
-      <Layout>
+      <Layout contentKey={viewKey}>
         <div className="flex items-center justify-center py-24">
           <div className="w-6 h-6 rounded-full border-2 animate-spin"
                style={{ borderColor: 'var(--color-brand-cyan)', borderTopColor: 'transparent' }} />
@@ -404,7 +408,7 @@ export default function Practice() {
     const loading = phase === 'fetching'
 
     return (
-      <Layout>
+      <Layout contentKey={viewKey}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
           <div
@@ -514,7 +518,7 @@ export default function Practice() {
   // ── Blackjack strategy trainer ─────────────────────────────────
   if (phase === 'strategy') {
     return (
-      <Layout>
+      <Layout contentKey={viewKey}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <button
@@ -541,7 +545,7 @@ export default function Practice() {
   // ── Poker winner / hand recognition trainer ────────────────────
   if (phase === 'winner' && winnerGame) {
     return (
-      <Layout>
+      <Layout contentKey={viewKey}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <button
@@ -581,7 +585,7 @@ export default function Practice() {
       : currentQ.question_text
 
   return (
-    <Layout>
+    <Layout contentKey={viewKey}>
       {/* Top bar */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
