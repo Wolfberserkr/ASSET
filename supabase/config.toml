@@ -1,0 +1,10 @@
+# Supabase CLI project config.
+# Minimal — only what the admin-users Edge Function deploy needs.
+# The rest of the backend is managed via SQL files run in the SQL Editor.
+
+project_id = "wcrxiyterasmmfhfdwtz"
+
+[functions.admin-users]
+# Require a valid Supabase JWT at the gateway; the function additionally
+# verifies the caller is an active director / casino_manager.
+verify_jwt = true

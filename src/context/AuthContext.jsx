@@ -179,10 +179,10 @@ export function AuthProvider({ children }) {
   }, [navigate, stopActivityTracking])
 
   // Department is derived from role: agent/supervisor/director are
-  // Surveillance; pit_manager/casino_manager are Pit. drillRole is the
-  // drill-taker role of the caller's department — client-side queries
-  // that list "the team" filter on it.
-  const department = profile?.role === 'pit_manager' || profile?.role === 'casino_manager'
+  // Surveillance; pit_manager/casino_manager/shift_manager are Pit.
+  // drillRole is the drill-taker role of the caller's department —
+  // client-side queries that list "the team" filter on it.
+  const department = ['pit_manager', 'casino_manager', 'shift_manager'].includes(profile?.role)
     ? 'pit'
     : 'surveillance'
 
@@ -193,7 +193,9 @@ export function AuthProvider({ children }) {
     login,
     logout,
     isAgent:      profile?.role === 'agent' || profile?.role === 'pit_manager',
-    isManagement: profile?.role === 'supervisor' || profile?.role === 'director' || profile?.role === 'casino_manager',
+    isManagement: ['supervisor', 'director', 'casino_manager', 'shift_manager'].includes(profile?.role),
+    // Only the two department heads may create/delete user accounts.
+    canManageUsers: profile?.role === 'director' || profile?.role === 'casino_manager',
     department,
     drillRole:    department === 'pit' ? 'pit_manager' : 'agent',
   }

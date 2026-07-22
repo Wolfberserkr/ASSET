@@ -25,6 +25,7 @@ const WeakAreas      = lazy(() => import('./pages/management/WeakAreas'))
 const QuestionStats  = lazy(() => import('./pages/management/QuestionStats'))
 const AuditLog       = lazy(() => import('./pages/management/AuditLog'))
 const QuestionEditor  = lazy(() => import('./pages/management/QuestionEditor'))
+const UserManagement  = lazy(() => import('./pages/management/UserManagement'))
 
 function PageLoader() {
   return (
@@ -63,7 +64,7 @@ export default function App() {
             </Route>
 
             {/* Management routes */}
-            <Route element={<ProtectedRoute allowedRoles={['supervisor', 'director', 'casino_manager']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['supervisor', 'director', 'casino_manager', 'shift_manager']} />}>
               <Route path="/management"                element={<TeamDashboard />} />
               <Route path="/management/agent/:id"      element={<AgentDetail />} />
               <Route path="/management/completion"     element={<Completion />} />
@@ -71,6 +72,11 @@ export default function App() {
               <Route path="/management/question-stats" element={<QuestionStats />} />
               <Route path="/management/audit-log"      element={<AuditLog />} />
               <Route path="/management/questions"        element={<QuestionEditor />} />
+            </Route>
+
+            {/* Account management — department heads only (Henk, Raquel) */}
+            <Route element={<ProtectedRoute allowedRoles={['director', 'casino_manager']} />}>
+              <Route path="/management/users"          element={<UserManagement />} />
             </Route>
 
             {/* Fallback */}

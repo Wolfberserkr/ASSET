@@ -9,7 +9,7 @@ import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
   ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Lock,
-  HelpCircle,
+  HelpCircle, UserCog,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -54,6 +54,10 @@ const mgmtNav = [
   { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen,        group: 'Reports' },
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText,        group: 'Reports' },
 ]
+
+// Account-management link — appended only for the two department heads
+// (director / casino_manager) via the canManageUsers flag.
+const usersNav = { to: '/management/users', label: 'User Management', icon: UserCog, group: 'Admin' }
 
 function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
   if (disabled) {
@@ -120,7 +124,7 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
 // Reusing the node has left stale pixels of the previous view painted below
 // the new page's end on some GPUs.
 export default function Layout({ children, bg, contentKey }) {
-  const { user, profile, logout, isManagement, department, drillRole } = useAuth()
+  const { user, profile, logout, isManagement, canManageUsers, department, drillRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -211,7 +215,7 @@ export default function Layout({ children, bg, contentKey }) {
     : null
 
   const navLinks = isManagement
-    ? mgmtNav
+    ? (canManageUsers ? [...mgmtNav, usersNav] : mgmtNav)
     : agentNav.map(link =>
         link.to === '/drill'
           ? { ...link, disabled: drillDisabled, badge: drillBadge }

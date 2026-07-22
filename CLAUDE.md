@@ -27,14 +27,15 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 ## Supabase Config
 - **Project URL:** `https://wcrxiyterasmmfhfdwtz.supabase.co`
 - **Auth pattern:** Employee ID login — email is `{employee_id}@stellaris.local`, Rick creates all accounts manually
-- **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `casino_manager` (Pit)
+- **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `shift_manager`, `casino_manager` (Pit)
+  - `shift_manager` (added in `supabase/add_user_management.sql`) is the Pit-side equivalent of `supervisor`: full management-portal access, scoped to Pit staff by the department wall, but it is **not** an account manager.
 - **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall
 - **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`, `get_question_stats`
 
 ### Departments (Surveillance vs Pit)
 Department is **derived from role** — no extra column:
 - `agent`, `supervisor`, `director` → **surveillance**
-- `pit_manager`, `casino_manager` → **pit**
+- `pit_manager`, `shift_manager`, `casino_manager` → **pit**
 
 Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_roles.sql`):
 - **Pit Managers** do drills exactly like agents: same session structure, scoring, 4-hour cooldown, 20 sessions/month recert, adaptive difficulty. They use the same agent portal pages (sidebar shows "Pit Operations").
@@ -205,7 +206,15 @@ Rules:
 ## Management Portal Access
 - **Henk (director) and Angelo (supervisor) see identical data** — no role-based visibility split in V1
 - **Angelo can create and edit questions** from the management portal
-- Rick retains sole control over user account management
+- Rick still creates the department heads and holds the Supabase service-role key; the two heads can now self-serve routine account work in their own department (see Delegated User Management).
+
+### Delegated User Management (added in `supabase/add_user_management.sql` + `supabase/functions/admin-users`)
+The **User Management** page (sidebar → Admin, route `/management/users`) is visible only to the two department heads — `director` (Henk) and `casino_manager` (Raquel) — gated by the `canManageUsers` flag from `AuthContext`. Supervisors/shift managers do not see it.
+- **Create user:** head enters Employee ID, full name, password, and role. Roles are department-scoped: Henk assigns `agent`/`supervisor`, Raquel assigns `pit_manager`/`shift_manager`. Login email is still derived as `{employee_id}@stellaris.local`.
+- **Deactivate / Reactivate:** flips `users.is_active` via the `set_user_active` RPC (SECURITY DEFINER, head-only, same-department, cannot target self or another head). This is the reversible default that preserves all session/audit history.
+- **Delete permanently:** hard-deletes the auth account (cascades `public.users`) — **only** when the user has zero session history; otherwise the UI/edge function forces deactivation instead. Guarded to same-department, non-head targets.
+- **Why an Edge Function:** creating an auth user with a password and hard-deleting an auth account both require the Supabase **service-role key**, which must never ship in the browser bundle. `supabase/functions/admin-users/index.ts` runs those two actions server-side, re-verifying from the caller's JWT that they are an active `director`/`casino_manager` and enforcing the department wall. `functions.invoke('admin-users', …)` forwards the caller's JWT automatically. Deploy with `supabase functions deploy admin-users` (service-role/URL/anon keys are injected by the Edge runtime — no extra secrets).
+- All four actions write `USER_CREATED` / `USER_DEACTIVATED` / `USER_REACTIVATED` / `USER_DELETED` rows to the audit log.
 
 ---
 
@@ -370,7 +379,7 @@ src/
   pages/
     Login.jsx
     agent/       — Dashboard, DrillSession, Results, History, ChangePassword, Practice
-    management/  — TeamDashboard, AgentDetail, Completion, WeakAreas, QuestionStats, AuditLog, QuestionEditor
+    management/  — TeamDashboard, AgentDetail, Completion, WeakAreas, QuestionStats, AuditLog, QuestionEditor, UserManagement (heads only)
 ```
 
 ## Important Patterns
