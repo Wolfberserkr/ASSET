@@ -206,6 +206,19 @@ button:not(:disabled) {
     background: #1f0a0a !important;
   }
 
+  /* Clickable session-history row — subtle fill + chevron nudge */
+  .history-row-clickable {
+    transition: background-color 160ms ease;
+  }
+  .history-row-clickable:hover {
+    background: var(--color-brand-bg);
+  }
+  .history-row-clickable:hover svg {
+    color: var(--color-brand-cyan) !important;
+    transform: translateX(2px);
+    transition: transform 160ms ease, color 160ms ease;
+  }
+
   /* Sidebar nav item hover — slide-in accent + subtle fill */
   .nav-item {
     position: relative;

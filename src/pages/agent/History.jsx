@@ -1,13 +1,15 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { FileText, TrendingUp, Trophy, Target, CalendarCheck } from 'lucide-react'
+import { FileText, TrendingUp, Trophy, Target, CalendarCheck, ChevronRight } from 'lucide-react'
 
 const REQUIRED = 20
 
 export default function History() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [sessions, setSessions] = useState([])
   const [loading,  setLoading]  = useState(true)
 
@@ -143,6 +145,7 @@ export default function History() {
                       {h}
                     </th>
                   ))}
+                  <th className="px-4 py-3" aria-label="View results" />
                 </tr>
               </thead>
               <tbody>
@@ -153,9 +156,22 @@ export default function History() {
                     : null
                   const mins = Math.floor((s.total_time_seconds ?? 0) / 60)
                   const secs = (s.total_time_seconds ?? 0) % 60
+                  const clickable = s.status === 'completed'
+                  const openResults = () => { if (clickable) navigate(`/results/${s.id}`) }
                   return (
                     <tr key={s.id}
-                      style={{ borderBottom: i < sessions.length - 1 ? '1px solid var(--color-brand-border)' : 'none' }}>
+                      onClick={openResults}
+                      onKeyDown={clickable ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openResults() }
+                      } : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      role={clickable ? 'button' : undefined}
+                      aria-label={clickable ? `View results for ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : undefined}
+                      className={clickable ? 'history-row-clickable' : undefined}
+                      style={{
+                        borderBottom: i < sessions.length - 1 ? '1px solid var(--color-brand-border)' : 'none',
+                        cursor: clickable ? 'pointer' : 'default',
+                      }}>
                       <td className="px-4 py-3">
                         <p style={{ color: 'var(--color-brand-text)' }}>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -188,6 +204,11 @@ export default function History() {
                       </td>
                       <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--color-brand-muted)' }}>
                         {s.total_time_seconds ? `${mins}m ${String(secs).padStart(2, '0')}s` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {clickable && (
+                          <ChevronRight size={16} className="inline-block" style={{ color: 'var(--color-brand-muted)' }} />
+                        )}
                       </td>
                     </tr>
                   )
