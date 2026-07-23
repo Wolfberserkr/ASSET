@@ -6,6 +6,7 @@ import { hasCoarsePointer } from '../../lib/device'
 import { randomizeBetAmount } from '../../lib/questionRandomizer'
 import { fetchAllRows } from '../../lib/fetchAllRows'
 import { generateRouletteScenario } from '../../lib/rouletteScenario'
+import useAdvanceOnClick from '../../hooks/useAdvanceOnClick'
 import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
 import BlackjackTrainer from '../../components/BlackjackTrainer'
@@ -403,6 +404,9 @@ export default function Practice() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [feedback, nextQuestion])
+
+  // Click / tap anywhere (after answering) → next question
+  useAdvanceOnClick(!!feedback, nextQuestion)
 
   const handlePayoutSubmit = (e) => {
     e.preventDefault()
@@ -936,6 +940,9 @@ export default function Practice() {
           >
             Next Question <ChevronRight size={16} />
           </button>
+          <p className="text-center text-xs -mt-1" style={{ color: 'var(--color-brand-muted)' }}>
+            or click anywhere to continue
+          </p>
         </div>
       )}
     </Layout>
