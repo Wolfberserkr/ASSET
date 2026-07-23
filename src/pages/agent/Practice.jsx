@@ -461,40 +461,6 @@ export default function Practice() {
   if (phase === 'selecting' || phase === 'fetching') {
     const loading = phase === 'fetching'
 
-    // Gold trainer cards live in their own section so the games grid stays
-    // uniform — interleaving them per game splits a game from its trainer
-    // across row boundaries in the responsive grid.
-    const trainerCards = games.flatMap(game => {
-      const cards = []
-      if (game.name === 'Blackjack') {
-        cards.push(
-          <TrainerCard
-            key={`${game.id}-strategy`}
-            icon={Spade}
-            title="Blackjack Strategy"
-            subtitle="Basic strategy trainer"
-            detail="Hit · Stand · Double · Split"
-            onClick={startStrategyTrainer}
-            disabled={loading}
-          />
-        )
-      }
-      if (WINNER_GAMES[game.name]) {
-        cards.push(
-          <TrainerCard
-            key={`${game.id}-hands`}
-            icon={Club}
-            title={`${WINNER_GAMES[game.name].short} Hands`}
-            subtitle="Hand recognition trainer"
-            detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
-            onClick={() => startWinnerTrainer(game.name)}
-            disabled={loading}
-          />
-        )
-      }
-      return cards
-    })
-
     return (
       <Layout contentKey={viewKey}>
         {/* Header */}
@@ -537,13 +503,19 @@ export default function Practice() {
           </div>
         )}
 
-        <p className="text-xs font-medium uppercase tracking-widest mb-3"
-           style={{ color: 'var(--color-brand-muted)' }}>
-          Choose a game
-        </p>
+        {/* ── Practice: drill real question pools ─────────────────── */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <p className="text-xs font-medium uppercase tracking-widest"
+             style={{ color: 'var(--color-brand-muted)' }}>
+            Practice
+          </p>
+          <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+            Drill the question pools with instant feedback
+          </span>
+        </div>
 
-        {/* Game cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+        {/* Practice game cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-8">
           {games.map(game => (
             <GameCard
               key={game.id}
@@ -571,18 +543,41 @@ export default function Practice() {
           />
         </div>
 
-        {/* Skill trainers (gold) — grouped so the games grid stays uniform */}
-        {trainerCards.length > 0 && (
-          <>
-            <p className="text-xs font-medium uppercase tracking-widest mb-3 mt-6"
-               style={{ color: 'var(--color-brand-muted)' }}>
-              Skill trainers
-            </p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
-              {trainerCards}
-            </div>
-          </>
-        )}
+        {/* ── Training: interactive skill trainers ────────────────── */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <p className="text-xs font-medium uppercase tracking-widest"
+             style={{ color: 'var(--color-brand-gold)' }}>
+            Training
+          </p>
+          <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+            Interactive skill trainers — no question pool
+          </span>
+        </div>
+
+        {/* Trainer cards (gold-bordered) */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+          {games.some(g => g.name === 'Blackjack') && (
+            <TrainerCard
+              icon={Spade}
+              title="Blackjack Strategy"
+              subtitle="Basic strategy trainer"
+              detail="Hit · Stand · Double · Split"
+              onClick={startStrategyTrainer}
+              disabled={loading}
+            />
+          )}
+          {games.filter(g => WINNER_GAMES[g.name]).map(game => (
+            <TrainerCard
+              key={`trainer-${game.id}`}
+              icon={Club}
+              title={`${WINNER_GAMES[game.name].short} Hands`}
+              subtitle="Hand recognition trainer"
+              detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
+              onClick={() => startWinnerTrainer(game.name)}
+              disabled={loading}
+            />
+          ))}
+        </div>
 
         {loading && (
           <div className="flex items-center justify-center py-6 gap-2">
