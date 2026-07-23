@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
@@ -461,6 +461,40 @@ export default function Practice() {
   if (phase === 'selecting' || phase === 'fetching') {
     const loading = phase === 'fetching'
 
+    // Gold trainer cards live in their own section so the games grid stays
+    // uniform — interleaving them per game splits a game from its trainer
+    // across row boundaries in the responsive grid.
+    const trainerCards = games.flatMap(game => {
+      const cards = []
+      if (game.name === 'Blackjack') {
+        cards.push(
+          <TrainerCard
+            key={`${game.id}-strategy`}
+            icon={Spade}
+            title="Blackjack Strategy"
+            subtitle="Basic strategy trainer"
+            detail="Hit · Stand · Double · Split"
+            onClick={startStrategyTrainer}
+            disabled={loading}
+          />
+        )
+      }
+      if (WINNER_GAMES[game.name]) {
+        cards.push(
+          <TrainerCard
+            key={`${game.id}-hands`}
+            icon={Club}
+            title={`${WINNER_GAMES[game.name].short} Hands`}
+            subtitle="Hand recognition trainer"
+            detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
+            onClick={() => startWinnerTrainer(game.name)}
+            disabled={loading}
+          />
+        )
+      }
+      return cards
+    })
+
     return (
       <Layout contentKey={viewKey}>
         {/* Header */}
@@ -511,34 +545,13 @@ export default function Practice() {
         {/* Game cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
           {games.map(game => (
-            <Fragment key={game.id}>
-              <GameCard
-                name={game.name}
-                drillType={game.drill_type}
-                onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
-                disabled={loading}
-              />
-              {game.name === 'Blackjack' && (
-                <TrainerCard
-                  icon={Spade}
-                  title="Blackjack Strategy"
-                  subtitle="Basic strategy trainer"
-                  detail="Hit · Stand · Double · Split"
-                  onClick={startStrategyTrainer}
-                  disabled={loading}
-                />
-              )}
-              {WINNER_GAMES[game.name] && (
-                <TrainerCard
-                  icon={Club}
-                  title={`${WINNER_GAMES[game.name].short} Hands`}
-                  subtitle="Hand recognition trainer"
-                  detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
-                  onClick={() => startWinnerTrainer(game.name)}
-                  disabled={loading}
-                />
-              )}
-            </Fragment>
+            <GameCard
+              key={game.id}
+              name={game.name}
+              drillType={game.drill_type}
+              onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
+              disabled={loading}
+            />
           ))}
 
           {/* Procedures */}
@@ -557,6 +570,19 @@ export default function Practice() {
             disabled={loading}
           />
         </div>
+
+        {/* Skill trainers (gold) — grouped so the games grid stays uniform */}
+        {trainerCards.length > 0 && (
+          <>
+            <p className="text-xs font-medium uppercase tracking-widest mb-3 mt-6"
+               style={{ color: 'var(--color-brand-muted)' }}>
+              Skill trainers
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+              {trainerCards}
+            </div>
+          </>
+        )}
 
         {loading && (
           <div className="flex items-center justify-center py-6 gap-2">
