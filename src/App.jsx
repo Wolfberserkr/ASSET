@@ -26,6 +26,9 @@ const QuestionStats  = lazy(() => import('./pages/management/QuestionStats'))
 const AuditLog       = lazy(() => import('./pages/management/AuditLog'))
 const QuestionEditor  = lazy(() => import('./pages/management/QuestionEditor'))
 const UserManagement  = lazy(() => import('./pages/management/UserManagement'))
+const Scorecard       = lazy(() => import('./pages/management/Scorecard'))
+const AuditDigest     = lazy(() => import('./pages/management/AuditDigest'))
+const Remediation     = lazy(() => import('./pages/management/Remediation'))
 
 function PageLoader() {
   return (
@@ -74,9 +77,12 @@ export default function App() {
               <Route path="/management/questions"        element={<QuestionEditor />} />
             </Route>
 
-            {/* Account management — department heads only (Henk, Raquel) */}
+            {/* Department heads only (Henk, Raquel) */}
             <Route element={<ProtectedRoute allowedRoles={['director', 'casino_manager']} />}>
               <Route path="/management/users"          element={<UserManagement />} />
+              <Route path="/management/scorecard"      element={<Scorecard />} />
+              <Route path="/management/audit-digest"   element={<AuditDigest />} />
+              <Route path="/management/remediation"    element={<Remediation />} />
             </Route>
 
             {/* Fallback */}

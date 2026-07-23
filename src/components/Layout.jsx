@@ -9,7 +9,7 @@ import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
   ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Lock,
-  HelpCircle, UserCog,
+  HelpCircle, UserCog, BarChart3, FileClock, Target,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -55,9 +55,15 @@ const mgmtNav = [
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText,        group: 'Reports' },
 ]
 
-// Account-management link — appended only for the two department heads
-// (director / casino_manager) via the canManageUsers flag.
-const usersNav = { to: '/management/users', label: 'User Management', icon: UserCog, group: 'Admin' }
+// Head-only links — appended for the two department heads (director /
+// casino_manager) via the canManageUsers flag. Scorecard/Digest sit under
+// Reports; Remediation + User Management under Admin.
+const headsNav = [
+  { to: '/management/scorecard',    label: 'Scorecard',     icon: BarChart3, group: 'Reports' },
+  { to: '/management/audit-digest', label: 'Audit Digest',  icon: FileClock, group: 'Reports' },
+  { to: '/management/remediation',  label: 'Remediation',   icon: Target,    group: 'Admin' },
+  { to: '/management/users',        label: 'User Management',icon: UserCog,   group: 'Admin' },
+]
 
 function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
   if (disabled) {
@@ -215,7 +221,7 @@ export default function Layout({ children, bg, contentKey }) {
     : null
 
   const navLinks = isManagement
-    ? (canManageUsers ? [...mgmtNav, usersNav] : mgmtNav)
+    ? (canManageUsers ? [...mgmtNav, ...headsNav] : mgmtNav)
     : agentNav.map(link =>
         link.to === '/drill'
           ? { ...link, disabled: drillDisabled, badge: drillBadge }

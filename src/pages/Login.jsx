@@ -17,6 +17,7 @@ export default function Login() {
   const [attempts,   setAttempts]   = useState(0)  // local UI counter
 
   const timeoutReason = params.get('reason') === 'timeout'
+  const forcedReason  = params.get('reason') === 'forced'
 
   // Redirect if already logged in
   useEffect(() => {
@@ -139,6 +140,17 @@ export default function Login() {
           >
             <Clock size={16} className="shrink-0" />
             <span>You were signed out due to inactivity.</span>
+          </div>
+        )}
+
+        {/* Force-logout notice */}
+        {forcedReason && !error && (
+          <div
+            className="alert-enter flex items-center gap-2 p-3 rounded-lg mb-4 text-sm"
+            style={{ background: '#1c1a0f', border: '1px solid var(--color-brand-warning)', color: 'var(--color-brand-warning)' }}
+          >
+            <Clock size={16} className="shrink-0" />
+            <span>You were signed out by an administrator.</span>
           </div>
         )}
 

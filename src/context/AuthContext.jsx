@@ -7,6 +7,19 @@ const AuthContext = createContext(null)
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000  // 30 minutes inactivity
 const ACTIVITY_EVENTS     = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart']
+const FORCE_LOGOUT_POLL_MS = 45 * 1000     // how often to check for an admin force-logout
+
+// Decode a JWT's `iat` (issued-at, seconds) without a library or an
+// auth.* call — pure base64url parse. Used to compare the current
+// session's start against force_logout_at. Returns null on any failure.
+function jwtIat(token) {
+  try {
+    const payload = token.split('.')[1]
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const iat = JSON.parse(json)?.iat
+    return typeof iat === 'number' ? iat : null
+  } catch { return null }
+}
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)   // Supabase auth user
@@ -17,6 +30,7 @@ export function AuthProvider({ children }) {
   const timeoutRef         = useRef(null)
   const profileRef         = useRef(null)
   const pendingLogoutsRef  = useRef(0)   // counts in-flight logout()-initiated signOut() calls
+  const sessionIatRef      = useRef(null) // issued-at of the current session's access token
 
   // ── Fetch profile from public.users ──────────────────────────
   const fetchProfile = useCallback(async (authUser) => {
@@ -85,6 +99,11 @@ export function AuthProvider({ children }) {
       }
 
       const authUser = session?.user ?? null
+      // Capture the session start (pure JWT parse, no auth.* call — safe in
+      // this listener). TOKEN_REFRESHED returns early above, so this holds the
+      // ORIGINAL sign-in time; a force-logout stamped after it still fires even
+      // if the token later refreshes.
+      sessionIatRef.current = session?.access_token ? jwtIat(session.access_token) : null
       setUser(authUser)
       fetchProfile(authUser).finally(() => setLoading(false))
 
@@ -161,7 +180,11 @@ export function AuthProvider({ children }) {
     setProfile(null)
     profileRef.current = null
 
-    navigate(reason === 'timeout' ? '/login?reason=timeout' : '/login')
+    navigate(
+      reason === 'timeout' ? '/login?reason=timeout'
+      : reason === 'forced' ? '/login?reason=forced'
+      : '/login',
+    )
 
     // Mark this logout so the SIGNED_OUT event our background signOut() will
     // fire is recognized as locally-initiated. The onAuthStateChange listener
@@ -177,6 +200,38 @@ export function AuthProvider({ children }) {
     }
     supabase.auth.signOut().catch(() => {})
   }, [navigate, stopActivityTracking])
+
+  // ── Force-logout poll ─────────────────────────────────────────
+  // A department head can end a user's active session from User
+  // Management (Edge Function stamps users.force_logout_at). We poll
+  // get_my_force_logout() and sign out when that timestamp is newer
+  // than this session's access token. Runs in its OWN effect (never in
+  // the onAuthStateChange listener) and only touches supabase.rpc — no
+  // auth.* call — so it can't deadlock the auth lock.
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+
+    const check = async () => {
+      const { data, error } = await supabase.rpc('get_my_force_logout')
+      if (cancelled || error || !data) return
+      const forcedSec = Math.floor(new Date(data).getTime() / 1000)
+      const iat = sessionIatRef.current
+      if (iat != null && forcedSec > iat) {
+        logout('forced')
+      }
+    }
+
+    check()
+    const id = setInterval(check, FORCE_LOGOUT_POLL_MS)
+    const onFocus = () => check()
+    window.addEventListener('focus', onFocus)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [user?.id, logout])
 
   // Department is derived from role: agent/supervisor/director are
   // Surveillance; pit_manager/casino_manager/shift_manager are Pit.

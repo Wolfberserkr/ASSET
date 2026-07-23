@@ -13,6 +13,10 @@
 //   { action: 'create', employee_id, name, password, role }
 //   { action: 'delete', user_id }   ← hard delete; blocked if the
 //                                      user has any session history
+//   { action: 'reset_password', user_id, password }  ← admin-set a
+//                                      new password (service role)
+//   { action: 'force_logout', user_id }  ← stamp force_logout_at so
+//                                      the target's client signs out
 //
 // Reversible (de)activation does NOT go through here — it uses the
 // set_user_active() RPC from add_user_management.sql.
@@ -204,6 +208,88 @@ Deno.serve(async (req) => {
       user_id: caller.id,
       action: 'USER_DELETED',
       details: { employee_id: target.employee_id, role: target.role },
+    })
+
+    return json(200, { ok: true, id: targetId, employee_id: target.employee_id })
+  }
+
+  // ─── RESET PASSWORD (admin-set) ────────────────────────────
+  if (body?.action === 'reset_password') {
+    const targetId = String(body.user_id ?? '')
+    const password = String(body.password ?? '')
+    if (!targetId) return json(400, { error: 'user_id is required.' })
+    if (password.length < 8) {
+      return json(400, { error: 'Password must be at least 8 characters.' })
+    }
+    if (targetId === caller.id) {
+      return json(400, {
+        error: 'Use Change Password to update your own password.',
+      })
+    }
+
+    const { data: target } = await admin
+      .from('users').select('role, employee_id').eq('id', targetId).single()
+    if (!target) return json(404, { error: 'User not found.' })
+
+    if (deptOf(target.role) !== callerDept) {
+      return json(403, { error: 'You can only manage users in your own department.' })
+    }
+    if (ACCOUNT_MANAGERS.includes(target.role)) {
+      return json(403, { error: 'You cannot reset another administrator\'s password.' })
+    }
+
+    const { error: pwErr } = await admin.auth.admin.updateUserById(targetId, { password })
+    if (pwErr) return json(400, { error: pwErr.message })
+
+    // Never log the password itself — only who and when.
+    await admin.from('audit_log').insert({
+      user_id: caller.id,
+      action: 'USER_PASSWORD_RESET',
+      details: { target_user_id: targetId, employee_id: target.employee_id },
+    })
+
+    return json(200, { ok: true, id: targetId, employee_id: target.employee_id })
+  }
+
+  // ─── FORCE LOGOUT ──────────────────────────────────────────
+  // Stamps force_logout_at; the target's signed-in client polls
+  // get_my_force_logout() and signs itself out when it sees a value
+  // newer than its access token. This ends the ACTIVE session — for a
+  // permanent block, deactivate the account instead.
+  if (body?.action === 'force_logout') {
+    const targetId = String(body.user_id ?? '')
+    if (!targetId) return json(400, { error: 'user_id is required.' })
+    if (targetId === caller.id) {
+      return json(400, { error: 'You cannot force yourself to log out.' })
+    }
+
+    const { data: target } = await admin
+      .from('users').select('role, employee_id').eq('id', targetId).single()
+    if (!target) return json(404, { error: 'User not found.' })
+
+    if (deptOf(target.role) !== callerDept) {
+      return json(403, { error: 'You can only manage users in your own department.' })
+    }
+    if (ACCOUNT_MANAGERS.includes(target.role)) {
+      return json(403, { error: 'You cannot force another administrator to log out.' })
+    }
+
+    const { error: updErr } = await admin
+      .from('users').update({ force_logout_at: new Date().toISOString() }).eq('id', targetId)
+    if (updErr) return json(400, { error: updErr.message })
+
+    // Best-effort server-side session revocation so a stale token can't
+    // silently refresh. Not all runtimes expose this; the force_logout_at
+    // flag is the guaranteed path, so ignore failures here.
+    try {
+      // @ts-ignore — signOut(userId, scope) availability varies by version.
+      await admin.auth.admin.signOut(targetId, 'global')
+    } catch { /* flag-based logout still applies */ }
+
+    await admin.from('audit_log').insert({
+      user_id: caller.id,
+      action: 'USER_FORCE_LOGOUT',
+      details: { target_user_id: targetId, employee_id: target.employee_id },
     })
 
     return json(200, { ok: true, id: targetId, employee_id: target.employee_id })

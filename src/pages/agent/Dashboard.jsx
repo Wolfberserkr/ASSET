@@ -10,7 +10,7 @@ import OnboardingModal from '../../components/OnboardingModal'
 import { useCooldown } from '../../hooks/useCooldown'
 import { computeTrend } from '../../lib/decayUtils'
 import {
-  CheckCircle, TrendingUp, Clock, PlayCircle, AlertTriangle, Bell,
+  CheckCircle, TrendingUp, Clock, PlayCircle, AlertTriangle, Bell, Target,
 } from 'lucide-react'
 
 // Non-participant agents excluded from the leaderboard (per Rick). Matched on
@@ -77,6 +77,7 @@ export default function AgentDashboard() {
   const [trendSessions,   setTrendSessions]   = useState([])
   const [leaderboard,     setLeaderboard]     = useState([])
   const [gameStats,       setGameStats]       = useState([])
+  const [assignments,     setAssignments]     = useState([])
   const [loadError,       setLoadError]       = useState(null)
   const [onboardingOpen,  setOnboardingOpen]  = useState(false)
   const [now,             setNow]             = useState(() => new Date())
@@ -109,7 +110,7 @@ export default function AgentDashboard() {
     try {
       const trendCutoff  = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
       const answerCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-      const [recertRes, trendRes, leaderboardRes, answersRes, gamesRes] = await Promise.all([
+      const [recertRes, trendRes, leaderboardRes, answersRes, gamesRes, remediationRes] = await Promise.all([
         supabase.rpc('get_recertification_status', { p_user_id: user.id }),
         supabase
           .from('sessions')
@@ -125,6 +126,7 @@ export default function AgentDashboard() {
           .eq('sessions.user_id', user.id)
           .gte('answered_at', answerCutoff),
         supabase.from('games').select('id, name'),
+        supabase.rpc('get_my_remediation'),
       ])
 
       if (recertRes.error) throw recertRes.error
@@ -136,6 +138,10 @@ export default function AgentDashboard() {
       // Leaderboard + accuracy are non-fatal — log and render empty on error.
       if (leaderboardRes.error) console.error('leaderboard:', leaderboardRes.error)
       setLeaderboard(leaderboardRes.data ?? [])
+
+      // Remediation is non-fatal — empty if the migration isn't applied yet.
+      if (remediationRes.error) console.error('remediation:', remediationRes.error)
+      else setAssignments(remediationRes.data ?? [])
 
       if (answersRes.error) console.error('game accuracy:', answersRes.error)
       const gameNames = Object.fromEntries((gamesRes.data ?? []).map(g => [g.id, g.name]))
@@ -279,6 +285,53 @@ export default function AgentDashboard() {
               View History
             </button>
           </div>
+
+          {/* Assigned practice */}
+          {assignments.length > 0 && (
+            <div className="rounded-2xl p-4 mb-5" style={{ ...card, borderColor: 'var(--color-brand-cyan)' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Target size={15} style={{ color: 'var(--color-brand-cyan)' }} />
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: 'var(--color-brand-cyan)' }}>
+                  Assigned Practice
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {assignments.map(a => {
+                  const pct = Math.min(1, Number(a.progress) / a.target_sessions)
+                  const due = a.due_date ? new Date(a.due_date + 'T00:00:00') : null
+                  const overdue = due && due < new Date(new Date().toDateString())
+                  return (
+                    <div key={a.id} className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>{a.focus_label}</span>
+                          {due && (
+                            <span className="text-xs px-1.5 py-0.5 rounded"
+                              style={{ background: overdue ? '#2a0a0a' : 'var(--color-brand-surface)', color: overdue ? '#fca5a5' : 'var(--color-brand-muted)' }}>
+                              {overdue ? 'Overdue' : 'Due'} {due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        {a.note && <p className="text-xs mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>{a.note}</p>}
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex-1 h-2 rounded-full overflow-hidden max-w-[180px]" style={{ background: 'var(--color-brand-surface)' }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, background: pct >= 1 ? 'var(--color-brand-success)' : 'linear-gradient(90deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }} />
+                          </div>
+                          <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{Number(a.progress)}/{a.target_sessions} drills</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate(canDrill ? '/drill' : '/practice')}
+                        className="shrink-0 px-4 py-2 rounded-full text-xs font-semibold text-white self-start"
+                        style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }}>
+                        {canDrill ? 'Start Drill' : 'Practice'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">

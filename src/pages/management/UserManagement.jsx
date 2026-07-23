@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
 import {
   UserCog, UserPlus, X, AlertTriangle, Eye, EyeOff,
-  ShieldCheck, ShieldOff, Trash2, Info, Check,
+  ShieldCheck, ShieldOff, Trash2, Info, Check, KeyRound, LogOut,
 } from 'lucide-react'
 
 const ROLE_LABELS = {
@@ -59,6 +59,16 @@ export default function UserManagement() {
 
   // Delete confirm
   const [confirmDel, setConfirmDel] = useState(null)      // user row pending hard delete
+
+  // Reset password modal
+  const [pwReset,    setPwReset]    = useState(null)      // user row, or null
+  const [pwValue,    setPwValue]    = useState('')
+  const [pwShow,     setPwShow]     = useState(false)
+  const [pwSaving,   setPwSaving]   = useState(false)
+  const [pwError,    setPwError]    = useState('')
+
+  // Force logout confirm
+  const [confirmLogout, setConfirmLogout] = useState(null) // user row, or null
 
   const loadUsers = async () => {
     const [{ data: rows }, { data: sessions }] = await Promise.all([
@@ -136,6 +146,32 @@ export default function UserManagement() {
     // The edge function writes the USER_DELETED audit row (service role).
     setUsers(prev => prev.filter(x => x.id !== u.id))
     flash('success', `Permanently deleted ${u.name} (${u.employee_id}).`)
+  }
+
+  const openReset = (u) => {
+    setPwReset(u); setPwValue(''); setPwShow(false); setPwError('')
+  }
+
+  const submitReset = async () => {
+    if (pwValue.length < 8) { setPwError('Password must be at least 8 characters.'); return }
+    setPwSaving(true); setPwError('')
+    const res = await invokeAdmin({ action: 'reset_password', user_id: pwReset.id, password: pwValue })
+    setPwSaving(false)
+    if (!res.ok) { setPwError(res.error); return }
+    const name = pwReset.name
+    setPwReset(null); setPwValue('')
+    // The edge function writes the USER_PASSWORD_RESET audit row (service role).
+    flash('success', `Password reset for ${name} — hand the new password over directly.`)
+  }
+
+  const forceLogout = async (u) => {
+    setConfirmLogout(null)
+    setBusyId(u.id)
+    const res = await invokeAdmin({ action: 'force_logout', user_id: u.id })
+    setBusyId(null)
+    if (!res.ok) { flash('error', res.error); return }
+    // The edge function writes the USER_FORCE_LOGOUT audit row (service role).
+    flash('success', `${u.name} will be signed out within a minute.`)
   }
 
   const inputCls = 'w-full px-3 py-2 rounded-lg text-sm outline-none'
@@ -251,6 +287,20 @@ export default function UserManagement() {
                   <span className="text-xs shrink-0" style={{ color: 'var(--color-brand-muted)' }}>—</span>
                 ) : (
                   <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => openReset(u)}
+                      className="p-2 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center"
+                      style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-cyan)' }}
+                      title="Reset password">
+                      <KeyRound size={15} />
+                    </button>
+                    {u.is_active && (
+                      <button onClick={() => setConfirmLogout(u)}
+                        className="p-2 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center"
+                        style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-warning)' }}
+                        title="Force logout — ends the active session">
+                        <LogOut size={15} />
+                      </button>
+                    )}
                     {u.is_active ? (
                       <button onClick={() => setActive(u, false)}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium"
@@ -410,6 +460,111 @@ export default function UserManagement() {
                 className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold"
                 style={{ background: '#dc2626', color: '#fff' }}>
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {/* Reset password modal */}
+      {pwReset && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          role="dialog" aria-modal="true" aria-label="Reset password">
+          <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 sm:p-6"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-cyan)' }}>
+                  <KeyRound size={18} />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg" style={{ color: 'var(--color-brand-text)' }}>Reset password</h2>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>
+                    {pwReset.name} (<span className="font-mono">{pwReset.employee_id}</span>)
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setPwReset(null)} style={{ color: 'var(--color-brand-muted)' }} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-brand-muted)' }}>New Password</label>
+            <div className="relative">
+              <input type={pwShow ? 'text' : 'password'} value={pwValue} autoFocus autoComplete="new-password"
+                onChange={e => setPwValue(e.target.value)}
+                placeholder="At least 8 characters" className={inputCls} style={{ ...inputStyle, paddingRight: '2.5rem' }} />
+              <button type="button" onClick={() => setPwShow(v => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded"
+                style={{ color: 'var(--color-brand-muted)' }} aria-label={pwShow ? 'Hide password' : 'Show password'}>
+                {pwShow ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-brand-muted)' }}>
+              The user keeps any active session until it expires or you force a logout — hand the new password over directly.
+            </p>
+
+            {pwError && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg text-xs mt-3"
+                style={{ background: '#2a0a0a', border: '1px solid #fca5a5', color: '#fca5a5' }}>
+                <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                <span>{pwError}</span>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setPwReset(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium"
+                style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}>
+                Cancel
+              </button>
+              <button onClick={submitReset} disabled={pwSaving}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))', color: '#fff', opacity: pwSaving ? 0.7 : 1 }}>
+                {pwSaving ? (
+                  <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving…</>
+                ) : (
+                  <><KeyRound size={15} /> Set Password</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {/* Force logout confirmation */}
+      {confirmLogout && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          role="dialog" aria-modal="true" aria-label="Confirm force logout">
+          <div className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 sm:p-6"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                style={{ background: '#1c1a0f', color: 'var(--color-brand-warning)' }}>
+                <LogOut size={18} />
+              </div>
+              <h2 className="font-bold text-lg" style={{ color: 'var(--color-brand-text)' }}>Force logout?</h2>
+            </div>
+            <p className="text-sm mb-5" style={{ color: 'var(--color-brand-muted)' }}>
+              <strong style={{ color: 'var(--color-brand-text)' }}>{confirmLogout.name}</strong>{' '}
+              (<span className="font-mono">{confirmLogout.employee_id}</span>) will be signed out of any active session
+              within about a minute. They can log back in with their password — to block access entirely, deactivate the account instead.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmLogout(null)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium"
+                style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}>
+                Cancel
+              </button>
+              <button onClick={() => forceLogout(confirmLogout)}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold"
+                style={{ background: 'var(--color-brand-warning)', color: '#1a1400' }}>
+                Force Logout
               </button>
             </div>
           </div>
