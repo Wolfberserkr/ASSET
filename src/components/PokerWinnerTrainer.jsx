@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import PlayingCard, { useFeltScale, FeltLabel } from './PlayingCard'
 import { generatePokerScenario, RANKINGS } from '../lib/pokerHands'
+import useAdvanceOnClick from '../hooks/useAdvanceOnClick'
 
 // ─── Per-game configuration ───────────────────────────────────────────────────
 
@@ -159,6 +160,9 @@ export default function PokerWinnerTrainer({ game }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [feedback, choose, nextHand, config])
+
+  // Click / tap anywhere (after answering) → next hand
+  useAdvanceOnClick(!!feedback, nextHand)
 
   const accuracy = stats.hands > 0 ? Math.round((stats.correct / stats.hands) * 100) : null
   const accColor = accuracy == null ? 'var(--color-brand-muted)'
@@ -355,6 +359,9 @@ export default function PokerWinnerTrainer({ game }) {
           >
             Next Hand <ChevronRight size={16} />
           </button>
+          <p className="text-center text-xs -mt-1" style={{ color: 'var(--color-brand-muted)' }}>
+            or click anywhere to continue
+          </p>
         </div>
       )}
 

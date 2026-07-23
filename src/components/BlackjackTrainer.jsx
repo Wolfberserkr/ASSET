@@ -6,6 +6,7 @@ import {
   DEALER_LABELS, CHART_SECTIONS, generateScenario, explainRule,
 } from '../lib/blackjackStrategy'
 import PlayingCard, { CardBack, useFeltScale, FeltLabel } from './PlayingCard'
+import useAdvanceOnClick from '../hooks/useAdvanceOnClick'
 
 // ─── Action + chart cell styling (mirrors the printed chart's color code) ─────
 
@@ -204,6 +205,9 @@ export default function BlackjackTrainer() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [feedback, choose, nextHand])
+
+  // Click / tap anywhere (after answering) → next hand
+  useAdvanceOnClick(!!feedback, nextHand)
 
   const accuracy = stats.hands > 0 ? Math.round((stats.correct / stats.hands) * 100) : null
   const accColor = accuracy == null ? 'var(--color-brand-muted)'
@@ -429,6 +433,9 @@ export default function BlackjackTrainer() {
           >
             Next Hand <ChevronRight size={16} />
           </button>
+          <p className="text-center text-xs -mt-1" style={{ color: 'var(--color-brand-muted)' }}>
+            or click anywhere to continue
+          </p>
         </div>
       )}
 
