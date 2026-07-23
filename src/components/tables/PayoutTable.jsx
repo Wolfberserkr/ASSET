@@ -255,16 +255,20 @@ function RouletteTable({ scenario }) {
           {/* Bet chips */}
           {bets.map((bet, i) => <BetChip key={i} bet={bet} />)}
 
-          {/* Winning number blue dot */}
+          {/* Winning number blue dot — placed in the cell's top-left corner so
+              it never covers a straight-up chip sitting on the winning number
+              (a centered marker hides that chip's denomination, making an easy
+              bet to miss when summing the payout). */}
           {(() => {
-            const r = 5
+            const r = 4.5
+            const off = 8
             const style = { fill: '#1d4ed8', stroke: '#93c5fd', strokeWidth: 1.5 }
-            if (win00) return <circle cx={ZW / 2} cy={CH * 0.75} r={r} {...style} />
-            if (win0)  return <circle cx={ZW / 2} cy={CH * 2.25} r={r} {...style} />
+            if (win00) return <circle cx={off} cy={off} r={r} {...style} />
+            if (win0)  return <circle cx={off} cy={CH * 1.5 + off} r={r} {...style} />
             const wNum = Number(winStr)
             if (wNum >= 1 && wNum <= 36) {
               const c = cellOf(wNum)
-              return <circle cx={c.cx} cy={c.cy} r={r} {...style} />
+              return <circle cx={c.x + off} cy={c.y + off} r={r} {...style} />
             }
             return null
           })()}
