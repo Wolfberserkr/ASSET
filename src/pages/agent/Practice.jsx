@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
@@ -503,42 +503,27 @@ export default function Practice() {
           </div>
         )}
 
-        <p className="text-xs font-medium uppercase tracking-widest mb-3"
-           style={{ color: 'var(--color-brand-muted)' }}>
-          Choose a game
-        </p>
+        {/* ── Practice: drill real question pools ─────────────────── */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <p className="text-xs font-medium uppercase tracking-widest"
+             style={{ color: 'var(--color-brand-muted)' }}>
+            Practice
+          </p>
+          <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+            Drill the question pools with instant feedback
+          </span>
+        </div>
 
-        {/* Game cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+        {/* Practice game cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-8">
           {games.map(game => (
-            <Fragment key={game.id}>
-              <GameCard
-                name={game.name}
-                drillType={game.drill_type}
-                onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
-                disabled={loading}
-              />
-              {game.name === 'Blackjack' && (
-                <TrainerCard
-                  icon={Spade}
-                  title="Blackjack Strategy"
-                  subtitle="Basic strategy trainer"
-                  detail="Hit · Stand · Double · Split"
-                  onClick={startStrategyTrainer}
-                  disabled={loading}
-                />
-              )}
-              {WINNER_GAMES[game.name] && (
-                <TrainerCard
-                  icon={Club}
-                  title={`${WINNER_GAMES[game.name].short} Hands`}
-                  subtitle="Hand recognition trainer"
-                  detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
-                  onClick={() => startWinnerTrainer(game.name)}
-                  disabled={loading}
-                />
-              )}
-            </Fragment>
+            <GameCard
+              key={game.id}
+              name={game.name}
+              drillType={game.drill_type}
+              onClick={() => startPractice({ id: game.id, name: game.name, drillType: game.drill_type })}
+              disabled={loading}
+            />
           ))}
 
           {/* Procedures */}
@@ -556,6 +541,42 @@ export default function Practice() {
             onClick={() => startPractice({ id: 'mixed', name: 'Mixed — All Games', drillType: 'mixed' })}
             disabled={loading}
           />
+        </div>
+
+        {/* ── Training: interactive skill trainers ────────────────── */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <p className="text-xs font-medium uppercase tracking-widest"
+             style={{ color: 'var(--color-brand-gold)' }}>
+            Training
+          </p>
+          <span className="text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+            Interactive skill trainers — no question pool
+          </span>
+        </div>
+
+        {/* Trainer cards (gold-bordered) */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+          {games.some(g => g.name === 'Blackjack') && (
+            <TrainerCard
+              icon={Spade}
+              title="Blackjack Strategy"
+              subtitle="Basic strategy trainer"
+              detail="Hit · Stand · Double · Split"
+              onClick={startStrategyTrainer}
+              disabled={loading}
+            />
+          )}
+          {games.filter(g => WINNER_GAMES[g.name]).map(game => (
+            <TrainerCard
+              key={`trainer-${game.id}`}
+              icon={Club}
+              title={`${WINNER_GAMES[game.name].short} Hands`}
+              subtitle="Hand recognition trainer"
+              detail={game.name === 'Let It Ride' ? 'Pays · No Pay' : 'Player · Dealer · Push'}
+              onClick={() => startWinnerTrainer(game.name)}
+              disabled={loading}
+            />
+          ))}
         </div>
 
         {loading && (
