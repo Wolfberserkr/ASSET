@@ -1,4 +1,5 @@
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { logAudit } from '../../lib/audit'
 import { hasCoarsePointer } from '../../lib/device'
@@ -203,6 +204,28 @@ export default function Practice() {
   const [feedback,         setFeedback]         = useState(null)
   const [stats,            setStats]            = useState({ answered: 0, correct: 0 })
 
+  const [searchParams] = useSearchParams()
+
+  // Accumulates the current game's practice for the append-only
+  // practice_activity log (drives remediation practice credits). Kept in a
+  // ref so the unmount flush always sees the latest counts.
+  const activityRef = useRef({ gameId: null, scope: null, answered: 0, correct: 0 })
+
+  // Write the accumulated practice for the game just left, then reset. Only
+  // the standard question-practice flow logs — trainers don't (different skill).
+  const flushActivity = useCallback(() => {
+    const a = activityRef.current
+    if (a.answered > 0 && a.scope) {
+      supabase.from('practice_activity').insert({
+        game_id: a.gameId,
+        scope: a.scope,
+        questions_answered: a.answered,
+        correct: a.correct,
+      }).then(() => {}, () => {}) // fire-and-forget; practice never blocks on this
+    }
+    activityRef.current = { gameId: null, scope: null, answered: 0, correct: 0 }
+  }, [])
+
   const currentQ = questions.length > 0 ? questions[queueIdx % questions.length] : null
 
   // Remount Layout's page container when the view swaps (see Layout
@@ -231,8 +254,27 @@ export default function Practice() {
       })
   }, [])
 
+  // Flush any in-progress practice when leaving the page entirely.
+  useEffect(() => () => flushActivity(), [flushActivity])
+
+  // Deep-link: /practice?game=<uuid|procedure> auto-starts focused practice
+  // (the remediation "Practice" button on the agent dashboard uses this).
+  useEffect(() => {
+    const g = searchParams.get('game')
+    if (!g || games.length === 0) return
+    if (g === 'procedure') {
+      startPractice({ id: 'procedure', name: 'Procedures', drillType: 'quiz' })
+    } else {
+      const match = games.find(x => x.id === g)
+      if (match) startPractice({ id: match.id, name: match.name, drillType: match.drill_type })
+    }
+    // Fire once when the games list first loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [games])
+
   // ── Start practice for a game ──────────────────────────────────
   const startPractice = useCallback(async (gameOption) => {
+    flushActivity() // persist any practice from the previous game first
     setPhase('fetching')
     setLoadError('')
 
@@ -282,6 +324,11 @@ export default function Practice() {
       setInputError('')
       setFeedback(null)
       setStats({ answered: 0, correct: 0 })
+      activityRef.current = {
+        gameId: (gameOption.id === 'procedure' || gameOption.id === 'mixed') ? null : gameOption.id,
+        scope:  gameOption.id === 'procedure' ? 'procedure' : gameOption.id === 'mixed' ? 'mixed' : 'game',
+        answered: 0, correct: 0,
+      }
       setSelectedGame(gameOption)
       setPhase('practicing')
     } catch (err) {
@@ -317,6 +364,8 @@ export default function Practice() {
       answered: s.answered + 1,
       correct:  s.correct + (isCorrect ? 1 : 0),
     }))
+    activityRef.current.answered += 1
+    if (isCorrect) activityRef.current.correct += 1
   }, [currentQ, feedback, betContext, rouletteScenario])
 
   // ── Next question ──────────────────────────────────────────────
@@ -365,6 +414,7 @@ export default function Practice() {
   }
 
   const backToSelector = () => {
+    flushActivity()
     setPhase('selecting')
     setSelectedGame(null)
     setWinnerGame(null)

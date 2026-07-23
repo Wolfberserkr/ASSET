@@ -297,9 +297,14 @@ export default function AgentDashboard() {
               </div>
               <div className="space-y-3">
                 {assignments.map(a => {
-                  const pct = Math.min(1, Number(a.progress) / a.target_sessions)
+                  const drills   = Number(a.drill_progress ?? 0)
+                  const credits  = Number(a.practice_credits ?? 0)
+                  const progress = Number(a.progress ?? drills)
+                  const pct = Math.min(1, progress / a.target_sessions)
+                  const needsDrill = drills === 0
                   const due = a.due_date ? new Date(a.due_date + 'T00:00:00') : null
                   const overdue = due && due < new Date(new Date().toDateString())
+                  const practiceHref = `/practice?game=${a.game_id ?? 'procedure'}`
                   return (
                     <div key={a.id} className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0">
@@ -317,15 +322,27 @@ export default function AgentDashboard() {
                           <div className="flex-1 h-2 rounded-full overflow-hidden max-w-[180px]" style={{ background: 'var(--color-brand-surface)' }}>
                             <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, background: pct >= 1 ? 'var(--color-brand-success)' : 'linear-gradient(90deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }} />
                           </div>
-                          <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{Number(a.progress)}/{a.target_sessions} drills</span>
+                          <span className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{progress}/{a.target_sessions}</span>
                         </div>
+                        <p className="text-[11px] mt-1" style={{ color: needsDrill ? 'var(--color-brand-warning)' : 'var(--color-brand-muted)' }}>
+                          {drills} drill{drills === 1 ? '' : 's'} + {credits} practice{needsDrill ? ' · needs 1 drill to complete' : ''}
+                        </p>
                       </div>
-                      <button
-                        onClick={() => navigate(canDrill ? '/drill' : '/practice')}
-                        className="shrink-0 px-4 py-2 rounded-full text-xs font-semibold text-white self-start"
-                        style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }}>
-                        {canDrill ? 'Start Drill' : 'Practice'}
-                      </button>
+                      <div className="flex gap-2 shrink-0 self-start">
+                        <button
+                          onClick={() => navigate(practiceHref)}
+                          className="px-4 py-2 rounded-full text-xs font-semibold"
+                          style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
+                          Practice
+                        </button>
+                        <button
+                          onClick={() => navigate('/drill')}
+                          disabled={!canDrill}
+                          className="px-4 py-2 rounded-full text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: 'linear-gradient(135deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }}>
+                          {canDrill ? 'Start Drill' : 'Cooldown'}
+                        </button>
+                      </div>
                     </div>
                   )
                 })}

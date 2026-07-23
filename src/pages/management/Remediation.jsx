@@ -134,12 +134,14 @@ export default function Remediation() {
         'Employee ID': r.employee_id,
         'Focus': r.focus_label,
         'Progress': `${Number(r.progress)}/${r.target_sessions}`,
+        'Drills': Number(r.drill_progress ?? 0),
+        'Practice Credits': Number(r.practice_credits ?? 0),
         'Status': r.status,
         'Due': r.due_date ? fmtDate(r.due_date) : '',
         'Assigned': fmtDate(r.created_at),
         'Note': r.note ?? '',
       })),
-      cols: [{ wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 30 }],
+      cols: [{ wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 30 }],
     })
   }
 
@@ -248,7 +250,7 @@ export default function Remediation() {
                   </div>
 
                   {/* Progress */}
-                  <div className="w-full sm:w-40 shrink-0">
+                  <div className="w-full sm:w-44 shrink-0">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span style={{ color: 'var(--color-brand-muted)' }}>Progress</span>
                       <span className="font-mono" style={{ color: 'var(--color-brand-text)' }}>{Number(r.progress)}/{r.target_sessions}</span>
@@ -256,6 +258,10 @@ export default function Remediation() {
                     <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-brand-surface)' }}>
                       <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, background: pct >= 1 ? 'var(--color-brand-success)' : 'linear-gradient(90deg, var(--color-brand-grad-a), var(--color-brand-grad-b))' }} />
                     </div>
+                    <p className="text-[11px] mt-1" style={{ color: (active && Number(r.drill_progress) === 0) ? 'var(--color-brand-warning)' : 'var(--color-brand-muted)' }}>
+                      {Number(r.drill_progress ?? 0)} drill{Number(r.drill_progress) === 1 ? '' : 's'} + {Number(r.practice_credits ?? 0)} practice
+                      {active && Number(r.drill_progress) === 0 ? ' · needs 1 drill' : ''}
+                    </p>
                   </div>
 
                   {/* Actions */}
@@ -343,7 +349,7 @@ export default function Remediation() {
 
               <p className="flex items-start gap-1.5 text-[11px]" style={{ color: 'var(--color-brand-muted)' }}>
                 <Clock size={12} className="mt-0.5 shrink-0" />
-                Auto-completes once the agent finishes {form.target_sessions || 3} qualifying drill session{Number(form.target_sessions) === 1 ? '' : 's'} in this focus. You can also mark it complete by hand.
+                Auto-completes at {form.target_sessions || 3} — qualifying drills plus practice credits (10 focused practice questions = 1 credit), and always needs at least 1 real drill. You can also mark it complete by hand.
               </p>
 
               {formError && (
