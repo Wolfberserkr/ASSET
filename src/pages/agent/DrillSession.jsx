@@ -339,6 +339,25 @@ export default function DrillSession() {
 
     if (q.game_id) recordDifficulty(q.game_id, isCorrect)
 
+    // Persist the exact layout shown so Results can redraw it for a missed
+    // payout question (roulette scenarios and chip stacks are generated at
+    // runtime and are otherwise unrecoverable). NULL for multiple choice.
+    let payoutSnapshot = null
+    if (q.type === 'payout') {
+      if (rouletteScenario) {
+        payoutSnapshot = { type: 'roulette', scenario: rouletteScenario }
+      } else if (betContext) {
+        payoutSnapshot = {
+          type:       'payout',
+          chips:      betContext.chips,
+          totalBet:   betContext.totalBet,
+          perSpotBet: betContext.perSpotBet ?? null,
+          activeBet:  deriveActiveBet(q),
+          payoutRatio: q.correct_answer,
+        }
+      }
+    }
+
     const record = {
       session_id:       sessionIdRef.current,
       question_id:      q.id,
@@ -346,6 +365,7 @@ export default function DrillSession() {
       user_answer:      String(userAnswer),
       is_correct:       isCorrect,
       bet_amount_shown: rouletteScenario ? rouletteScenario.correctPayout : (betContext?.totalBet ?? null),
+      payout_snapshot:  payoutSnapshot,
       answered_at:      new Date().toISOString(),
     }
 

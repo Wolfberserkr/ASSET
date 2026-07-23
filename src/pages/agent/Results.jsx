@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
+import PayoutTable from '../../components/tables/PayoutTable'
 import {
   CheckCircle, XCircle, Trophy, Clock, RotateCcw,
   ChevronDown, ChevronUp, AlertTriangle, Home,
@@ -132,6 +133,33 @@ function MissedQuestion({ answer, index, gameName }) {
 
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3" style={{ borderTop: '1px solid var(--color-brand-border)' }}>
+          {/* Payout layout that was shown during the drill — lets the agent
+              confirm exactly which bets they were summing. */}
+          {answer.payout_snapshot && (
+            <div className="mt-3">
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--color-brand-muted)' }}>
+                Layout shown
+              </p>
+              {answer.payout_snapshot.type === 'roulette' ? (
+                <PayoutTable
+                  gameName={gameName ?? 'Roulette'}
+                  scenario={answer.payout_snapshot.scenario}
+                  activeBet={null}
+                />
+              ) : (
+                <PayoutTable
+                  gameName={gameName ?? ''}
+                  scenario={null}
+                  payoutRatio={answer.payout_snapshot.payoutRatio ?? ''}
+                  chips={answer.payout_snapshot.chips ?? []}
+                  totalBet={answer.payout_snapshot.totalBet ?? 0}
+                  perSpotBet={answer.payout_snapshot.perSpotBet ?? undefined}
+                  activeBet={answer.payout_snapshot.activeBet}
+                />
+              )}
+            </div>
+          )}
+
           <div className="mt-3 p-3 rounded-lg" style={{ background: '#1f0a0a' }}>
             <p className="text-xs uppercase tracking-widest mb-1" style={{ color: 'var(--color-brand-danger)' }}>
               Your answer
@@ -198,6 +226,7 @@ export default function Results() {
             user_answer,
             is_correct,
             bet_amount_shown,
+            payout_snapshot,
             question:questions (
               id,
               question_text,
