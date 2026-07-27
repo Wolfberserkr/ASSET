@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A.S.S.E.T. — User Manual</title>
+<style>
+  :root{
+    --bg:#0b1020; --ink:#1a2233; --muted:#5b6b86; --line:#e2e8f2;
+    --blue:#4876ff; --violet:#7c5cff; --green:#1f9d57; --amber:#c47a12; --red:#d14343;
+    --card:#f5f8ff; --tip:#eef6ff; --note:#f3f0ff; --warn:#fff6ec;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"DM Sans","Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--ink); font-size:10.6pt; line-height:1.55; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  code,.mono{ font-family:"Space Mono","SFMono-Regular",Consolas,monospace; }
+  h1,h2,h3,h4{ line-height:1.2; color:#0e1526; margin:0 0 .35em; }
+  h2{ font-size:19pt; }
+  h3{ font-size:13.5pt; margin-top:1.1em; }
+  h4{ font-size:11.2pt; margin-top:.9em; color:#26314a; }
+  p{ margin:.45em 0; }
+  ul,ol{ margin:.4em 0 .6em; padding-left:1.15em; }
+  li{ margin:.16em 0; }
+  a{ color:var(--blue); text-decoration:none; }
+  .muted{ color:var(--muted); }
+  strong{ color:#0e1526; }
+
+  /* Page layout */
+  @page{ size:A4; margin:16mm 15mm 18mm; }
+  .page{ }
+  .no-break{ break-inside:avoid; }
+
+  /* Cover */
+  .cover{
+    position:relative; height:262mm; color:#eaf0ff;
+    background:radial-gradient(120% 90% at 15% 0%, #1b2b5e 0%, #0b1020 55%, #070b16 100%);
+    border-radius:0; padding:30mm 22mm; display:flex; flex-direction:column; break-after:page;
+  }
+  .cover .badge{ width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--blue),var(--violet)); box-shadow:0 0 40px rgba(72,118,255,.55); font-size:30px;}
+  .cover h1{ color:#fff; font-size:46pt; letter-spacing:.14em; margin:26mm 0 2mm; }
+  .cover .sub{ color:#9fb2d8; font-size:15pt; letter-spacing:.02em; }
+  .cover .rule{ height:3px;width:74mm;margin:9mm 0;background:linear-gradient(90deg,var(--blue),var(--violet),transparent);border-radius:3px;}
+  .cover .kicker{ color:#7f93bd; text-transform:uppercase; letter-spacing:.32em; font-size:9pt; }
+  .cover .meta{ margin-top:auto; color:#8ea1c9; font-size:9.5pt; }
+  .cover .meta b{ color:#cdd9f2; }
+  .cover .tag{ display:inline-block; margin-top:4mm; padding:3px 12px; border:1px solid #33436e; border-radius:999px; color:#b9c7e6; font-size:8.5pt; letter-spacing:.06em;}
+
+  /* TOC */
+  .toc h2{ border-bottom:2px solid var(--line); padding-bottom:.3em; }
+  .toc ol{ list-style:none; padding:0; counter-reset:sec; }
+  .toc > ol > li{ counter-increment:sec; margin:.5em 0; font-weight:600; }
+  .toc > ol > li::before{ content:counter(sec) ".\00a0\00a0"; color:var(--blue); }
+  .toc ul{ list-style:none; padding-left:1.4em; margin:.2em 0 .3em; }
+  .toc ul li{ color:var(--muted); font-weight:400; font-size:9.8pt; }
+
+  /* Section header band */
+  .sec{ break-before:page; }
+  .sec-head{ display:flex; align-items:center; gap:12px; border-bottom:2px solid var(--line); padding-bottom:8px; margin-bottom:10px; }
+  .sec-num{ width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--blue),var(--violet)); color:#fff; font-weight:700; font-size:13pt;}
+  .sec-head h2{ margin:0; }
+  .lead{ color:#3a4763; font-size:10.9pt; }
+
+  /* Figures */
+  figure{ margin:12px 0 14px; break-inside:avoid; }
+  figure img{ width:100%; border-radius:8px; border:1px solid #cfd8ea; box-shadow:0 6px 18px rgba(16,26,54,.14); display:block; }
+  figcaption{ margin-top:6px; font-size:8.9pt; color:var(--muted); }
+  figcaption b{ color:#26314a; }
+
+  /* Callouts */
+  .callout{ border-radius:9px; padding:10px 13px; margin:11px 0; font-size:9.9pt; border:1px solid var(--line); break-inside:avoid; }
+  .callout .h{ font-weight:700; letter-spacing:.02em; margin-bottom:2px; display:flex; align-items:center; gap:7px; }
+  .tip{ background:var(--tip); border-color:#cbe0ff; } .tip .h{ color:#1c5fd6; }
+  .note{ background:var(--note); border-color:#ddd3ff; } .note .h{ color:#5a3fd6; }
+  .warn{ background:var(--warn); border-color:#ffdcb8; } .warn .h{ color:#b46410; }
+  .callout ul{ margin:.3em 0 .1em; }
+
+  /* Key-value chips + tables */
+  table{ width:100%; border-collapse:collapse; margin:10px 0; font-size:9.6pt; break-inside:avoid; }
+  th,td{ text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ background:#eef2fb; color:#26314a; font-weight:700; }
+  tr:nth-child(even) td{ background:#f8fafe; }
+  .pill{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:8.4pt; font-weight:600; }
+  .p-agent{ background:#e7effe; color:#2b5fd0; } .p-mgmt{ background:#eafaf0; color:#1c8a4e; } .p-head{ background:#f3ecff; color:#6a44d6; }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 22px; }
+  .kbd{ display:inline-block; border:1px solid #c9d3e6; border-bottom-width:2px; border-radius:5px; padding:0 6px; background:#f4f7fd; font-family:"Space Mono",monospace; font-size:8.6pt; }
+  .step{ counter-reset:st; list-style:none; padding-left:0; }
+  .step li{ position:relative; padding-left:30px; margin:.5em 0; }
+  .step li::before{ counter-increment:st; content:counter(st); position:absolute; left:0; top:0; width:21px;height:21px;
+    background:var(--blue); color:#fff; border-radius:50%; font-size:8.5pt; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .footer-note{ margin-top:14px; padding-top:8px; border-top:1px dashed var(--line); font-size:8.6pt; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="badge">🛡️</div>
+  <div class="kicker">Aruba Marriott Resort &amp; Stellaris Casino · Surveillance</div>
+  <h1>A.S.S.E.T.</h1>
+  <div class="sub">Aruba Surveillance Skill Enhancement &amp; Training</div>
+  <div class="rule"></div>
+  <div style="font-size:14pt;color:#e7edff;font-weight:600;">User Manual &amp; Training Guide</div>
+  <p style="color:#9fb2d8;max-width:130mm;">A complete, illustrated walkthrough of the drill platform — for surveillance agents, pit managers, supervisors, and department heads. Every screen shown here is the live application.</p>
+  <span class="tag">Version 1.0 · Illustrated with live screenshots</span>
+  <div class="meta">
+    Prepared for the Surveillance &amp; Pit training program.<br>
+    <b>Audience:</b> Agents · Pit Managers · Supervisors · Directors · Casino Manager &nbsp;•&nbsp; <b>Access:</b> assetdrills.com
+  </div>
+</section>
+
+<!-- ============ TOC ============ -->
+<section class="page toc">
+  <h2>Contents</h2>
+  <ol>
+    <li>Welcome to A.S.S.E.T.
+      <ul><li>What the platform is for · Who uses it · Roles at a glance</li></ul></li>
+    <li>Signing In
+      <ul><li>Employee ID login · Password rules · Lockout · Changing your password</li></ul></li>
+    <li>Your First Login — the Guided Tour</li>
+    <li>The Drill Portal (Agents &amp; Pit Managers)
+      <ul><li>Dashboard · Running a Drill · Your Results · Practice Mode · Skill Trainers · Resources · My History · Pit Operations</li></ul></li>
+    <li>How Scoring &amp; Certification Work
+      <ul><li>Scoring formula · 4-hour cooldown · Monthly recertification · Adaptive difficulty · Session structure</li></ul></li>
+    <li>The Management Portal (Supervisors &amp; Heads)
+      <ul><li>Team Dashboard · Agent Detail · Completion Tracker · Weak Areas · Question Stats · Question Editor · Audit Log · Notifications</li></ul></li>
+    <li>Department Heads — Extra Tools
+      <ul><li>Scorecard · Audit Digest · Remediation · User Management</li></ul></li>
+    <li>Tips, Shortcuts &amp; Excel Exports</li>
+    <li>Roles &amp; Access — Quick Reference</li>
+    <li>Troubleshooting &amp; FAQ</li>
+  </ol>
+  <div class="callout tip">
+    <div class="h">▸ How to read this manual</div>
+    Screenshots use a demonstration data set (fictional names such as “Sam Trainee” and IDs like <span class="mono">Z-01</span>). Your own screen will show your real team. Blue <span class="mono">Tip</span>, purple <span class="mono">Note</span>, and amber <span class="mono">Important</span> boxes call out the things worth remembering.
+  </div>
+</section>
+
+<!-- ============ 1. WELCOME ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">1</div><h2>Welcome to A.S.S.E.T.</h2></div>
+  <p class="lead">A.S.S.E.T. — <strong>A</strong>ruba <strong>S</strong>urveillance <strong>S</strong>kill <strong>E</strong>nhancement &amp; <strong>T</strong>raining — is the department’s web-based drill platform. It keeps your payout math, game-protection knowledge, and floor procedures sharp through short, scored gaming drills, and gives supervisors and directors a clear view of team readiness.</p>
+
+  <h3>What you do here</h3>
+  <ul>
+    <li><strong>Run drills</strong> — 10-question scored sessions drawn from seven casino games plus shared floor procedures.</li>
+    <li><strong>Practice freely</strong> — unlimited, unscored practice with instant feedback, including dedicated skill trainers.</li>
+    <li><strong>Track progress</strong> — scores, accuracy, weak areas, and your monthly certification status.</li>
+  </ul>
+
+  <h3>Who uses it</h3>
+  <p>The platform serves two departments that never see each other’s data (the “department wall”): <strong>Surveillance</strong> and <strong>Pit</strong>. Everyone signs in the same way; what you see afterwards depends on your role.</p>
+
+  <table class="no-break">
+    <thead><tr><th>Role</th><th>Portal</th><th>What they do</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-agent">Agent</span> (Surveillance)</td><td>Drill portal</td><td>Runs drills, practice, and trainers; tracks own progress.</td></tr>
+      <tr><td><span class="pill p-agent">Pit Manager</span> (Pit)</td><td>Drill portal</td><td>Same drills as agents, labelled “Pit Operations”.</td></tr>
+      <tr><td><span class="pill p-mgmt">Supervisor</span> / <span class="pill p-mgmt">Shift Manager</span></td><td>Management portal</td><td>Views team performance and reports; can create &amp; edit questions.</td></tr>
+      <tr><td><span class="pill p-head">Director</span> (Surveillance head)</td><td>Management + Admin</td><td>Everything a supervisor sees, plus Scorecard, Remediation, Audit Digest, and User Management.</td></tr>
+      <tr><td><span class="pill p-head">Casino Manager</span> (Pit head)</td><td>Management + Admin</td><td>Same head tools as the Director, scoped to Pit staff.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout note">
+    <div class="h">◆ The department wall</div>
+    Surveillance staff and Pit staff never appear in each other’s dashboards, leaderboards, reports, or audit records. Questions, games, and resources are shared; people and their results are not.
+  </div>
+</section>
+
+<!-- ============ 2. SIGNING IN ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">2</div><h2>Signing In</h2></div>
+  <p class="lead">You log in with the <strong>Employee ID</strong> and password your administrator handed you — there is no public sign-up and no email required.</p>
+
+  <figure>
+    <img src="assets/00-login.jpg" alt="Login screen">
+    <figcaption><b>Figure 2.1</b> — The sign-in screen. Enter your Employee ID (for example <span class="mono">B-24</span>) and password, then select <b>Sign in</b>. The eye icon reveals the password as you type.</figcaption>
+  </figure>
+
+  <ol class="step">
+    <li>Open <span class="mono">assetdrills.com</span> in any modern browser (works on desktop, tablet, and phone).</li>
+    <li>Type your <strong>Employee ID</strong> exactly as issued — it is not case-sensitive.</li>
+    <li>Enter your password and select <strong>Sign in</strong>. You land on your Dashboard automatically.</li>
+  </ol>
+
+  <div class="callout warn">
+    <div class="h">▲ Important — account lockout</div>
+    After <strong>5 failed attempts within 15 minutes</strong> the account is temporarily locked. Wait for the window to pass or ask your supervisor. Forgot your password? There is no self-service reset — “<em>Forgot your password? Contact your Supervisor.</em>” A head can set a new one for you in seconds.
+  </div>
+
+  <h3>Changing your own password</h3>
+  <p>Once signed in, open <strong>Change Password</strong> from the sidebar (under <em>Help</em>). Enter a new password — the change is immediate and needs no approval.</p>
+  <figure>
+    <img src="assets/agent-11-change-password.jpg" alt="Change password screen">
+    <figcaption><b>Figure 2.2</b> — The self-service <b>Change Password</b> page. Available to every drill-taker from the sidebar.</figcaption>
+  </figure>
+
+  <div class="callout tip">
+    <div class="h">▸ Automatic sign-out</div>
+    For security the app signs you out after <strong>30 minutes of inactivity</strong>. A department head can also force-log-out an active session; if that happens you’ll be returned to the login screen within about a minute.
+  </div>
+</section>
+
+<!-- ============ 3. FIRST LOGIN TOUR ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">3</div><h2>Your First Login — the Guided Tour</h2></div>
+  <p class="lead">The very first time an agent or pit manager signs in, a short five-step tour explains the essentials before the first drill. You can move with <strong>Next</strong>/<strong>Back</strong>, and it only appears once.</p>
+  <figure>
+    <img src="assets/agent-01-onboarding.jpg" alt="Onboarding tour step 1">
+    <figcaption><b>Figure 3.1</b> — Step 1 of the welcome tour. The five steps cover what drills are, the 4-hour cooldown, the scoring multiplier, and monthly recertification. Re-read it any time under <b>How It Works</b>.</figcaption>
+  </figure>
+  <div class="callout tip">
+    <div class="h">▸ Tip</div>
+    If you skipped through the tour and want a refresher, the sidebar’s <strong>How It Works</strong> page repeats all of it — scoring, cooldown, and certification rules — on one screen.
+  </div>
+</section>
+
+<!-- ============ 4. DRILL PORTAL ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">4</div><h2>The Drill Portal</h2></div>
+  <p class="lead">This is what agents and pit managers use every shift. The left sidebar is your map: <strong>Dashboard, Drill, Practice, Resources, My History</strong>, plus <strong>How It Works</strong> and <strong>Change Password</strong> under <em>Help</em>.</p>
+
+  <h3>4.1 &nbsp;The Dashboard</h3>
+  <p>Your home screen summarises where you stand right now: sessions completed this month, your rolling average score, cooldown state, per-game accuracy, recertification progress, and how you rank against your team.</p>
+  <figure>
+    <img src="assets/agent-02-dashboard.jpg" alt="Agent dashboard">
+    <figcaption><b>Figure 4.1</b> — The agent Dashboard. Left: <b>Start Drill</b>, <b>Practice Mode</b>, and <b>View History</b> shortcuts, session counts, score chart, and accuracy rings. Right: your ID card with strongest/weakest game, recertification progress, and the team leaderboard.</figcaption>
+  </figure>
+  <table class="no-break">
+    <thead><tr><th>On the Dashboard</th><th>What it tells you</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Sessions This Month</strong></td><td>Progress toward the 20-session monthly requirement.</td></tr>
+      <tr><td><strong>Avg Score · 14 days</strong></td><td>Your recent form. Unlocks a trend line once you have a few sessions.</td></tr>
+      <tr><td><strong>Days Left / Cooldown</strong></td><td>Days remaining in the recert window and whether you can drill now.</td></tr>
+      <tr><td><strong>Accuracy by Game</strong></td><td>Rings showing how you’re doing per game — your weakest game is flagged.</td></tr>
+      <tr><td><strong>Team Leaderboard</strong></td><td>Your rank within your department (Surveillance or Pit only).</td></tr>
+    </tbody>
+  </table>
+  <div class="callout note">
+    <div class="h">◆ Assigned Practice</div>
+    If a supervisor has given you a focus area, an <strong>Assigned Practice</strong> card appears at the top of the Dashboard with a <strong>Practice</strong> button (jumps straight to that game) and a <strong>Start Drill</strong> button. See §7 (Remediation).
+  </div>
+
+  <h3>4.2 &nbsp;Running a Drill</h3>
+  <p>A drill is a <strong>10-question, 10-minute</strong> scored session drawn from across all games and shared procedures. Faster, accurate sessions score higher (see §5).</p>
+  <figure>
+    <img src="assets/agent-03-drill.jpg" alt="Drill session — payout question">
+    <figcaption><b>Figure 4.2</b> — A live payout drill. The chip stack sits on the table layout; read the wager, work out the payout, type the dollar amount, and select <b>Submit Answer</b>. The bar and timer at the top track your progress and the 10-minute cap.</figcaption>
+  </figure>
+  <div class="grid2">
+    <div>
+      <h4>Two question types</h4>
+      <ul>
+        <li><strong>Payout drills</strong> — a bet is shown on the felt; you type the correct dollar payout. Validated to a 2-cent tolerance.</li>
+        <li><strong>Multiple choice</strong> — rules, game-protection, and procedure scenarios; pick the correct option.</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Good to know</h4>
+      <ul>
+        <li>Difficulty adapts to you (§5). The tag by the question shows Easy/Medium/Hard.</li>
+        <li>Roulette and Craps tables offer a <strong>2D / 3D</strong> view toggle.</li>
+        <li>Leaving early marks the session <em>abandoned</em> — it scores 0 and doesn’t count.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>4.3 &nbsp;Your Results</h3>
+  <p>Finishing a session opens a full breakdown, so you learn from every miss.</p>
+  <figure>
+    <img src="assets/agent-09b-results-full.jpg" alt="Results screen">
+    <figcaption><b>Figure 4.3</b> — The Results screen: final score out of 150, the time multiplier applied, correct/missed counts, a question-by-question sequence, and accuracy broken down by game and by difficulty. Scroll down to review each missed question with the correct answer and an explanation.</figcaption>
+  </figure>
+
+  <h3>4.4 &nbsp;Practice Mode</h3>
+  <p>Practice is unlimited and <strong>completely separate from your record</strong> — no score, no cooldown, no effect on your stats or difficulty. Choose a single game, <em>Procedures</em>, or <em>Mixed — All Games</em>.</p>
+  <figure>
+    <img src="assets/agent-04b-practice-picker-full.jpg" alt="Practice picker">
+    <figcaption><b>Figure 4.4</b> — The Practice picker. <b>Choose a Game</b> for endless questions in one game, or drop into a <b>Skill Trainer</b> (gold cards) for specialised drills.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/agent-05-practice-feedback.jpg" alt="Practice feedback">
+    <figcaption><b>Figure 4.5</b> — In Practice, every answer is graded instantly: your answer vs. the correct answer, plus an explanation. Select <b>Next Question</b> (or click anywhere) to continue.</figcaption>
+  </figure>
+  <div class="callout tip">
+    <div class="h">▸ Tip — practice with purpose</div>
+    Use the accuracy rings on your Dashboard or the <em>Weak Areas</em> report to pick what to practise. Focused practice on an assigned game also earns credit toward any Remediation assignment (§7).
+  </div>
+
+  <h3>4.5 &nbsp;Skill Trainers</h3>
+  <p>Beyond the games, dedicated trainers drill specific dealer skills — the <strong>Blackjack Strategy Trainer</strong> and <strong>Hand Recognition Trainers</strong> for Caribbean Stud, Ultimate Hold’em, Let It Ride, and Three Card Poker.</p>
+  <figure>
+    <img src="assets/agent-05b-strategy-trainer.jpg" alt="Blackjack strategy trainer">
+    <figcaption><b>Figure 4.6</b> — The Blackjack Strategy Trainer. Call the correct play (Hit / Stand / Double / Split) for the dealt hand vs. the dealer up-card. Keyboard shortcuts <span class="kbd">H</span> <span class="kbd">S</span> <span class="kbd">D</span> <span class="kbd">P</span> speed you up; a wrong call shows the house rule and highlights the chart row. A full strategy chart is one click away.</figcaption>
+  </figure>
+
+  <h3>4.6 &nbsp;Resources</h3>
+  <p>Everything you need for reference lives here: rules &amp; payout PDFs, video walkthroughs, and a payout calculator, organised by game.</p>
+  <figure>
+    <img src="assets/agent-06-resources.jpg" alt="Resources page">
+    <figcaption><b>Figure 4.7</b> — The Resources library. Each game card links to its <b>Rules</b>, <b>Videos</b>, <b>Calculator</b>, and (where available) <b>Trainer</b> tabs.</figcaption>
+  </figure>
+
+  <h3>4.7 &nbsp;My History</h3>
+  <p>A running log of your sessions with dates, status, score, accuracy, and time. Your monthly progress, best score, and average sit at the top.</p>
+  <figure>
+    <img src="assets/agent-08-history.jpg" alt="Session history">
+    <figcaption><b>Figure 4.8</b> — Session History. Select any row to reopen that session’s full Results breakdown.</figcaption>
+  </figure>
+
+  <h3>4.8 &nbsp;Pit Operations</h3>
+  <p>Pit managers use the exact same portal — same drills, scoring, cooldown, and certification — with the sidebar simply labelled <strong>Pit Operations</strong> and the team leaderboard scoped to Pit staff.</p>
+  <figure>
+    <img src="assets/pit-01-dashboard.jpg" alt="Pit manager dashboard">
+    <figcaption><b>Figure 4.9</b> — A Pit Manager’s Dashboard. Identical layout to the agent view; note “PIT OPERATIONS” in the sidebar and the Pit-only leaderboard on the right.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 5. SCORING & CERT ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">5</div><h2>How Scoring &amp; Certification Work</h2></div>
+  <p class="lead">A few simple rules govern every scored drill. Knowing them helps you plan your shift and hit your monthly target.</p>
+
+  <div class="grid2">
+    <div>
+      <h3>Scoring</h3>
+      <ul>
+        <li><strong>10 points</strong> per correct answer (100 base for a perfect 10/10).</li>
+        <li>A <strong>speed multiplier</strong> is applied to the whole session at the end.</li>
+      </ul>
+      <table class="no-break">
+        <thead><tr><th>Finish time</th><th>Multiplier</th></tr></thead>
+        <tbody>
+          <tr><td>≤ 5 minutes</td><td>× 1.5</td></tr>
+          <tr><td>5 – 7½ minutes</td><td>× 1.25</td></tr>
+          <tr><td>7½ – 10 minutes</td><td>× 1.0</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Maximum score per session: <strong>150</strong> (10 correct × 10 × 1.5).</p>
+    </div>
+    <div>
+      <h3>Session structure</h3>
+      <ul>
+        <li><strong>10 questions</strong>, drawn across all games plus shared procedures.</li>
+        <li><strong>10-minute</strong> cap per session.</li>
+        <li>Weaker games surface a little more often, so drills target your gaps.</li>
+        <li>Recently-seen questions are skipped to keep sessions fresh.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Cooldown &amp; recertification</h3>
+  <table class="no-break">
+    <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>4-hour cooldown</strong></td><td>After each completed session you must wait 4 hours before the next scored drill. The Drill link in the sidebar shows a live countdown. <em>Practice has no cooldown.</em></td></tr>
+      <tr><td><strong>20 sessions / month</strong></td><td>Each drill-taker must complete 20 sessions in a calendar month to stay certified. Only <em>completed</em> sessions count.</td></tr>
+      <tr><td><strong>Missed target</strong></td><td>Falling short flags the account and notifies the department heads in-app.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Adaptive difficulty</h3>
+  <p>Each game tracks your level (1 Easy → 3 Hard) independently:</p>
+  <ul>
+    <li><strong>3 correct in a row</strong> at your current level → step <em>up</em>.</li>
+    <li><strong>2 wrong in a row</strong> → step <em>down</em>.</li>
+    <li>Bounded between Easy (1) and Hard (3). Practice never changes it.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="h">▲ Important — abandoned sessions</div>
+    Leaving a drill before you finish records it as <strong>abandoned</strong>: it scores 0 and does <em>not</em> count toward your 20. Finish the session — even a low score beats an abandon.
+  </div>
+</section>
+
+<!-- ============ 6. MANAGEMENT PORTAL ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">6</div><h2>The Management Portal</h2></div>
+  <p class="lead">Supervisors, shift managers, and department heads sign in the same way but land in the management portal. All views are scoped to your department and every list can be filtered and exported to Excel.</p>
+
+  <h3>6.1 &nbsp;Team Dashboard</h3>
+  <p>The command centre: team averages, who is behind on sessions, score-decay alerts, and a searchable roster with per-agent detail.</p>
+  <figure>
+    <img src="assets/mgmt-01-team-dashboard.jpg" alt="Team dashboard">
+    <figcaption><b>Figure 6.1</b> — Team Dashboard. Amber and purple banners flag agents below the monthly target or showing a score drop. Each row links to that agent’s <b>Detail</b> page; <b>Export Excel</b> is top-right.</figcaption>
+  </figure>
+
+  <h3>6.2 &nbsp;Agent Detail</h3>
+  <p>Drill into one person: score trend, per-game averages, and full session history including IP/device for each sitting.</p>
+  <figure>
+    <img src="assets/mgmt-02-agent-detail.jpg" alt="Agent detail">
+    <figcaption><b>Figure 6.2</b> — An individual Agent Detail page — the complete performance picture for one team member.</figcaption>
+  </figure>
+
+  <h3>6.3 &nbsp;Completion Tracker</h3>
+  <p>Certification at a glance: who has hit 20 sessions this month and who hasn’t, with automated flagging. You can record exceptions (e.g., approved leave).</p>
+  <figure>
+    <img src="assets/mgmt-03-completion.jpg" alt="Completion tracker">
+    <figcaption><b>Figure 6.3</b> — The Completion Tracker enforces the 20-session monthly recertification rule across the department.</figcaption>
+  </figure>
+
+  <h3>6.4 &nbsp;Weak Areas</h3>
+  <p>Where the team struggles — accuracy by game and the most-failed questions, filterable by date range, agent, and game.</p>
+  <figure>
+    <img src="assets/mgmt-04-weak-areas.jpg" alt="Weak areas report">
+    <figcaption><b>Figure 6.4</b> — Weak Areas. Use it to steer coaching and to decide what to assign as Remediation.</figcaption>
+  </figure>
+
+  <h3>6.5 &nbsp;Question Stats &amp; 6.6 Question Editor</h3>
+  <p>Question Stats shows how each question is performing (times shown, accuracy) for <em>your department</em>. The Question Editor lets supervisors and heads add or edit questions in the shared pool.</p>
+  <div class="grid2">
+    <figure>
+      <img src="assets/mgmt-05-question-stats.jpg" alt="Question stats">
+      <figcaption><b>Figure 6.5</b> — Question effectiveness, department-scoped.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/mgmt-06-question-editor.jpg" alt="Question editor">
+      <figcaption><b>Figure 6.6</b> — The Question Editor (create &amp; edit).</figcaption>
+    </figure>
+  </div>
+  <div class="callout note">
+    <div class="h">◆ Question pool health</div>
+    A game needs at least <strong>30 active questions</strong> to be considered ready; the portal warns when a game drops below that line.
+  </div>
+
+  <h3>6.7 &nbsp;Audit Log</h3>
+  <p>An append-only record of significant actions — logins, completed sessions, question edits, account changes — for the department. Agents have no access.</p>
+  <figure>
+    <img src="assets/mgmt-07-audit-log.jpg" alt="Audit log">
+    <figcaption><b>Figure 6.7</b> — The Audit Log. Filterable and exportable; the newest 500 events are shown (use the Audit Digest for exact period totals).</figcaption>
+  </figure>
+
+  <h3>6.8 &nbsp;Notifications</h3>
+  <p>The sidebar bell collects the alerts that need attention — agents who missed last month’s target and agents whose scores are decaying.</p>
+  <figure>
+    <img src="assets/mgmt-12-notifications.jpg" alt="Notifications panel">
+    <figcaption><b>Figure 6.8</b> — The Notifications panel. Dismiss individually or clear all; the badge shows the outstanding count.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 7. HEADS ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">7</div><h2>Department Heads — Extra Tools</h2></div>
+  <p class="lead">The <strong>Director</strong> (Surveillance) and <strong>Casino Manager</strong> (Pit) see four additional pages under <em>Reports</em> and <em>Admin</em>. Supervisors and shift managers do not.</p>
+
+  <h3>7.1 &nbsp;Scorecard</h3>
+  <p>Month-over-month department KPIs — average score, sessions, active drill-takers, recert-compliance rate, and accuracy — with trend arrows, sparklines, and a per-game accuracy matrix.</p>
+  <figure>
+    <img src="assets/mgmt-08-scorecard.jpg" alt="Department scorecard">
+    <figcaption><b>Figure 7.1</b> — The Department Scorecard. The current month is marked <b>MTD</b> (month-to-date); deltas compare it to the previous month.</figcaption>
+  </figure>
+
+  <h3>7.2 &nbsp;Audit Digest</h3>
+  <p>A period rollup (24h / 7d / 30d / 90d) of department activity: totals by action, most-active users, notable/security events, and a failed-login summary — with exact counts that the 500-row Audit Log can’t always show.</p>
+  <figure>
+    <img src="assets/mgmt-09-audit-digest.jpg" alt="Audit digest">
+    <figcaption><b>Figure 7.2</b> — The Audit Digest. A fast health check on department activity and security.</figcaption>
+  </figure>
+
+  <h3>7.3 &nbsp;Remediation</h3>
+  <p>Assign a drill-taker a focus — a specific game or Procedures — with a note and a due date. The assignment appears on that person’s Dashboard, and progress is tracked automatically.</p>
+  <figure>
+    <img src="assets/mgmt-10-remediation.jpg" alt="Remediation">
+    <figcaption><b>Figure 7.3</b> — Remediation assignments with live progress. Each shows a <b>drills + practice</b> split; the assign form pre-suggests each agent’s weakest game.</figcaption>
+  </figure>
+  <div class="callout note">
+    <div class="h">◆ How an assignment completes</div>
+    Progress counts qualifying <strong>drills</strong> plus <strong>practice credits</strong> (every 10 focused-practice questions = 1 credit). It auto-completes when the target is reached <em>and at least one real drill</em> has happened — practice alone can never certify completion. A head can also mark it complete or cancel it by hand.
+  </div>
+
+  <h3>7.4 &nbsp;User Management</h3>
+  <p>Heads manage their own department’s accounts end-to-end — no IT ticket required.</p>
+  <figure>
+    <img src="assets/mgmt-11-user-management.jpg" alt="User management">
+    <figcaption><b>Figure 7.4</b> — User Management. Per-user actions: reset password, force logout, deactivate/reactivate, and (for accounts with no history) permanent delete.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/mgmt-13-new-user.jpg" alt="Create new user">
+    <figcaption><b>Figure 7.5</b> — Creating a user. Enter an Employee ID, name, password, and role; the login email is derived automatically as <span class="mono">id@stellaris.local</span>. Hand the credentials over directly.</figcaption>
+  </figure>
+  <table class="no-break">
+    <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Create user</strong></td><td>Adds an account in your department with the role you choose.</td></tr>
+      <tr><td><strong>Reset password</strong></td><td>Sets a new password directly — the model here is “hand credentials over in person”.</td></tr>
+      <tr><td><strong>Force logout</strong></td><td>Ends the user’s active session within about a minute (temporary).</td></tr>
+      <tr><td><strong>Deactivate / Reactivate</strong></td><td>The reversible block that preserves all history. A deactivated user cannot log in.</td></tr>
+      <tr><td><strong>Delete permanently</strong></td><td>Only offered for accounts that have never run a session; otherwise the app deactivates instead.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <div class="h">▲ Important</div>
+    Every account action is written to the Audit Log, and heads can only act on <em>their own department</em> — never on themselves or the other head. Passwords are never recorded in the log.
+  </div>
+</section>
+
+<!-- ============ 8. TIPS ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">8</div><h2>Tips, Shortcuts &amp; Excel Exports</h2></div>
+
+  <h3>Navigation</h3>
+  <ul>
+    <li>The <strong>left sidebar</strong> is always your map; the highlighted item is where you are. On a phone, tap the ☰ menu icon.</li>
+    <li>Your <strong>Employee ID</strong> and <strong>Sign out</strong> live at the bottom of the sidebar.</li>
+    <li>In the drill portal the <strong>Drill</strong> link is greyed out during cooldown and shows the remaining time.</li>
+  </ul>
+
+  <h3>Keyboard shortcuts (Skill Trainers)</h3>
+  <p>Blackjack Strategy: <span class="kbd">H</span> Hit · <span class="kbd">S</span> Stand · <span class="kbd">D</span> Double · <span class="kbd">P</span> Split. Hand trainers use the on-screen option keys shown under each hand.</p>
+
+  <h3>Excel exports (management)</h3>
+  <ul>
+    <li>The <strong>Export Excel</strong> button appears on the Team Dashboard, Agent Detail, Completion, Weak Areas, Question Stats, Audit Log, Scorecard, Audit Digest, and Remediation.</li>
+    <li>Filter first — by <strong>date range, agent, and game</strong> where offered — then export; the file reflects your filters.</li>
+  </ul>
+
+  <div class="callout tip">
+    <div class="h">▸ Tips worth keeping</div>
+    <ul>
+      <li><strong>Beat the clock, but don’t rush.</strong> The ×1.5 multiplier needs a sub-5-minute finish — valuable only if you stay accurate.</li>
+      <li><strong>Warm up in Practice.</strong> It never touches your score, cooldown, or difficulty — the perfect place to shake off rust before a scored drill.</li>
+      <li><strong>Finish every drill.</strong> Abandoned sessions score 0 and don’t count toward your 20.</li>
+      <li><strong>Read the misses.</strong> Every wrong answer comes with the correct answer and an explanation — the fastest way to improve.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 9. ROLES REFERENCE ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">9</div><h2>Roles &amp; Access — Quick Reference</h2></div>
+  <table>
+    <thead><tr><th>Capability</th><th>Agent / Pit Mgr</th><th>Supervisor / Shift Mgr</th><th>Director / Casino Mgr</th></tr></thead>
+    <tbody>
+      <tr><td>Run drills, practice, trainers</td><td>✓</td><td>—</td><td>—</td></tr>
+      <tr><td>See own history &amp; certification</td><td>✓</td><td>✓ (team)</td><td>✓ (team)</td></tr>
+      <tr><td>Team Dashboard, Completion, Weak Areas</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Question Stats, Question Editor, Audit Log</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Scorecard, Audit Digest</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Remediation (assign focus)</td><td>receives</td><td>—</td><td>✓</td></tr>
+      <tr><td>User Management (accounts, passwords)</td><td>—</td><td>—</td><td>✓</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">All access is confined to your own department (Surveillance or Pit) by the department wall. Only the two department heads manage accounts; the platform administrator creates the heads themselves.</p>
+</section>
+
+<!-- ============ 10. FAQ ============ -->
+<section class="sec">
+  <div class="sec-head"><div class="sec-num">10</div><h2>Troubleshooting &amp; FAQ</h2></div>
+  <table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>I forgot my password.</td><td>There’s no self-service reset. Ask your supervisor or department head — they can set a new one for you immediately.</td></tr>
+      <tr><td>My account is locked.</td><td>Five failed logins in 15 minutes triggers a temporary lock. Wait for the window to clear, or ask a head.</td></tr>
+      <tr><td>The Drill button is greyed out.</td><td>You’re in the 4-hour cooldown after a completed session. The countdown is on the button. Practice is always available.</td></tr>
+      <tr><td>I was signed out unexpectedly.</td><td>Either 30 minutes of inactivity, or a head force-logged the session. Just sign back in.</td></tr>
+      <tr><td>Does Practice affect my score or ranking?</td><td>No. Practice writes nothing to your record — no score, cooldown, or difficulty change.</td></tr>
+      <tr><td>My session says “abandoned”.</td><td>It was left before finishing. It scores 0 and doesn’t count. Always complete the 10 questions.</td></tr>
+      <tr><td>Why don’t I see the other department?</td><td>By design. Surveillance and Pit are walled off from each other’s people and results.</td></tr>
+      <tr><td>Can I use my phone?</td><td>Yes — the app is fully responsive. On payout drills the keyboard opens only when you tap the amount field, so the table stays visible.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    A.S.S.E.T. — Aruba Surveillance Skill Enhancement &amp; Training · Internal training platform for the Surveillance &amp; Pit departments, Aruba Marriott Resort &amp; Stellaris Casino. Screenshots in this guide use demonstration data; live screens show your real team. For account help, contact your supervisor or department head.
+  </div>
+</section>
+
+</body>
+</html>
