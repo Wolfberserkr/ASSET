@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>A.S.S.E.T. — User Manual &amp; Management Guide (v2.0)</title>
+<title>A.S.S.E.T. — User Manual &amp; Management Guide</title>
 <style>
 /* ============================================================
    A.S.S.E.T. User Manual — print stylesheet
@@ -190,8 +190,6 @@ h4{
 .callout.note .ct{ color:var(--violet); }
 .callout.important{ border-color:var(--amber);background:var(--wash-amber); }
 .callout.important .ct{ color:var(--amber); }
-.callout.fixed{ border-color:var(--green);background:var(--wash-green); }
-.callout.fixed .ct{ color:var(--green); }
 .callout.danger{ border-color:var(--red);background:var(--wash-red); }
 .callout.danger .ct{ color:var(--red); }
 
@@ -327,7 +325,7 @@ figcaption b{ color:var(--navy-2); }
     the numbers. Every screen shown here is the live application.
   </p>
   <div class="cover-meta">
-    <div><span>Edition</span><strong>Version 2.0 — audited</strong></div>
+    <div><span>Version</span><strong>1.0</strong></div>
     <div><span>Issued</span><strong>July 2026</strong></div>
     <div><span>Audience</span><strong>Agents · Pit Managers · Supervisors · Directors · Casino Manager</strong></div>
     <div><span>Access</span><strong>assetdrills.com</strong></div>
@@ -338,43 +336,36 @@ figcaption b{ color:var(--navy-2); }
   </div>
 </section>
 
-<!-- ══════════════════════════ HOW TO USE / WHAT'S NEW ══════════════════════════ -->
-<h2 class="sec cont"><span class="num">—</span>About this edition</h2>
+<!-- ══════════════════════════ HOW TO USE ══════════════════════════ -->
+<h2 class="sec cont"><span class="num">—</span>How to use this manual</h2>
 <p class="sec-lede">
-  Version 2.0 is a full audit of the version 1.0 manual against the live application and its
-  database. Every rule, threshold, and formula in these pages was re-checked in the code that
-  actually runs; where the first edition was incomplete or wrong, this edition says so plainly.
+  Every rule, threshold, and formula in these pages was taken from the code that actually runs and
+  the database it runs against — not from a specification. Where a number could be read two ways,
+  this manual says which one the application means.
 </p>
 
-<h3>What changed in version 2.0</h3>
+<h3>How it is organised</h3>
 <table>
-  <thead><tr><th style="width:33%">Area</th><th>What is new or corrected</th></tr></thead>
+  <thead><tr><th style="width:22%">Part</th><th style="width:26%">Who it is for</th><th>What it covers</th></tr></thead>
   <tbody>
-    <tr><td class="k">Management sections</td><td>Sections 6 and 7 now define <em>every</em> number on every management screen — what it counts, over what period, and who is included in the denominator.</td></tr>
-    <tr><td class="k">Audit Log scope</td><td>Corrected. The Audit Log page lists drill-taker activity only; management's own actions (question edits, account changes, remediation) are recorded but are read in the Audit Digest. See §6.7.</td></tr>
-    <tr><td class="k">Practice mode</td><td>Corrected. Practice still never touches score, cooldown, difficulty, or question statistics — but it <em>is</em> logged, and focused practice earns remediation credit. See §4.4.</td></tr>
-    <tr><td class="k">Craps</td><td>New. Craps is <strong>practice-only</strong> in production: agents can drill it freely, but its questions are excluded from scored sessions. See §5.5.</td></tr>
-    <tr><td class="k">Completion statuses</td><td>New. On Track / Below Target / At Risk / Flagged are now defined with the exact pacing arithmetic. See §6.3.</td></tr>
-    <tr><td class="k">Notifications</td><td>New. Alert thresholds, and the fact that dismissals are stored per browser — not shared between managers. See §6.8.</td></tr>
-    <tr><td class="k">Playbooks</td><td>New §8: daily, weekly, and month-end routines, plus onboarding and offboarding checklists.</td></tr>
-    <tr><td class="k">Definitions appendix</td><td>New §11: one table with every metric, its formula, its window, and where it appears.</td></tr>
-    <tr><td class="k">Security &amp; data</td><td>New §12: what is stored, who can see it, how long it is kept, and what a permanent delete really removes.</td></tr>
-    <tr><td class="k">Known behaviours</td><td>New §14: the handful of places where the app's behaviour will surprise you, documented rather than discovered.</td></tr>
+    <tr><td class="k">I — Everyone</td><td>All users</td><td>What the platform is, who is in it, how to sign in, and the first-login tour.</td></tr>
+    <tr><td class="k">II — The drill portal</td><td>Agents · Pit Managers</td><td>Every screen you use on shift, plus the rules that decide what a session is worth.</td></tr>
+    <tr><td class="k">III — Management</td><td>Supervisors · Shift Managers · Heads</td><td>Every management screen with every number defined, the head-only tools, the routines that turn them into action, and the exports.</td></tr>
+    <tr><td class="k">IV — Reference</td><td>Management</td><td>The access matrix, one table of metric definitions, and how the platform protects its data.</td></tr>
+    <tr><td class="k">V — Support</td><td>All users</td><td>FAQ, documented behaviours that catch people out, and a one-page quick reference card.</td></tr>
   </tbody>
 </table>
-
-<h3>How to read this manual</h3>
 <p>
-  Parts I and II are for everyone who takes drills. Part III is written for management and is the
-  reason this edition exists — it is deliberately precise, because these numbers end up in
-  compliance conversations. Parts IV and V are reference: definitions, security, FAQ, and a
-  one-page cheat sheet you can pin up.
+  Parts I and II are meant to be read once, start to finish. Part III is deliberately precise —
+  these numbers end up in compliance conversations — and Parts IV and V are for looking things up.
 </p>
+
+<h3>The boxes used throughout</h3>
 <div class="grid2">
   <div class="callout"><span class="ct">Tip</span>Practical advice — how to get more out of a screen.</div>
   <div class="callout note"><span class="ct">Note</span>Context or behaviour worth knowing, but not urgent.</div>
   <div class="callout important"><span class="ct">Important</span>Rules, limits, and things that will bite you if ignored.</div>
-  <div class="callout fixed"><span class="ct">Corrected in v2.0</span>A statement the first edition got wrong or left out.</div>
+  <div class="callout danger"><span class="ct">Read before acting</span>Irreversible actions and the consequences that follow them.</div>
 </div>
 <div class="formula">
   <span class="ct">How it is calculated</span>
@@ -417,7 +408,7 @@ figcaption b{ color:var(--navy-2); }
 
   <div class="toc-item"><div class="t"><em>Part V</em>Support</div></div>
   <div class="toc-item"><div class="t"><em>13</em>FAQ</div><div class="d">For drill-takers, and 24 questions management actually asks</div></div>
-  <div class="toc-item"><div class="t"><em>14</em>Known behaviours &amp; limits</div><div class="d">Documented quirks and what is deferred to v2</div></div>
+  <div class="toc-item"><div class="t"><em>14</em>Known behaviours &amp; limits</div><div class="d">Documented quirks and what is not built yet</div></div>
   <div class="toc-item"><div class="t"><em>15</em>Quick reference card</div><div class="d">Every number on one page</div></div>
 </div>
 
@@ -464,7 +455,7 @@ figcaption b{ color:var(--navy-2); }
 
 <div class="callout note">
   <span class="ct">Note — who is on the system today</span>
-  As of this edition the live roster is <strong>10 agents</strong> and <strong>10 pit managers</strong>
+  The live roster is <strong>10 agents</strong> and <strong>10 pit managers</strong>
   (the drill-takers), one Supervisor and one Director on the Surveillance side, and one Casino
   Manager on the Pit side. No Shift Manager account exists yet — the role is built and ready if
   the Pit side wants a second manager without account powers.
@@ -683,10 +674,10 @@ figcaption b{ color:var(--navy-2); }
   no cooldown to wait out.
 </p>
 
-<div class="callout fixed">
-  <span class="ct">Corrected in v2.0</span>
+<div class="callout important">
+  <span class="ct">Important — exactly what practice records</span>
   <p>
-    The first edition said practice “writes nothing”. To be exact: practice <strong>never</strong>
+    Practice <strong>never</strong>
     affects your score, your cooldown, your adaptive difficulty, your certification count, or the
     question statistics management reads. It <strong>does</strong> leave two harmless traces —
     a “practice started” entry in the audit log, and a count of questions answered per game that
@@ -874,12 +865,12 @@ figcaption b{ color:var(--navy-2); }
   under-filled one.
 </div>
 
-<div class="callout fixed">
-  <span class="ct">Corrected in v2.0 — Craps is practice-only</span>
+<div class="callout important">
+  <span class="ct">Important — Craps is practice-only</span>
   <p>
     <strong>Craps questions never appear in a scored drill.</strong> The Craps game is flagged
     practice-only in production, so its 74 active questions are available in Practice (including
-    Mixed) but excluded from scored sessions. This was a deliberate decision — the team drills Craps
+    Mixed) but excluded from scored sessions. This is deliberate — the team drills Craps
     freely until everyone is ready for it to count. Promoting it later is a single database change
     and needs no application update. Note that Craps procedure questions, which are shared
     procedure questions rather than Craps-game questions, <em>do</em> appear in scored drills.
@@ -897,7 +888,7 @@ figcaption b{ color:var(--navy-2); }
 
 <h3>5.7 The live question pool</h3>
 <p>
-  Sessions draw from the active pool at the moment they start. As of this edition:
+  Sessions draw from the active pool at the moment a session starts. At the time of writing:
 </p>
 <table class="compact">
   <thead><tr><th>Pool</th><th class="c">Active questions</th><th>In scored drills?</th><th>Notes</th></tr></thead>
@@ -979,8 +970,8 @@ figcaption b{ color:var(--navy-2); }
   </tbody>
 </table>
 
-<div class="callout fixed">
-  <span class="ct">Corrected in v2.0 — two things the first edition did not say</span>
+<div class="callout important">
+  <span class="ct">Important — two things this screen does not spell out</span>
   <p>
     <strong>1. “Avg Score” is this month, not all time.</strong> On the 1st of a month the column
     empties out and the team average drops to the first few sessions posted. That is expected
@@ -1182,11 +1173,10 @@ figcaption b{ color:var(--navy-2); }
   reasons appear as a chip on the row — select it to read the agent's full explanation.</figcaption>
 </figure>
 
-<div class="callout fixed">
-  <span class="ct">Corrected in v2.0 — what this page does and does not show</span>
+<div class="callout important">
+  <span class="ct">Important — what this page does and does not show</span>
   <p>
-    The first edition described the Audit Log as covering “logins, completed sessions, question
-    edits, account changes”. In fact <strong>this page lists your department's drill-takers only</strong>
+    <strong>This page lists your department's drill-takers only</strong>
     — agents on the Surveillance side, pit managers on the Pit side.
   </p>
   <p style="margin-bottom:0">
@@ -1241,8 +1231,8 @@ figcaption b{ color:var(--navy-2); }
   returns after a week if the decline continues.
 </div>
 
-<div class="callout fixed">
-  <span class="ct">Corrected in v2.0 — dismissals are personal</span>
+<div class="callout important">
+  <span class="ct">Important — dismissals are personal</span>
   Dismissing a notification stores that choice <strong>in your own browser</strong>. It does not
   clear the alert for your colleague, and it comes back if you sign in from a different computer or
   clear your browser data. Treat the bell as your own worklist, not a shared queue — if an alert
@@ -1781,7 +1771,7 @@ figcaption b{ color:var(--navy-2); }
 <div class="a">Check three things on Agent Detail: the session status (abandoned scores 0 and does not count), the completion time against the 20:00 month boundary, and whether they are looking at a cached page — the management notification data refreshes every five minutes.</div></div>
 
 <div class="faq"><div class="q"><em>Q.</em> Can I change the 20-session requirement, the 4-hour cooldown, or the scoring multipliers?</div>
-<div class="a">The 20 sessions and 4 hours are stored as configurable values and can be changed by the platform administrator — there is no screen for it. The scoring multipliers are fixed in the application; an admin settings panel is a deferred v2 item. Changing either affects everyone in both departments immediately, so agree it before it is changed.</div></div>
+<div class="a">The 20 sessions and 4 hours are stored as configurable values and can be changed by the platform administrator — there is no screen for it. The scoring multipliers are fixed in the application; an admin settings panel is not built. Changing either affects everyone in both departments immediately, so agree it before it is changed.</div></div>
 
 <div class="faq"><div class="q"><em>Q.</em> Why does the Question Stats accuracy differ between me and the other department's head?</div>
 <div class="a">Because it is department-scoped by design: the pool is shared, the experience of it is not. Your figures come only from your department's answers.</div></div>
@@ -1823,7 +1813,7 @@ figcaption b{ color:var(--navy-2); }
 <div class="a">Deactivate, then force logout — in that order. Deactivation alone blocks the next sign-in but leaves an open session running.</div></div>
 
 <div class="faq"><div class="q"><em>Q.</em> Are there email notifications?</div>
-<div class="a">No. Alerts are in-app only, on the bell in the management sidebar. Email is a deferred v2 item. Anyone who needs to know must be told; the platform will not tell them.</div></div>
+<div class="a">No. Alerts are in-app only, on the bell in the management sidebar. Email delivery is not built. Anyone who needs to know must be told; the platform will not tell them.</div></div>
 
 <div class="faq"><div class="q"><em>Q.</em> Can agents game the system?</div>
 <div class="a">The obvious routes are closed: options are shuffled on every display, payout answers are computed rather than matched to text, the cooldown is enforced on the server, questions from recent sessions are excluded, abandoned sessions are logged with a reason, and every session records IP and device. The remaining risk is one person drilling on another's account — which is exactly what the IP and device column exists to check.</div></div>
@@ -1832,7 +1822,7 @@ figcaption b{ color:var(--navy-2); }
 <div class="a">The Compliance Records export from the Completion Tracker: sheet one is who was compliant, sheet two is every session with date, time, score, and duration. Add the recert notes — they are in the export — and the file explains itself.</div></div>
 
 <div class="faq"><div class="q"><em>Q.</em> Something in the application disagrees with this manual.</div>
-<div class="a">The application is right. Tell the platform administrator so the manual is corrected — that is exactly how this edition came about.</div></div>
+<div class="a">The application is right — it is the system of record. Tell the platform administrator so the manual can be brought back into line.</div></div>
 
 <h2 class="sec"><span class="num">14</span>Known behaviours &amp; limits</h2>
 <p class="sec-lede">
@@ -1859,12 +1849,13 @@ figcaption b{ color:var(--navy-2); }
   </tbody>
 </table>
 
-<h3>Deferred to a future version</h3>
+<h3>Not built yet</h3>
 <p>
-  Email notifications for missed recertification · an admin settings panel for scoring multipliers
-  and thresholds · difficulty-tier indicators and a points leaderboard · two-factor authentication
-  for management accounts · shift-correlation and time-pressure analytics · video-clip drills ·
-  pre- and post-training comparison reporting.
+  These do not exist today. They are on the ideas list, not commitments — do not plan a process
+  around any of them: email notifications for missed recertification · an admin settings panel for
+  scoring multipliers and thresholds · difficulty-tier indicators and a points leaderboard ·
+  two-factor authentication for management accounts · shift-correlation and time-pressure
+  analytics · video-clip drills · pre- and post-training comparison reporting.
 </p>
 
 <h2 class="sec"><span class="num">15</span>Quick reference card</h2>
@@ -1948,10 +1939,10 @@ figcaption b{ color:var(--navy-2); }
 <div class="footer-note">
   <strong>A.S.S.E.T. — Aruba Surveillance Skill Enhancement &amp; Training.</strong>
   Internal training platform for the Surveillance and Pit departments, Aruba Marriott Resort &amp;
-  Stellaris Casino. User Manual &amp; Management Guide, version 2.0, July 2026 — audited against the
-  live application and database. Screenshots use demonstration data; live screens show your real
-  team. For account help, contact your department head. Where this document and the application
-  disagree, the application is authoritative — report the difference so the manual can be corrected.
+  Stellaris Casino. User Manual &amp; Management Guide · Version 1.0 · July 2026. Screenshots use
+  demonstration data; live screens show your real team. For account help, contact your department
+  head. Where this document and the application disagree, the application is authoritative —
+  report the difference so the manual can be brought back into line.
 </div>
 
 </body>
