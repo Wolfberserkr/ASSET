@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A.S.S.E.T. — User Manual &amp; Management Guide (v2.0)</title>
+<style>
+/* ============================================================
+   A.S.S.E.T. User Manual — print stylesheet
+   Target: A4, Chromium print-to-PDF
+   ============================================================ */
+
+:root{
+  --ink:#111826;
+  --ink-soft:#38445c;
+  --muted:#697488;
+  --line:#dde2ea;
+  --line-soft:#eef1f6;
+  --paper:#ffffff;
+  --navy:#101a30;
+  --navy-2:#1b2b4d;
+  --blue:#2a5bd7;
+  --cyan:#0d7c8e;
+  --green:#12784a;
+  --amber:#9a6b06;
+  --red:#b02a24;
+  --violet:#6231bb;
+  --wash-blue:#f2f6fe;
+  --wash-green:#f0faf4;
+  --wash-amber:#fdf7ea;
+  --wash-violet:#f7f3fe;
+  --wash-red:#fdf3f2;
+  --wash-grey:#f7f8fb;
+}
+
+@page{
+  size: A4;
+  margin: 16mm 15mm 16mm 15mm;
+}
+
+*{ box-sizing:border-box; }
+
+html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+body{
+  margin:0;
+  font-family:"Liberation Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:9.6pt;
+  line-height:1.55;
+  color:var(--ink);
+  background:var(--paper);
+}
+
+code,.mono{
+  font-family:"Liberation Mono","DejaVu Sans Mono",monospace;
+  font-size:0.92em;
+}
+code{
+  background:var(--wash-grey);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:0.5pt 3pt;
+}
+
+p{ margin:0 0 7pt; }
+ul,ol{ margin:0 0 8pt; padding-left:15pt; }
+li{ margin:0 0 3.5pt; }
+strong{ color:var(--ink); }
+a{ color:var(--blue); text-decoration:none; }
+
+/* ── Page mechanics ───────────────────────────────────────── */
+.page-break{ break-after:page; }
+.avoid-break{ break-inside:avoid; }
+
+/* ── Cover ────────────────────────────────────────────────── */
+.cover{
+  position:relative;
+  height:259mm;
+  margin:0;
+  border-radius:4mm;
+  padding:30mm 20mm 16mm;
+  background:
+    radial-gradient(80% 55% at 78% 6%, rgba(45,110,255,0.40) 0%, rgba(45,110,255,0) 62%),
+    radial-gradient(70% 50% at 10% 96%, rgba(13,148,166,0.34) 0%, rgba(13,148,166,0) 60%),
+    linear-gradient(160deg,#0b1224 0%,#101a30 45%,#0a1120 100%);
+  color:#eef2fb;
+  break-after:page;
+  overflow:hidden;
+}
+.cover-mark{
+  width:19mm;height:19mm;border-radius:6mm;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#3a6bff,#12b3c9);
+  box-shadow:0 0 0 1.2mm rgba(58,107,255,0.16);
+  margin-bottom:12mm;
+}
+.cover-mark svg{ width:10mm;height:10mm; }
+.cover-eyebrow{
+  font-size:8.4pt;letter-spacing:0.32em;text-transform:uppercase;
+  color:#8fa6d8;margin-bottom:7mm;
+}
+.cover h1{
+  font-size:40pt;line-height:1.03;margin:0 0 4mm;
+  letter-spacing:0.10em;font-weight:700;
+}
+.cover h2{
+  font-size:13pt;font-weight:400;letter-spacing:0.04em;
+  color:#b9c8ea;margin:0 0 10mm;
+}
+.cover-title-rule{
+  width:44mm;height:1.1mm;border-radius:1mm;
+  background:linear-gradient(90deg,#3a6bff,#12b3c9);
+  margin:0 0 9mm;
+}
+.cover-lede{
+  font-size:11pt;line-height:1.6;color:#d5def2;max-width:120mm;margin-bottom:14mm;
+}
+.cover-meta{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:5mm 8mm;max-width:130mm;
+  border-top:0.35mm solid rgba(255,255,255,0.16);padding-top:8mm;
+}
+.cover-meta div span{
+  display:block;font-size:7.6pt;letter-spacing:0.22em;text-transform:uppercase;
+  color:#7e93c4;margin-bottom:1.6mm;
+}
+.cover-meta div strong{ font-size:10pt;font-weight:600;color:#eef2fb; }
+.cover-foot{
+  position:absolute;left:20mm;right:20mm;bottom:14mm;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  font-size:8.2pt;color:#7e93c4;
+  border-top:0.35mm solid rgba(255,255,255,0.14);padding-top:5mm;
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+.part-divider{
+  break-before:page;
+  margin:0 0 10mm;
+  padding:9mm 9mm 8mm;
+  background:linear-gradient(135deg,#101a30,#1c2c52);
+  color:#eef2fb;border-radius:3mm;
+}
+.part-divider .kicker{
+  font-size:7.8pt;letter-spacing:0.3em;text-transform:uppercase;color:#8fa6d8;
+}
+.part-divider h2{ font-size:20pt;margin:3mm 0 2mm;letter-spacing:0.02em; }
+.part-divider p{ margin:0;color:#c3cfe9;font-size:9.6pt;max-width:150mm; }
+
+h2.sec{
+  break-before:page;
+  font-size:17pt;line-height:1.15;margin:0 0 2mm;
+  padding-bottom:3mm;border-bottom:0.7mm solid var(--navy);
+  color:var(--navy);letter-spacing:0.01em;
+}
+h2.sec .num{
+  display:inline-block;min-width:11mm;color:var(--blue);
+}
+h2.sec.cont{ break-before:auto; }
+.sec-lede{
+  color:var(--ink-soft);font-size:10pt;margin:4mm 0 7mm;max-width:165mm;
+}
+h3{
+  font-size:11.6pt;margin:8mm 0 3mm;color:var(--navy-2);
+  letter-spacing:0.01em;break-after:avoid;
+}
+h4{
+  font-size:9.9pt;margin:6mm 0 2.5mm;color:var(--ink);
+  text-transform:uppercase;letter-spacing:0.12em;break-after:avoid;
+}
+
+/* ── Contents ─────────────────────────────────────────────── */
+.toc{ columns:2; column-gap:10mm; }
+.toc-item{ break-inside:avoid; margin-bottom:4.5mm; }
+.toc-item .t{ font-weight:700;color:var(--navy);font-size:10pt; }
+.toc-item .t em{ font-style:normal;color:var(--blue);margin-right:2mm; }
+.toc-item .d{ color:var(--muted);font-size:8.6pt;line-height:1.4; }
+
+/* ── Callouts ─────────────────────────────────────────────── */
+.callout{
+  break-inside:avoid;
+  margin:5mm 0;padding:4mm 5mm;border-radius:2mm;
+  border-left:1.2mm solid var(--blue);
+  background:var(--wash-blue);
+  font-size:9.2pt;
+}
+.callout .ct{
+  font-weight:700;font-size:8.2pt;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:2mm;display:block;
+}
+.callout p:last-child,.callout ul:last-child{ margin-bottom:0; }
+.callout.note{ border-color:var(--violet);background:var(--wash-violet); }
+.callout.note .ct{ color:var(--violet); }
+.callout.important{ border-color:var(--amber);background:var(--wash-amber); }
+.callout.important .ct{ color:var(--amber); }
+.callout.fixed{ border-color:var(--green);background:var(--wash-green); }
+.callout.fixed .ct{ color:var(--green); }
+.callout.danger{ border-color:var(--red);background:var(--wash-red); }
+.callout.danger .ct{ color:var(--red); }
+
+/* “How it is calculated” box */
+.formula{
+  break-inside:avoid;
+  margin:4mm 0;padding:4mm 5mm;border-radius:2mm;
+  background:var(--navy);color:#dbe4f7;font-size:8.8pt;line-height:1.5;
+}
+.formula .ct{
+  display:block;font-size:7.8pt;letter-spacing:0.16em;text-transform:uppercase;
+  color:#8fa6d8;margin-bottom:2mm;font-weight:700;
+}
+.formula code{
+  background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.16);color:#eaf0ff;
+}
+.formula strong{ color:#fff; }
+
+/* ── Tables ───────────────────────────────────────────────── */
+table{
+  width:100%;border-collapse:collapse;margin:4mm 0 6mm;
+  font-size:8.8pt;break-inside:auto;
+}
+thead{ display:table-header-group; }
+tr{ break-inside:avoid; }
+thead th{
+  text-align:left;background:var(--navy);color:#e8eefb;
+  font-size:7.6pt;letter-spacing:0.13em;text-transform:uppercase;
+  padding:2.6mm 3mm;font-weight:700;
+}
+tbody td{
+  padding:2.4mm 3mm;border-bottom:0.25mm solid var(--line);
+  vertical-align:top;
+}
+tbody tr:nth-child(even) td{ background:var(--wash-grey); }
+td.k{ font-weight:700;color:var(--navy-2);white-space:nowrap; }
+td.c{ text-align:center; }
+table.compact td,table.compact th{ padding:1.9mm 2.6mm; }
+.yes{ color:var(--green);font-weight:700; }
+.no{ color:var(--muted); }
+.part{ color:var(--amber);font-weight:700; }
+
+/* ── Figures ──────────────────────────────────────────────── */
+figure{
+  margin:5mm 0 6mm;break-inside:avoid;
+}
+figure .shot{
+  border:0.3mm solid var(--line);border-radius:2mm;overflow:hidden;
+  background:#0b1120;padding:2mm;
+  max-width:156mm;margin:0 auto;
+}
+figure img{ width:100%;display:block;border-radius:1.2mm; }
+figcaption{
+  margin-top:2.5mm;font-size:8.3pt;color:var(--muted);line-height:1.45;
+}
+figcaption b{ color:var(--navy-2); }
+
+/* ── Misc components ──────────────────────────────────────── */
+.grid2{ display:grid;grid-template-columns:1fr 1fr;gap:5mm; }
+.grid3{ display:grid;grid-template-columns:repeat(3,1fr);gap:4mm; }
+.card{
+  border:0.3mm solid var(--line);border-radius:2mm;padding:4mm 4.5mm;
+  background:#fff;break-inside:avoid;
+}
+.card h5{
+  margin:0 0 2mm;font-size:9.4pt;color:var(--navy);
+}
+.card p{ font-size:8.8pt;color:var(--ink-soft);margin:0; }
+
+.kpi{
+  border:0.3mm solid var(--line);border-left:1.2mm solid var(--cyan);
+  border-radius:2mm;padding:3.5mm 4mm;background:#fff;break-inside:avoid;
+}
+.kpi .v{ font-family:"Liberation Mono",monospace;font-size:15pt;font-weight:700;color:var(--navy); }
+.kpi .l{ font-size:7.8pt;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted); }
+
+.steps{ counter-reset:step;list-style:none;padding:0;margin:4mm 0 6mm; }
+.steps li{
+  counter-increment:step;position:relative;padding-left:9mm;margin-bottom:3.5mm;
+  break-inside:avoid;
+}
+.steps li::before{
+  content:counter(step);
+  position:absolute;left:0;top:0.2mm;
+  width:5.6mm;height:5.6mm;border-radius:50%;
+  background:var(--blue);color:#fff;
+  font-size:7.6pt;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.faq{ break-inside:avoid;margin-bottom:5mm; }
+.faq .q{
+  font-weight:700;color:var(--navy);font-size:9.6pt;margin-bottom:1.6mm;
+}
+.faq .q em{ font-style:normal;color:var(--blue);margin-right:1.5mm; }
+.faq .a{ color:var(--ink-soft);font-size:9.2pt; }
+
+.chip{
+  display:inline-block;padding:0.6mm 2.2mm;border-radius:1.4mm;
+  font-size:7.6pt;font-weight:700;letter-spacing:0.06em;
+  border:0.25mm solid var(--line);background:var(--wash-grey);color:var(--ink-soft);
+}
+.chip.g{ background:var(--wash-green);color:var(--green);border-color:#cfe9db; }
+.chip.a{ background:var(--wash-amber);color:var(--amber);border-color:#f0e0bb; }
+.chip.o{ background:#fdf1e7;color:#b45309;border-color:#f3ddc6; }
+.chip.r{ background:var(--wash-red);color:var(--red);border-color:#f2cfcc; }
+.chip.b{ background:var(--wash-blue);color:var(--blue);border-color:#cddcf8; }
+
+.lede-rule{ height:0.5mm;background:var(--line);margin:8mm 0; border:0;}
+
+.footer-note{
+  margin-top:10mm;padding-top:4mm;border-top:0.3mm solid var(--line);
+  font-size:8pt;color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ COVER ══════════════════════════════ -->
+<section class="cover">
+  <div class="cover-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  </div>
+  <div class="cover-eyebrow">Stellaris Casino · Surveillance &amp; Pit</div>
+  <h1>A.S.S.E.T.</h1>
+  <div class="cover-title-rule"></div>
+  <h2>Aruba Surveillance Skill Enhancement &amp; Training</h2>
+  <p class="cover-lede">
+    The complete, illustrated guide to the drill platform — for agents and pit managers who run
+    the drills, and for the supervisors, directors, and casino managers who have to answer for
+    the numbers. Every screen shown here is the live application.
+  </p>
+  <div class="cover-meta">
+    <div><span>Edition</span><strong>Version 2.0 — audited</strong></div>
+    <div><span>Issued</span><strong>July 2026</strong></div>
+    <div><span>Audience</span><strong>Agents · Pit Managers · Supervisors · Directors · Casino Manager</strong></div>
+    <div><span>Access</span><strong>assetdrills.com</strong></div>
+  </div>
+  <div class="cover-foot">
+    <div>Internal training document — Surveillance &amp; Pit departments,<br>Aruba Marriott Resort &amp; Stellaris Casino.</div>
+    <div>Illustrated with live screenshots<br>Demonstration data throughout</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ HOW TO USE / WHAT'S NEW ══════════════════════════ -->
+<h2 class="sec cont"><span class="num">—</span>About this edition</h2>
+<p class="sec-lede">
+  Version 2.0 is a full audit of the version 1.0 manual against the live application and its
+  database. Every rule, threshold, and formula in these pages was re-checked in the code that
+  actually runs; where the first edition was incomplete or wrong, this edition says so plainly.
+</p>
+
+<h3>What changed in version 2.0</h3>
+<table>
+  <thead><tr><th style="width:33%">Area</th><th>What is new or corrected</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Management sections</td><td>Sections 6 and 7 now define <em>every</em> number on every management screen — what it counts, over what period, and who is included in the denominator.</td></tr>
+    <tr><td class="k">Audit Log scope</td><td>Corrected. The Audit Log page lists drill-taker activity only; management's own actions (question edits, account changes, remediation) are recorded but are read in the Audit Digest. See §6.7.</td></tr>
+    <tr><td class="k">Practice mode</td><td>Corrected. Practice still never touches score, cooldown, difficulty, or question statistics — but it <em>is</em> logged, and focused practice earns remediation credit. See §4.4.</td></tr>
+    <tr><td class="k">Craps</td><td>New. Craps is <strong>practice-only</strong> in production: agents can drill it freely, but its questions are excluded from scored sessions. See §5.5.</td></tr>
+    <tr><td class="k">Completion statuses</td><td>New. On Track / Below Target / At Risk / Flagged are now defined with the exact pacing arithmetic. See §6.3.</td></tr>
+    <tr><td class="k">Notifications</td><td>New. Alert thresholds, and the fact that dismissals are stored per browser — not shared between managers. See §6.8.</td></tr>
+    <tr><td class="k">Playbooks</td><td>New §8: daily, weekly, and month-end routines, plus onboarding and offboarding checklists.</td></tr>
+    <tr><td class="k">Definitions appendix</td><td>New §11: one table with every metric, its formula, its window, and where it appears.</td></tr>
+    <tr><td class="k">Security &amp; data</td><td>New §12: what is stored, who can see it, how long it is kept, and what a permanent delete really removes.</td></tr>
+    <tr><td class="k">Known behaviours</td><td>New §14: the handful of places where the app's behaviour will surprise you, documented rather than discovered.</td></tr>
+  </tbody>
+</table>
+
+<h3>How to read this manual</h3>
+<p>
+  Parts I and II are for everyone who takes drills. Part III is written for management and is the
+  reason this edition exists — it is deliberately precise, because these numbers end up in
+  compliance conversations. Parts IV and V are reference: definitions, security, FAQ, and a
+  one-page cheat sheet you can pin up.
+</p>
+<div class="grid2">
+  <div class="callout"><span class="ct">Tip</span>Practical advice — how to get more out of a screen.</div>
+  <div class="callout note"><span class="ct">Note</span>Context or behaviour worth knowing, but not urgent.</div>
+  <div class="callout important"><span class="ct">Important</span>Rules, limits, and things that will bite you if ignored.</div>
+  <div class="callout fixed"><span class="ct">Corrected in v2.0</span>A statement the first edition got wrong or left out.</div>
+</div>
+<div class="formula">
+  <span class="ct">How it is calculated</span>
+  Dark boxes like this one give the exact rule the application applies — the arithmetic, the time
+  window, and who is counted. When someone challenges a number in a meeting, this is the answer.
+</div>
+
+<div class="callout important">
+  <span class="ct">Important — screenshots use demonstration data</span>
+  <p>
+    Every screen in this manual was captured from the live application, but the people are
+    fictional (names such as “Sam Trainee”, IDs such as <code>Z-01</code>) and the session history
+    is seeded test data. Your screens will show your real team, and totals such as “9 agents” or
+    “451 questions” will differ. The <em>layout</em>, controls, and rules are exactly what you will see.
+  </p>
+</div>
+
+<!-- ══════════════════════════════ CONTENTS ══════════════════════════════ -->
+<h2 class="sec">Contents</h2>
+<div class="toc">
+  <div class="toc-item"><div class="t"><em>Part I</em>Everyone</div></div>
+  <div class="toc-item"><div class="t"><em>1</em>Welcome to A.S.S.E.T.</div><div class="d">What the platform is for · who uses it · roles · the department wall</div></div>
+  <div class="toc-item"><div class="t"><em>2</em>Signing in</div><div class="d">Employee ID login · lockout · password rules · timeouts</div></div>
+  <div class="toc-item"><div class="t"><em>3</em>Your first login</div><div class="d">The five-step guided tour</div></div>
+
+  <div class="toc-item"><div class="t"><em>Part II</em>The drill portal</div></div>
+  <div class="toc-item"><div class="t"><em>4</em>Using the drill portal</div><div class="d">Dashboard · drills · results · practice · trainers · resources · history · Pit Operations</div></div>
+  <div class="toc-item"><div class="t"><em>5</em>Scoring &amp; certification</div><div class="d">Scoring formula · cooldown · recertification · adaptive difficulty · how questions are chosen</div></div>
+
+  <div class="toc-item"><div class="t"><em>Part III</em>Management</div></div>
+  <div class="toc-item"><div class="t"><em>6</em>The management portal</div><div class="d">Team Dashboard · Agent Detail · Completion · Weak Areas · Question Stats · Question Editor · Audit Log · Notifications</div></div>
+  <div class="toc-item"><div class="t"><em>7</em>Department head tools</div><div class="d">Scorecard · Audit Digest · Remediation · User Management</div></div>
+  <div class="toc-item"><div class="t"><em>8</em>Management playbooks</div><div class="d">Daily · weekly · month-end close-out · onboarding · offboarding · coaching</div></div>
+  <div class="toc-item"><div class="t"><em>9</em>Exports &amp; reporting</div><div class="d">Which screen exports what, column by column</div></div>
+
+  <div class="toc-item"><div class="t"><em>Part IV</em>Reference</div></div>
+  <div class="toc-item"><div class="t"><em>10</em>Roles &amp; access</div><div class="d">The capability matrix</div></div>
+  <div class="toc-item"><div class="t"><em>11</em>Metric definitions</div><div class="d">Every number, its formula, and its window</div></div>
+  <div class="toc-item"><div class="t"><em>12</em>Security, privacy &amp; data</div><div class="d">What is stored, who sees it, how long it is kept</div></div>
+
+  <div class="toc-item"><div class="t"><em>Part V</em>Support</div></div>
+  <div class="toc-item"><div class="t"><em>13</em>FAQ</div><div class="d">For drill-takers, and 24 questions management actually asks</div></div>
+  <div class="toc-item"><div class="t"><em>14</em>Known behaviours &amp; limits</div><div class="d">Documented quirks and what is deferred to v2</div></div>
+  <div class="toc-item"><div class="t"><em>15</em>Quick reference card</div><div class="d">Every number on one page</div></div>
+</div>
+
+<!-- ══════════════════════════════ PART I ══════════════════════════════ -->
+<div class="part-divider">
+  <div class="kicker">Part I</div>
+  <h2>Everyone</h2>
+  <p>What the platform is, who is in it, and how to get in. Four pages that every user — agent,
+     pit manager, supervisor, or head — should read once.</p>
+</div>
+
+<h2 class="sec cont"><span class="num">1</span>Welcome to A.S.S.E.T.</h2>
+<p class="sec-lede">
+  A.S.S.E.T. — Aruba Surveillance Skill Enhancement &amp; Training — is the department's web-based
+  drill platform. It keeps payout math, game-protection knowledge, and floor procedures sharp
+  through short scored drills, and gives supervisors and directors an evidenced view of team
+  readiness.
+</p>
+
+<div class="grid3">
+  <div class="card"><h5>Run drills</h5><p>Ten-question scored sessions drawn from the live game and procedure pools, capped at ten minutes.</p></div>
+  <div class="card"><h5>Practice freely</h5><p>Unlimited, unscored practice with instant feedback, plus dedicated skill trainers.</p></div>
+  <div class="card"><h5>Prove readiness</h5><p>Scores, accuracy, weak areas, monthly certification, and exportable compliance records.</p></div>
+</div>
+
+<h3>1.1 Who uses it</h3>
+<p>
+  The platform serves two departments that never see each other's people or results — the
+  <strong>department wall</strong>. Everyone signs in the same way; what appears afterwards depends
+  entirely on the role attached to the account.
+</p>
+
+<table>
+  <thead><tr><th style="width:24%">Role</th><th style="width:12%">Dept.</th><th style="width:20%">Portal</th><th>What they do</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Agent</td><td>Surveillance</td><td>Drill portal</td><td>Runs drills, practice, and trainers; tracks own progress and certification.</td></tr>
+    <tr><td class="k">Pit Manager</td><td>Pit</td><td>Drill portal</td><td>Identical drills, scoring, and rules; sidebar is labelled “Pit Operations”.</td></tr>
+    <tr><td class="k">Supervisor</td><td>Surveillance</td><td>Management</td><td>Team performance and reports; creates and edits questions.</td></tr>
+    <tr><td class="k">Shift Manager</td><td>Pit</td><td>Management</td><td>The Pit equivalent of Supervisor — same pages, Pit staff only.</td></tr>
+    <tr><td class="k">Director <span class="chip b">head</span></td><td>Surveillance</td><td>Management + Admin</td><td>Everything a supervisor sees, plus Scorecard, Audit Digest, Remediation, and User Management.</td></tr>
+    <tr><td class="k">Casino Manager <span class="chip b">head</span></td><td>Pit</td><td>Management + Admin</td><td>The same head tools, scoped to Pit staff.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout note">
+  <span class="ct">Note — who is on the system today</span>
+  As of this edition the live roster is <strong>10 agents</strong> and <strong>10 pit managers</strong>
+  (the drill-takers), one Supervisor and one Director on the Surveillance side, and one Casino
+  Manager on the Pit side. No Shift Manager account exists yet — the role is built and ready if
+  the Pit side wants a second manager without account powers.
+</div>
+
+<h3>1.2 The department wall</h3>
+<p>
+  Surveillance staff and Pit staff never appear in each other's dashboards, leaderboards, reports,
+  audit records, or exports. This is enforced on the server — not merely hidden in the interface —
+  so it holds regardless of how a page is reached.
+</p>
+<div class="formula">
+  <span class="ct">How the wall works</span>
+  Department is derived from the role, not stored separately. <strong>Surveillance</strong> =
+  <code>agent</code>, <code>supervisor</code>, <code>director</code>.
+  <strong>Pit</strong> = <code>pit_manager</code>, <code>shift_manager</code>, <code>casino_manager</code>.
+  Every management query and reporting function re-derives the caller's department from their
+  signed-in identity and filters to it. <strong>Shared across the wall:</strong> the question pool,
+  the games, and the resource library. <strong>Never shared:</strong> people, sessions, answers,
+  audit entries, notes, and benchmarks.
+</div>
+<div class="callout important">
+  <span class="ct">Important — benchmarks never mix</span>
+  Because leaderboards and team benchmarks are department-scoped, a Surveillance agent is ranked
+  only against Surveillance, and a Pit Manager only against Pit. Never compare a figure from a
+  Surveillance report with one from a Pit report and call it a gap — they are different populations.
+</div>
+
+<h2 class="sec"><span class="num">2</span>Signing in</h2>
+<p class="sec-lede">
+  You sign in with the Employee ID and password your administrator handed you. There is no public
+  sign-up, no email address to confirm, and no self-service reset.
+</p>
+
+<ol class="steps">
+  <li>Open <strong>assetdrills.com</strong> in any modern browser — desktop, tablet, or phone.</li>
+  <li>Type your <strong>Employee ID</strong> exactly as issued. It is not case-sensitive.</li>
+  <li>Enter your password and select <strong>Sign in</strong>. You land on your Dashboard automatically.</li>
+</ol>
+
+<figure>
+  <div class="shot"><img src="img/fig-login.png" alt="A.S.S.E.T. sign-in screen"></div>
+  <figcaption><b>Figure 2.1 — The sign-in screen.</b> Enter your Employee ID (for example <code>B-24</code>)
+  and password, then select Sign in. The eye icon reveals the password as you type.</figcaption>
+</figure>
+
+<div class="formula">
+  <span class="ct">How the login works</span>
+  Accounts have no real mailbox. The application derives a synthetic address from the Employee ID —
+  <code>{employee_id}@stellaris.local</code> — and authenticates against that. This is why there is
+  no “email me a reset link”: the address does not receive mail. A department head sets a new
+  password directly instead.
+</div>
+
+<h3>2.1 Lockout and failed attempts</h3>
+<div class="callout important">
+  <span class="ct">Important — account lockout</span>
+  <p>
+    After <strong>5 failed attempts within 15 minutes</strong> the Employee ID is temporarily locked
+    and the message reads “Account locked — too many failed attempts. Try again in 15 minutes.”
+    Wait for the window to pass, or ask a department head. Every attempt — successful or not — is
+    recorded, and heads can see failed-attempt counts per employee in the Audit Digest (§7.2).
+  </p>
+</div>
+
+<h3>2.2 Changing your own password</h3>
+<p>
+  Once signed in, open <strong>Change Password</strong> from the sidebar (under <em>Help</em>). The
+  change is immediate and needs no approval. Requirements are shown live as you type:
+  at least 8 characters, at least one number, and both fields matching.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-change-password.png" alt="Change Password page"></div>
+  <figcaption><b>Figure 2.2 — Self-service password change.</b> Available to every user from the
+  sidebar. The checklist turns green as each requirement is met.</figcaption>
+</figure>
+
+<h3>2.3 Being signed out</h3>
+<table class="compact">
+  <thead><tr><th style="width:30%">Cause</th><th style="width:22%">How fast</th><th>What you see</th></tr></thead>
+  <tbody>
+    <tr><td class="k">30 minutes idle</td><td>Immediately at 30:00</td><td>Returned to the login screen. Any drill in progress is recorded as abandoned.</td></tr>
+    <tr><td class="k">Head forces a logout</td><td>Within about a minute</td><td>Returned to the login screen. You can sign straight back in — a forced logout ends the current session, it does not block the account.</td></tr>
+    <tr><td class="k">Account deactivated</td><td>At next sign-in</td><td>“Your account has been deactivated. Contact your administrator.”</td></tr>
+  </tbody>
+</table>
+<div class="callout note">
+  <span class="ct">Note — forced logout vs. deactivation</span>
+  These are different tools and heads should not confuse them. <strong>Force logout</strong> ends
+  the session that is open right now. <strong>Deactivate</strong> prevents any future sign-in but
+  does not, by itself, kick out a session already running. To remove someone immediately and
+  permanently: deactivate, then force logout.
+</div>
+
+<h2 class="sec"><span class="num">3</span>Your first login — the guided tour</h2>
+<p class="sec-lede">
+  The first time an agent or pit manager signs in, a five-step tour explains the essentials before
+  the first drill. Move with Next/Back; it appears once per account.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-tour.png" alt="Welcome tour, step 1"></div>
+  <figcaption><b>Figure 3.1 — Step 1 of the welcome tour.</b> The five steps are: welcome and what
+  A.S.S.E.T. is · drill vs. practice · the 4-hour cooldown · 20 sessions per month ·
+  scoring and adaptive difficulty.</figcaption>
+</figure>
+
+<div class="callout">
+  <span class="ct">Tip</span>
+  Skipped it? The sidebar's <strong>How It Works</strong> page repeats all of it — scoring,
+  cooldown, and certification rules — on one screen, any time.
+</div>
+
+<!-- ══════════════════════════════ PART II ══════════════════════════════ -->
+<div class="part-divider">
+  <div class="kicker">Part II</div>
+  <h2>The drill portal</h2>
+  <p>For agents and pit managers — the screens you use every shift, and the rules that decide
+     what a session is worth.</p>
+</div>
+
+<h2 class="sec cont"><span class="num">4</span>Using the drill portal</h2>
+<p class="sec-lede">
+  The left sidebar is your map: Dashboard, Drill, Practice, Resources, and My History under
+  <em>Main</em>; How It Works and Change Password under <em>Help</em>. Your Employee ID and
+  <strong>Sign out</strong> sit at the bottom. On a phone, open it with the <strong>☰</strong> icon.
+</p>
+
+<h3>4.1 The Dashboard</h3>
+<p>
+  Your home screen summarises where you stand right now: sessions completed this month, recent
+  average score, cooldown state, per-game accuracy, recertification progress, and your rank within
+  your own department.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-agent-dashboard.png" alt="Agent dashboard"></div>
+  <figcaption><b>Figure 4.1 — The agent Dashboard.</b> Left: Start Drill, Practice Mode, and View
+  History shortcuts, session counts, the score chart, and accuracy rings. Right: your ID card with
+  strongest and weakest game, recertification progress, and the team leaderboard.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th style="width:30%">On the Dashboard</th><th>What it tells you</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Sessions This Month</td><td>Completed sessions this calendar month, against the 20-session requirement.</td></tr>
+    <tr><td class="k">Avg Score · 14 days</td><td>Your recent form. A trend line appears once you have enough sessions to draw one.</td></tr>
+    <tr><td class="k">Days Left / Cooldown</td><td>Days remaining in the current month, and whether you may start a scored drill now.</td></tr>
+    <tr><td class="k">Accuracy by Game</td><td>Rings showing per-game accuracy; your weakest game is called out by name.</td></tr>
+    <tr><td class="k">Team Leaderboard</td><td>Your rank inside your own department. Colleagues appear by Employee ID, not by name.</td></tr>
+    <tr><td class="k">Assigned Practice</td><td>Appears only when a head has given you a focus area — see §7.3.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout note">
+  <span class="ct">Note — the leaderboard shows IDs, not names</span>
+  The team leaderboard lists Employee IDs only, ranked by this month's average score, then by
+  session count. It includes active drill-takers in your department. Deactivated colleagues drop
+  off it immediately.
+</div>
+
+<h3>4.2 Running a drill</h3>
+<p>
+  A drill is a <strong>10-question, 10-minute scored session</strong> drawn from across the games
+  and the shared procedure pool. Faster, accurate sessions score higher — see §5.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-drill.png" alt="Live payout drill"></div>
+  <figcaption><b>Figure 4.2 — A live payout drill.</b> The chip stack sits on the table layout: read
+  the wager, work out the payout, type the dollar amount, and select Submit Answer. The progress bar
+  and timer at the top track the ten questions and the ten-minute cap.</figcaption>
+</figure>
+
+<div class="grid2">
+  <div class="card">
+    <h5>Two question types</h5>
+    <p><strong>Payout drills</strong> — a bet is shown on the felt and you type the dollar payout.
+    Answers are accepted within a two-cent tolerance, so rounding never costs you a question.<br><br>
+    <strong>Multiple choice</strong> — rules, game-protection, and procedure scenarios; pick the
+    correct option. Options are shuffled every time the question appears.</p>
+  </div>
+  <div class="card">
+    <h5>Good to know</h5>
+    <p>The tag beside each question shows Easy / Medium / Hard — difficulty adapts to you (§5.4).<br><br>
+    Roulette and Craps tables offer a <strong>2D / 3D view toggle</strong>.<br><br>
+    Leaving early marks the session <strong>abandoned</strong>: it scores 0, does not count toward
+    your 20, and asks you for an optional reason that management can read.</p>
+  </div>
+</div>
+
+<div class="callout important">
+  <span class="ct">Important — the abandon reason is visible to management</span>
+  When you leave a drill early the app offers a one-line reason box (“radio call, restroom break,
+  technical issue…”). It is optional, but it is the only way to explain the abandon: the reason is
+  attached to the session and shown to supervisors in the Audit Log. A blank reason leaves them
+  guessing.
+</div>
+
+<h3>4.3 Your results</h3>
+<p>Finishing a session opens a full breakdown, so every miss becomes a lesson.</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-results.png" alt="Results screen"></div>
+  <figcaption><b>Figure 4.3 — The Results screen.</b> Final score out of 150, the time multiplier
+  that was applied, correct and missed counts, a question-by-question sequence, and accuracy broken
+  down by game and by difficulty. Scroll down to review each missed question with the correct answer,
+  the payout layout, and an explanation.</figcaption>
+</figure>
+
+<h3>4.4 Practice mode</h3>
+<p>
+  Practice is unlimited and separate from your record. Choose a single game, <em>Procedures</em>, or
+  <em>Mixed — All Games</em>. Questions shuffle and cycle endlessly; there is no pool to exhaust and
+  no cooldown to wait out.
+</p>
+
+<div class="callout fixed">
+  <span class="ct">Corrected in v2.0</span>
+  <p>
+    The first edition said practice “writes nothing”. To be exact: practice <strong>never</strong>
+    affects your score, your cooldown, your adaptive difficulty, your certification count, or the
+    question statistics management reads. It <strong>does</strong> leave two harmless traces —
+    a “practice started” entry in the audit log, and a count of questions answered per game that
+    feeds remediation credit (§7.3). Practising is visible, and that is by design: it is evidence
+    of effort, not a penalty.
+  </p>
+</div>
+
+<figure>
+  <div class="shot"><img src="img/fig-practice-picker.png" alt="Practice picker"></div>
+  <figcaption><b>Figure 4.4 — The Practice picker.</b> Choose a game for endless questions in one
+  game, or drop into a <strong>Skill Trainer</strong> (the gold cards) for specialised drills.</figcaption>
+</figure>
+
+<figure>
+  <div class="shot"><img src="img/fig-practice-feedback.png" alt="Practice feedback"></div>
+  <figcaption><b>Figure 4.5 — Instant feedback.</b> In practice every answer is graded immediately:
+  your answer against the correct answer, plus the explanation. Select Next Question — or click
+  anywhere — to continue.</figcaption>
+</figure>
+
+<div class="callout">
+  <span class="ct">Tip — practise with purpose</span>
+  Use the accuracy rings on your Dashboard, or ask your supervisor for the Weak Areas report, to
+  choose what to practise. Focused practice on an assigned game also earns credit toward a
+  Remediation assignment: every 10 questions answered in the target game counts as one credit.
+</div>
+
+<h3>4.5 Skill trainers</h3>
+<p>
+  Beyond the games, dedicated trainers drill specific dealer skills: the <strong>Blackjack Strategy
+  Trainer</strong> and <strong>Hand Recognition Trainers</strong> for Caribbean Stud, Ultimate
+  Hold'em, Let It Ride, and Three Card Poker. Like practice, they are unscored.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-blackjack-trainer.png" alt="Blackjack strategy trainer"></div>
+  <figcaption><b>Figure 4.6 — The Blackjack Strategy Trainer.</b> Call the correct play
+  (Hit / Stand / Double / Split) for the dealt hand against the dealer up-card. Keyboard shortcuts
+  <code>H</code> <code>S</code> <code>D</code> <code>P</code> speed you up; a wrong call shows the
+  house rule and highlights the matching row of the strategy chart, which is one click away in full.</figcaption>
+</figure>
+
+<h3>4.6 Resources</h3>
+<p>
+  Reference material lives here: rules and payout PDFs, video walkthroughs, a payout calculator, and
+  the trainers — organised by game. Resources are shared across both departments.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-resources.png" alt="Resources library"></div>
+  <figcaption><b>Figure 4.7 — The Resources library.</b> Each game card links to its Rules, Videos,
+  Calculator, and — where available — Trainer tabs.</figcaption>
+</figure>
+
+<h3>4.7 My History</h3>
+<p>
+  A running log of your sessions with date, status, score, accuracy, and time. Monthly progress,
+  best score, and average sit at the top. Select any row to reopen that session's full Results
+  breakdown.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-history.png" alt="Session history"></div>
+  <figcaption><b>Figure 4.8 — Session History.</b> Abandoned sessions are listed too, marked as such
+  and scored 0 — the record is complete, not flattering.</figcaption>
+</figure>
+
+<h3>4.8 Pit Operations</h3>
+<p>
+  Pit managers use exactly the same portal — same drills, scoring, cooldown, certification, and
+  trainers. The only differences are cosmetic and jurisdictional: the sidebar is labelled
+  <strong>Pit Operations</strong>, and the leaderboard, benchmark, and every report are scoped to
+  Pit staff.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-pit-dashboard.png" alt="Pit manager dashboard"></div>
+  <figcaption><b>Figure 4.9 — A Pit Manager's Dashboard.</b> Identical layout to the agent view;
+  note “PIT OPERATIONS” in the sidebar and the Pit-only leaderboard on the right.</figcaption>
+</figure>
+
+<h2 class="sec"><span class="num">5</span>Scoring &amp; certification</h2>
+<p class="sec-lede">
+  A small number of rules govern every scored drill. They are stated here exactly as the application
+  applies them — this section is the reference both agents and management should quote.
+</p>
+
+<h3>5.1 Scoring</h3>
+<div class="formula">
+  <span class="ct">The scoring formula</span>
+  <strong>score = round( correct answers × 10 × time multiplier )</strong><br>
+  Multiplier: <strong>×1.5</strong> when the session is finished in 5 minutes or less ·
+  <strong>×1.25</strong> over 5 and up to 7½ minutes ·
+  <strong>×1.0</strong> over 7½ minutes.<br>
+  The multiplier applies to the whole session at the end, not per question.
+  Maximum: <strong>150</strong> points (10 correct × 10 × 1.5). Abandoned or expired sessions score
+  <strong>0</strong>.
+</div>
+
+<table class="compact">
+  <thead><tr><th>Finish time</th><th>Multiplier</th><th>10/10</th><th>8/10</th><th>6/10</th></tr></thead>
+  <tbody>
+    <tr><td class="k">≤ 5:00</td><td>×1.5</td><td>150</td><td>120</td><td>90</td></tr>
+    <tr><td class="k">5:00 – 7:30</td><td>×1.25</td><td>125</td><td>100</td><td>75</td></tr>
+    <tr><td class="k">7:30 – 10:00</td><td>×1.0</td><td>100</td><td>80</td><td>60</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="ct">Tip — accuracy beats speed</span>
+  Eight correct answers in four minutes (120) beats ten correct in eight minutes (100), but six
+  correct in four minutes (90) loses to eight correct in eight (80 — close) and badly to nine in
+  seven (112). Rushing pays only while you stay accurate.
+</div>
+
+<h3>5.2 The 4-hour cooldown</h3>
+<p>
+  After each <em>completed</em> session you must wait <strong>4 hours</strong> before starting
+  another scored drill. It is global — there is no per-game bypass — and it is enforced on the
+  server, so reloading, switching device, or clearing the browser will not shorten it. The Drill
+  link in the sidebar greys out and shows a live countdown. Practice is never blocked.
+</p>
+<div class="formula">
+  <span class="ct">How the cooldown is measured</span>
+  From the <code>completed_at</code> timestamp of your most recent <strong>completed</strong>
+  session. Abandoned sessions do not start a cooldown — if you abandon, you may start again at
+  once. The countdown the browser shows is a cached copy of the server's answer, refreshed at least
+  every 30 seconds.
+</div>
+
+<h3>5.3 Monthly recertification</h3>
+<div class="formula">
+  <span class="ct">The certification rule</span>
+  Each drill-taker must complete <strong>20 sessions per calendar month</strong>. Only sessions with
+  status <em>completed</em> count — abandoned and expired sessions do not. The month is the calendar
+  month; the counter resets at midnight on the 1st. Falling short flags the account and raises an
+  in-app notification to the department's management.
+</div>
+<div class="callout important">
+  <span class="ct">Important — 20 sessions, 4 hours apart</span>
+  Twenty sessions at a four-hour cooldown needs planning: the theoretical ceiling is six per day,
+  but realistically it is one or two per shift. Leaving the requirement to the last week of the
+  month is how agents end up flagged. Management can see the required pace per agent on the
+  Completion Tracker (§6.3).
+</div>
+
+<h3>5.4 Adaptive difficulty</h3>
+<p>Each game tracks your level independently, from 1 (Easy) to 3 (Hard).</p>
+<ul>
+  <li><strong>Step up</strong> — three correct answers in a row at your current level in that game.</li>
+  <li><strong>Step down</strong> — two wrong answers in a row at your current level.</li>
+  <li><strong>Bounded</strong> — never below 1, never above 3.</li>
+  <li><strong>Practice never changes it</strong> — only scored drills move your level.</li>
+</ul>
+<div class="callout note">
+  <span class="ct">Note — difficulty does not change the points</span>
+  A hard question is worth the same 10 points as an easy one. Difficulty controls what you are
+  <em>asked</em>, not what a correct answer is worth. This is deliberate: it keeps scores comparable
+  across agents. It also means a strong agent working at level 3 and a new agent at level 1 can post
+  the same score — read scores alongside the difficulty breakdown on the Results screen, not alone.
+</div>
+
+<h3>5.5 How the ten questions are chosen</h3>
+<p>
+  A session is not a random ten. The draw is designed to stay varied, to lean gently toward your
+  weaker games, and never to serve the same near-identical question twice.
+</p>
+<div class="formula">
+  <span class="ct">The session draw, in order of priority</span>
+  <strong>1. Freshness</strong> — questions you answered in your last 3 completed sessions are
+  excluded.<br>
+  <strong>2. Spread</strong> — at most 4 of the 10 questions from any one game; shared procedure
+  questions form their own bucket, also capped at 4. Every session therefore touches at least three
+  different buckets.<br>
+  <strong>3. Procedure variety</strong> — at most 2 procedure questions from the same category
+  (e.g. <code>roulette_procedure</code>).<br>
+  <strong>4. No near-duplicates</strong> — never two payout questions with the same game and payout
+  ratio, and never two questions with identical wording.<br>
+  <strong>5. Weak-area lean</strong> — a game's weight is <code>0.5 + 0.5 × (1 − accuracy)</code>,
+  so a 20 %-accuracy game is about 1.5× as likely as an 80 % one. Weak areas surface more; they do
+  not take over.<br>
+  <strong>Fallback</strong> — if the fresh pool cannot fill ten, the rules relax in that order
+  (recently-seen questions first, caps last). A full ten-question session always wins over an
+  under-filled one.
+</div>
+
+<div class="callout fixed">
+  <span class="ct">Corrected in v2.0 — Craps is practice-only</span>
+  <p>
+    <strong>Craps questions never appear in a scored drill.</strong> The Craps game is flagged
+    practice-only in production, so its 74 active questions are available in Practice (including
+    Mixed) but excluded from scored sessions. This was a deliberate decision — the team drills Craps
+    freely until everyone is ready for it to count. Promoting it later is a single database change
+    and needs no application update. Note that Craps procedure questions, which are shared
+    procedure questions rather than Craps-game questions, <em>do</em> appear in scored drills.
+  </p>
+</div>
+
+<h3>5.6 Abandoned sessions</h3>
+<div class="callout important">
+  <span class="ct">Important</span>
+  Leaving a drill before finishing — closing the tab, navigating away, being timed out at 30
+  minutes idle, or letting the 10-minute cap expire — records the session as <strong>abandoned</strong>.
+  It scores 0, does not count toward the 20, and is visible to management with its reason. Finish
+  the session: a low score always beats an abandon.
+</div>
+
+<h3>5.7 The live question pool</h3>
+<p>
+  Sessions draw from the active pool at the moment they start. As of this edition:
+</p>
+<table class="compact">
+  <thead><tr><th>Pool</th><th class="c">Active questions</th><th>In scored drills?</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Blackjack</td><td class="c">178</td><td class="yes">Yes</td><td>Multiple choice: payouts, side bets, game protection, basic strategy.</td></tr>
+    <tr><td class="k">Procedures (shared)</td><td class="c">165</td><td class="yes">Yes</td><td>Floor procedures incl. roulette, craps, and CSP procedure sets. Eligible in every session.</td></tr>
+    <tr><td class="k">Let It Ride</td><td class="c">92</td><td class="yes">Yes</td><td>28 further questions exist but are deactivated.</td></tr>
+    <tr><td class="k">Caribbean Stud Poker</td><td class="c">78</td><td class="yes">Yes</td><td>Ante/Bet payouts plus progressive and qualify rules.</td></tr>
+    <tr><td class="k">Craps</td><td class="c">74</td><td class="part">Practice only</td><td>Excluded from scored sessions by the practice-only flag.</td></tr>
+    <tr><td class="k">Three Card Poker</td><td class="c">45</td><td class="yes">Yes</td><td>Pair Plus payout drills.</td></tr>
+    <tr><td class="k">Roulette</td><td class="c">31</td><td class="yes">Yes</td><td>Payout scenarios are generated fresh on the table layout each time, so the same question is never numerically identical twice.</td></tr>
+    <tr><td class="k">Ultimate Texas Hold'em</td><td class="c">30</td><td class="yes">Yes</td><td>At the 30-question minimum — watch this pool.</td></tr>
+  </tbody>
+</table>
+<p style="font-size:8.6pt;color:var(--muted)">
+  Counts are active questions at the time of writing and move as questions are added or retired.
+  Read them live in <em>Question Stats</em> (§6.5).
+</p>
+
+<!-- ══════════════════════════════ PART III ══════════════════════════════ -->
+<div class="part-divider">
+  <div class="kicker">Part III</div>
+  <h2>Management</h2>
+  <p>Every management screen, every number defined, and the routines that turn them into action.
+     If a figure in this part ever disagrees with the application, the application is right and this
+     manual needs an update — tell your administrator.</p>
+</div>
+
+<h2 class="sec cont"><span class="num">6</span>The management portal</h2>
+<p class="sec-lede">
+  Supervisors, shift managers, and department heads sign in the same way as everyone else and land
+  in the management portal instead of a dashboard. Every view is scoped to your department, every
+  list can be filtered, and every page exports to Excel.
+</p>
+
+<h4>The management sidebar</h4>
+<table class="compact">
+  <thead><tr><th style="width:16%">Group</th><th style="width:30%">Page</th><th>Who sees it</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Main</td><td>Team Dashboard · Completion Tracker · Weak Areas</td><td>All management roles</td></tr>
+    <tr><td class="k">Reports</td><td>Question Stats · Question Editor · Audit Log</td><td>All management roles</td></tr>
+    <tr><td class="k">Reports</td><td>Scorecard · Audit Digest</td><td>Department heads only</td></tr>
+    <tr><td class="k">Admin</td><td>Remediation · User Management</td><td>Department heads only</td></tr>
+  </tbody>
+</table>
+
+<div class="callout note">
+  <span class="ct">Note — the two heads</span>
+  “Department head” means the <strong>Director</strong> on the Surveillance side and the
+  <strong>Casino Manager</strong> on the Pit side. Supervisors and shift managers do not see the
+  Admin group at all — the links are absent, and the pages refuse the request even if the address is
+  typed by hand.
+</div>
+
+<h3>6.1 Team Dashboard</h3>
+<p>
+  The command centre: department averages, who is behind on sessions, score-decay alerts, and a
+  searchable roster where every row opens that person's detail page.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-team-dashboard.png" alt="Team Dashboard"></div>
+  <figcaption><b>Figure 6.1 — Team Dashboard.</b> The amber banner lists everyone below the
+  20-session monthly target; the purple banner lists score decay. Each roster row links to Agent
+  Detail; <em>Export Excel</em> is top-right. In this demonstration capture all nine agents are
+  below target, which is why On Track reads 0/9.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th style="width:26%">Element</th><th>Exactly what it counts</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Total Agents</td><td>Every drill-taker account in your department, <strong>including deactivated ones</strong>. The Status column tells you which are active.</td></tr>
+    <tr><td class="k">Team Avg Score</td><td>The average of each drill-taker's <strong>current-month</strong> average score, across the roster. It is an average of averages, not a session-weighted mean; an agent with two sessions counts as much as one with twenty.</td></tr>
+    <tr><td class="k">On Track</td><td>How many have already completed 20 or more sessions this calendar month.</td></tr>
+    <tr><td class="k">Sessions column</td><td>Completed sessions this calendar month, out of 20.</td></tr>
+    <tr><td class="k">Avg Score column</td><td>That person's average score for <strong>this calendar month only</strong> — blank until they complete a session this month.</td></tr>
+    <tr><td class="k">Last Active</td><td>The timestamp of their most recent session.</td></tr>
+    <tr><td class="k">Decay chip <span class="chip r">↓19%</span></td><td>Appears beside the name when the two-week comparison in §6.8 finds a drop of 15 % or more.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout fixed">
+  <span class="ct">Corrected in v2.0 — two things the first edition did not say</span>
+  <p>
+    <strong>1. “Avg Score” is this month, not all time.</strong> On the 1st of a month the column
+    empties out and the team average drops to the first few sessions posted. That is expected
+    behaviour, not lost data — history is intact on Agent Detail and in the Scorecard.
+  </p>
+  <p style="margin-bottom:0">
+    <strong>2. Deactivated accounts still appear here.</strong> The roster is every drill-taker
+    account in the department; a leaver stays on the list — showing 0 sessions and counting toward
+    “below target” — until the account is deleted. Read the Status column before you act on a
+    banner, and see §8.5 for the offboarding routine.
+  </p>
+</div>
+
+<h3>6.2 Agent Detail</h3>
+<p>
+  One person, in full: score trend, per-game averages, and the complete session history including
+  the IP address and device recorded for each sitting.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-agent-detail.png" alt="Agent detail page"></div>
+  <figcaption><b>Figure 6.2 — Agent Detail.</b> The complete performance picture for one team member,
+  and the page to have open during a coaching conversation.</figcaption>
+</figure>
+
+<div class="callout">
+  <span class="ct">Tip — what the IP and device column is for</span>
+  Session records carry the IP address and browser user-agent. Its purpose is integrity, not
+  surveillance of staff: it is how you check that a run of suspiciously fast, high-scoring sessions
+  came from the surveillance room rather than from one person completing drills on a colleague's
+  behalf. Treat it as evidence to confirm or clear a concern, and see §12 for the handling rules.
+</div>
+
+<h3>6.3 Completion Tracker</h3>
+<p>
+  Certification at a glance: who has hit 20 sessions this month and who has not, at what pace they
+  now need to work, and the exceptions you have recorded.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-completion.png" alt="Completion Tracker"></div>
+  <figcaption><b>Figure 6.3 — The Completion Tracker</b> enforces the 20-session rule across the
+  department. Rows are sorted by urgency, the <span class="chip r">prev</span> tag marks anyone who
+  also missed last month, and the Needed column gives both the shortfall and the sessions-per-day
+  pace required to close it.</figcaption>
+</figure>
+
+<h4>The four statuses</h4>
+<table>
+  <thead><tr><th style="width:22%">Status</th><th style="width:34%">Rule</th><th>How to read it</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><span class="chip g">On Track</span></td><td>20 or more sessions completed this month</td><td>Certified for the month. Nothing more is required.</td></tr>
+    <tr><td class="k"><span class="chip a">Below Target</span></td><td>Short of 20, and the remaining shortfall needs 1.5 sessions per day or fewer</td><td>Behind but recoverable at a normal pace.</td></tr>
+    <tr><td class="k"><span class="chip o">At Risk</span></td><td>Short of 20, and the shortfall needs more than 1.5 sessions per day</td><td>Will not make it without a deliberate push. This is the group to speak to.</td></tr>
+    <tr><td class="k"><span class="chip r">Flagged</span></td><td>Short of 20 on the last day of the month</td><td>The month is over; the shortfall is now a compliance fact. Record a note if there is a reason.</td></tr>
+  </tbody>
+</table>
+
+<div class="formula">
+  <span class="ct">How the pace is calculated</span>
+  <strong>needed = 20 − completed sessions this month</strong><br>
+  <strong>per day = needed ÷ days left in the month</strong>, where days left =
+  (last day of month − today). On the final day, days left is 0 and anyone short becomes
+  <em>Flagged</em>.<br>
+  The <em>At Risk</em> threshold is <code>needed ÷ days left &gt; 1.5</code>. Remember the four-hour
+  cooldown caps a realistic day at two or three sessions.
+</div>
+
+<h4>Recert exception notes</h4>
+<p>
+  Use <strong>Add note</strong> on any row to record why a month fell short — approved leave, medical
+  absence, a mid-month transfer. Notes are per agent per month, up to 1000 characters, editable and
+  deletable, and previous months are kept in the row's history. They appear in both Completion
+  exports, so the explanation travels with the number.
+</p>
+<div class="callout important">
+  <span class="ct">Important — a note explains, it does not excuse</span>
+  Writing a note does not change the status, the count, or the flag. It attaches the reason to the
+  record so that a report reviewed months later is not read as unexplained non-compliance. Write the
+  note in the month it applies to.
+</div>
+
+<h4>Two exports, different jobs</h4>
+<table class="compact">
+  <thead><tr><th style="width:26%">Button</th><th>Contents</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Export Excel</td><td>One sheet — the tracker as displayed: ID, name, sessions this month, required, status, last month's sessions, whether last month was missed, and the note.</td></tr>
+    <tr><td class="k">Compliance Records</td><td>Two sheets — <em>Summary</em> (as above plus a Compliant yes/no column) and <em>Session Detail</em>, every completed session this month with date, time, score, and duration. This is the file to hand over when someone asks for training evidence.</td></tr>
+  </tbody>
+</table>
+
+<h3>6.4 Weak Areas</h3>
+<p>
+  Where the department struggles: accuracy by game, the most-failed questions, and per-agent
+  weakest areas — filterable by date range, agent, and game.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-weak-areas.png" alt="Weak Areas report"></div>
+  <figcaption><b>Figure 6.4 — Weak Areas.</b> Use it to steer coaching and to decide what to assign
+  as Remediation. Bars are colour-coded: red below 60 %, amber 60–75 %, green above 75 %.</figcaption>
+</figure>
+
+<div class="formula">
+  <span class="ct">What Weak Areas counts</span>
+  Answers from <strong>completed sessions only</strong>, in your department, within the selected
+  date range — <em>last 30 days, 90 days, 6 months, or all time</em>. The default is
+  <strong>90 days</strong>. Practice answers are never included. Accuracy for a game is
+  <code>correct answers ÷ answers shown</code> for that game, not an average of per-agent rates.
+</div>
+
+<div class="callout">
+  <span class="ct">Tip — read the pair, not the number</span>
+  A game at 55 % accuracy over 400 answers is a training problem. The same 55 % over 9 answers is
+  noise. Always read accuracy next to the volume beside it before you assign remediation on the
+  strength of it.
+</div>
+
+<h3>6.5 Question Stats</h3>
+<p>
+  How each question is performing for <em>your</em> department: how often it has been shown, how
+  often it was answered correctly, and whether it looks too easy or too hard.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-question-stats.png" alt="Question Stats"></div>
+  <figcaption><b>Figure 6.5 — Question effectiveness.</b> Filter by game, difficulty, and status
+  (Active / Inactive / Never shown), search the text, and sort any column. The four tiles summarise
+  active questions, average accuracy, flagged questions, and questions never yet shown.</figcaption>
+</figure>
+
+<div class="formula">
+  <span class="ct">Department-scoped counts</span>
+  <strong>Shown</strong> and <strong>Correct</strong> are recomputed from your department's answers
+  every time the page loads — Surveillance sees Surveillance's experience of a question, Pit sees
+  Pit's, over the same shared pool. The numbers therefore differ between Henk's screen and Raquel's,
+  and that is correct. Only scored sessions count; practice never moves these figures.
+</div>
+
+<table class="compact">
+  <thead><tr><th style="width:24%">Flag</th><th>Rule</th><th>What to do</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><span class="chip b">Too Easy</span></td><td>Accuracy ≥ 90 % after at least 10 showings</td><td>Not automatically a problem — it may simply be well-trained. Consider raising its difficulty or retiring it if it is trivial.</td></tr>
+    <tr><td class="k"><span class="chip r">Too Hard</span></td><td>Accuracy ≤ 40 % after at least 10 showings</td><td>Check the wording and the stored answer first. A genuinely hard question is fine; an ambiguous or wrong one is not.</td></tr>
+    <tr><td class="k">Never shown</td><td><code>Shown = 0</code></td><td>Newly added, or excluded because its game is practice-only. Expect all Craps questions here.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout important">
+  <span class="ct">Important — pool health warning</span>
+  A game is considered ready at <strong>30 or more active questions</strong>; the page warns you
+  below that line. Ultimate Texas Hold'em currently sits exactly at 30 and Roulette at 31 —
+  deactivating two or three questions in either would drop it under the minimum. The Procedures
+  bucket is counted on its own in this warning.
+</div>
+
+<h3>6.6 Question Editor</h3>
+<p>
+  Supervisors, shift managers, and heads can add and edit questions in the shared pool. There is one
+  pool for both departments: a question Angelo writes is served to Pit Managers too.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-question-editor.png" alt="Question Editor"></div>
+  <figcaption><b>Figure 6.6 — The Question Editor.</b> Create or edit a question, search the whole
+  pool by text, answer, explanation, or category, and toggle any question active or inactive.</figcaption>
+</figure>
+
+<h4>Writing a question that behaves correctly</h4>
+<table>
+  <thead><tr><th style="width:22%">Field</th><th>Rules that matter</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Game</td><td>Pick the game, or tick <strong>procedure</strong> to make it a shared question with no game. Shared procedure questions are eligible in <em>every</em> session, in both departments.</td></tr>
+    <tr><td class="k">Type</td><td><em>Multiple choice</em> or <em>payout</em>. A payout-drill game can hold both — the interface renders by question type, not by the game's type.</td></tr>
+    <tr><td class="k">Correct answer (payout)</td><td><strong>Store the payout ratio, not a dollar amount.</strong> <code>35</code> for 35:1, <code>1.5</code> for 3:2, <code>1.8</code> for 9:5. The drill computes <code>bet × ratio</code> and accepts the agent's typed amount within two cents. A dollar figure in this box makes the question permanently unanswerable.</td></tr>
+    <tr><td class="k">Correct answer (choice)</td><td>Must match one of the options exactly. Options are shuffled at display time.</td></tr>
+    <tr><td class="k">Explanation</td><td>Shown after a wrong answer in both drills and practice. This is where the training actually happens — write the rule, not just the number.</td></tr>
+    <tr><td class="k">Category</td><td>Drives which felt band the table layout highlights for payout questions, and the per-category caps in the session draw. Use an existing category unless you have a reason not to.</td></tr>
+    <tr><td class="k">Difficulty</td><td>1 Easy · 2 Medium · 3 Hard. Feeds the adaptive engine. Points stay at 10 regardless.</td></tr>
+    <tr><td class="k">Active</td><td>Unticking removes a question from all future draws while preserving its history. This is the correct way to retire a question — there is no delete.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="ct">Tip — test what you write</span>
+  After saving a payout question, open Practice for that game and answer it once. Two minutes of
+  checking prevents a bad ratio quietly costing every agent a point for weeks.
+</div>
+
+<h3>6.7 Audit Log</h3>
+<p>
+  An append-only record of what happened, with filters for date range (24 hours to all time),
+  employee, and action category, plus free-text search. Drill-takers have no access to it whatsoever.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-audit-log.png" alt="Audit Log"></div>
+  <figcaption><b>Figure 6.7 — The Audit Log.</b> Filterable, searchable, and exportable. Abandon
+  reasons appear as a chip on the row — select it to read the agent's full explanation.</figcaption>
+</figure>
+
+<div class="callout fixed">
+  <span class="ct">Corrected in v2.0 — what this page does and does not show</span>
+  <p>
+    The first edition described the Audit Log as covering “logins, completed sessions, question
+    edits, account changes”. In fact <strong>this page lists your department's drill-takers only</strong>
+    — agents on the Surveillance side, pit managers on the Pit side.
+  </p>
+  <p style="margin-bottom:0">
+    Actions performed by management — question created/updated/toggled, users created, deactivated,
+    deleted, password reset, forced logout, remediation assigned or closed — <em>are</em> recorded
+    permanently, but they are attributed to the manager who performed them, and managers are not
+    drill-takers, so they do not appear in this list. Read them in the <strong>Audit Digest</strong>
+    (§7.2), which counts every role in the department. The consequence worth remembering: the
+    “Question edits” filter on this page will normally return nothing.
+  </p>
+</div>
+
+<table class="compact">
+  <thead><tr><th style="width:24%">Category filter</th><th>Events</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Auth events</td><td>Login · Logout · Password change (self-service)</td></tr>
+    <tr><td class="k">Sessions</td><td>Drill started · Drill completed (with score and correct count) · Drill abandoned (with the agent's reason)</td></tr>
+    <tr><td class="k">Practice</td><td>Practice started, with the scope chosen and the size of the pool</td></tr>
+    <tr><td class="k">Question edits</td><td>Question created / updated / activated / deactivated — recorded, but see the correction above</td></tr>
+  </tbody>
+</table>
+
+<div class="callout important">
+  <span class="ct">Important — the 500-row cap</span>
+  The page loads the <strong>most recent 500 entries</strong> that match your date filter, newest
+  first, and the Excel export contains what is on screen. For counting rather than reading — “how
+  many logins last week?”, “how many abandons?” — use the Audit Digest, which totals every row in
+  the period regardless of the cap. Narrow the date range if you need to read older detail.
+</div>
+
+<h3>6.8 Notifications</h3>
+<p>
+  The sidebar bell collects the two alerts that need a manager's attention: drill-takers who missed
+  last month's target, and drill-takers whose scores are decaying.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-notifications.png" alt="Notifications panel"></div>
+  <figcaption><b>Figure 6.8 — The Notifications panel.</b> Grouped into Missed Target and Score
+  Decay. Dismiss individually or clear all; the badge shows the outstanding count.</figcaption>
+</figure>
+
+<div class="formula">
+  <span class="ct">How the two alerts are generated</span>
+  <strong>Missed Target</strong> — every <em>active</em> drill-taker in your department who completed
+  fewer than 20 sessions in the <strong>previous</strong> calendar month. The alert key includes the
+  month, so it clears itself when the next month begins.<br><br>
+  <strong>Score Decay</strong> — compares the average score of the last 14 days against the 14 days
+  before that. It fires when the drop is <strong>15 % or more</strong>, and only when there are at
+  least <strong>3 completed sessions in each</strong> window — so a quiet fortnight cannot fake a
+  decay, and a genuinely inactive agent shows up as Missed Target instead. A dismissed decay alert
+  returns after a week if the decline continues.
+</div>
+
+<div class="callout fixed">
+  <span class="ct">Corrected in v2.0 — dismissals are personal</span>
+  Dismissing a notification stores that choice <strong>in your own browser</strong>. It does not
+  clear the alert for your colleague, and it comes back if you sign in from a different computer or
+  clear your browser data. Treat the bell as your own worklist, not a shared queue — if an alert
+  needs joint action, agree it in person or in Remediation (§7.3), which is stored on the server.
+</div>
+<div class="callout note">
+  <span class="ct">Note — the panel refreshes every five minutes</span>
+  Notification data is cached for five minutes so that moving between management pages does not
+  re-query the database each time. A change you make now may take up to five minutes — or one
+  reload — to be reflected in the badge.
+</div>
+
+<h2 class="sec"><span class="num">7</span>Department head tools</h2>
+<p class="sec-lede">
+  Four pages are reserved for the Director (Surveillance) and the Casino Manager (Pit): two reports
+  that summarise a department, and two tools that act on it. Everything on them respects the same
+  department wall as the rest of the portal.
+</p>
+
+<h3>7.1 Scorecard</h3>
+<p>
+  Month-over-month department KPIs — average score, sessions, active drill-takers, recertification
+  compliance, and accuracy — with delta arrows, sparklines, a monthly detail table, and a per-game
+  accuracy matrix. Six months are shown.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-scorecard.png" alt="Department Scorecard"></div>
+  <figcaption><b>Figure 7.1 — The Department Scorecard.</b> The current month is marked
+  <span class="chip b">MTD</span> — month to date — and every delta compares it with the full
+  previous month. Months with no activity are shown as zero rather than omitted, so the trend line
+  stays continuous.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th style="width:22%">KPI</th><th>Definition</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Avg Score</td><td>The mean score of every completed session in the department that month. Unlike the Team Dashboard tile, this is session-weighted: a heavy driller moves it more than a light one.</td></tr>
+    <tr><td class="k">Sessions</td><td>Completed sessions in the department that month. Abandoned sessions are excluded everywhere on this page.</td></tr>
+    <tr><td class="k">Active</td><td>Distinct drill-takers with at least one completed session that month — participation, not headcount.</td></tr>
+    <tr><td class="k">Recert Rate</td><td>The percentage of the roster that reached 20 completed sessions that month.</td></tr>
+    <tr><td class="k">Accuracy</td><td>Correct answers ÷ answers given, across all completed sessions that month.</td></tr>
+    <tr><td class="k">Per-game matrix</td><td>The same accuracy calculation split by game, one column per month. A dot means no answers were recorded for that game that month.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout important">
+  <span class="ct">Important — how to read the Recert Rate honestly</span>
+  <p>
+    The denominator is <strong>today's active roster</strong>, applied to every month in the table.
+    If the department had 6 drill-takers in March and has 10 now, March's rate is shown as
+    “out of 10”. This keeps the trend line comparable against the team you manage today, but it means
+    a historic percentage in this table is not the percentage that was true at the time.
+  </p>
+  <p style="margin-bottom:0">
+    For a point-in-time figure — the number to quote in a compliance conversation about a specific
+    month — use the Completion Tracker's <em>Compliance Records</em> export taken during that month,
+    or count the Session Detail sheet.
+  </p>
+</div>
+
+<div class="callout">
+  <span class="ct">Tip — the current month always looks bad</span>
+  MTD is an incomplete month compared against a complete one. On the 8th, sessions will be down
+  roughly two-thirds and the recert rate will usually be 0 %, because almost nobody has 20 sessions
+  yet. Judge the month on avg score and accuracy, which are rate-based and comparable, and leave
+  volume judgements until the month closes.
+</div>
+
+<h3>7.2 Audit Digest</h3>
+<p>
+  A period rollup of everything your department did — totals by action, the most active users,
+  security-relevant events, and failed sign-ins — over 24 hours, 7, 30, or 90 days.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-audit-digest.png" alt="Audit Digest"></div>
+  <figcaption><b>Figure 7.2 — The Audit Digest.</b> A fast health check on activity and security.
+  Exact counts, unaffected by the Audit Log's 500-row display cap.</figcaption>
+</figure>
+
+<table class="compact">
+  <thead><tr><th style="width:26%">Panel</th><th>What it contains</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Totals by action</td><td>Every recorded action in the period, counted exactly: logins, logouts, self-service password changes, practice starts, drills started / completed / abandoned, question edits, user administration, and remediation events. <strong>This is where management's own actions appear.</strong></td></tr>
+    <tr><td class="k">Most active users</td><td>The top 15 by event count, across all roles in your department.</td></tr>
+    <tr><td class="k">Notable events</td><td>The security-relevant subset: abandoned drills, user created / deleted / deactivated / reactivated, admin password resets, forced logouts, and remediation assigned / completed / cancelled.</td></tr>
+    <tr><td class="k">Failed sign-ins</td><td>Failed attempts grouped by employee, with the last attempt time, matched to your department's roster.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout note">
+  <span class="ct">Note — failed attempts against unknown IDs</span>
+  The failed-login panel can only show attempts against Employee IDs that belong to your department.
+  An attempt against an ID that does not exist — a typo, or someone guessing — cannot be attributed
+  to a department and is therefore not listed. It is still recorded. If you suspect probing from
+  outside, raise it with the platform administrator, who can query the raw attempt log.
+</div>
+
+<div class="callout">
+  <span class="ct">Tip — a two-minute weekly security read</span>
+  Set the period to 7 days and look at three things: forced logouts and admin password resets you
+  did not perform, any employee with a double-digit failed-login count, and the ratio of drills
+  abandoned to drills completed. Anything unexpected in those three lines deserves a question.
+</div>
+
+<h3>7.3 Remediation</h3>
+<p>
+  Assign a drill-taker a focus — one game, or Procedures — with an optional note and due date. The
+  assignment appears on that person's Dashboard as an <strong>Assigned Practice</strong> card with a
+  Practice button that deep-links to the right game and a Start Drill button. Progress is tracked
+  automatically.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-remediation.png" alt="Remediation assignments"></div>
+  <figcaption><b>Figure 7.3 — Remediation assignments with live progress.</b> Each row shows the
+  drills-plus-practice split; the assign form pre-suggests the agent's weakest game from the last
+  90 days.</figcaption>
+</figure>
+
+<div class="formula">
+  <span class="ct">How an assignment completes</span>
+  <strong>progress = qualifying drills + practice credits</strong>, counted from the moment the
+  assignment was created.<br>
+  <strong>Qualifying drill</strong> — a completed session that included at least one question from
+  the target game. For a Procedures focus, any completed session qualifies.<br>
+  <strong>Practice credit</strong> — one credit per <strong>10 questions</strong> answered in
+  focused practice on the target game (or Procedures practice for a Procedures focus).<br>
+  <strong>Auto-completion</strong> — when <code>progress ≥ target</code> <em>and</em> at least
+  <strong>one real drill</strong> has happened. This drill floor means practice alone can never
+  certify a remediation; assessment integrity is preserved.<br>
+  <strong>Target</strong> — default 3, settable 1–50. <strong>Overdue</strong> is displayed when the
+  due date has passed and the assignment is still open; it does not close or escalate anything.
+</div>
+
+<table class="compact">
+  <thead><tr><th style="width:22%">Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="k"><span class="chip b">Assigned</span></td><td>Open and counting. Visible on the agent's Dashboard.</td></tr>
+    <tr><td class="k"><span class="chip r">Overdue</span></td><td>Open, and past its due date. A display state — still counting.</td></tr>
+    <tr><td class="k"><span class="chip g">Completed</span></td><td>Reached the target with at least one drill, or a head marked it complete by hand.</td></tr>
+    <tr><td class="k"><span class="chip r">Cancelled</span></td><td>Closed by a head without completion. Use this when circumstances change; it stays in the record.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="ct">Tip — write the note as if you will not be there</span>
+  The note is the only context the agent gets. “Roulette split payouts — you missed three in the
+  last two sessions; work through the practice set before Friday” lands. “Needs improvement” does
+  not. Assignments, completions, and cancellations are all recorded in the audit trail, so a
+  well-written note also documents that coaching took place.
+</div>
+
+<h3>7.4 User Management</h3>
+<p>
+  Heads manage their own department's accounts end to end — no ticket to the platform administrator
+  required. Six actions are available, all department-walled, all recorded.
+</p>
+
+<figure>
+  <div class="shot"><img src="img/fig-user-management.png" alt="User Management"></div>
+  <figcaption><b>Figure 7.4 — User Management.</b> Per-user actions: reset password, force logout,
+  deactivate or reactivate, and — only for accounts with no session history — permanent delete.</figcaption>
+</figure>
+
+<figure>
+  <div class="shot"><img src="img/fig-create-user.png" alt="Create user dialog"></div>
+  <figcaption><b>Figure 7.5 — Creating a user.</b> Employee ID, full name, password (minimum 8
+  characters), and role. The login address is derived automatically as
+  <code>{employee_id}@stellaris.local</code>; hand the credentials over in person.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th style="width:22%">Action</th><th>What it does</th><th style="width:26%">Recorded as</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Create user</td><td>Adds an account in your department with a role you are allowed to assign. The Director may create <em>agent</em> and <em>supervisor</em>; the Casino Manager may create <em>pit manager</em> and <em>shift manager</em>.</td><td><code>USER_CREATED</code></td></tr>
+    <tr><td class="k">Reset password</td><td>Sets a new password directly, minimum 8 characters. There is no email link — hand it over in person. The password itself is never recorded.</td><td><code>USER_PASSWORD_RESET</code></td></tr>
+    <tr><td class="k">Force logout</td><td>Ends the user's <em>current</em> session within about a minute. It does not prevent them signing back in.</td><td><code>USER_FORCE_LOGOUT</code></td></tr>
+    <tr><td class="k">Deactivate</td><td>The reversible block. The account cannot sign in; all sessions, answers, notes, and audit history are preserved.</td><td><code>USER_DEACTIVATED</code></td></tr>
+    <tr><td class="k">Reactivate</td><td>Restores access with everything intact.</td><td><code>USER_REACTIVATED</code></td></tr>
+    <tr><td class="k">Delete permanently</td><td>Removes the account entirely. <strong>Offered only when the user has never completed a session</strong>; otherwise the app refuses and directs you to deactivate.</td><td><code>USER_DELETED</code></td></tr>
+  </tbody>
+</table>
+
+<div class="callout danger">
+  <span class="ct">Read before deleting</span>
+  <p>
+    Permanent delete is for mistakes — a typo in an Employee ID, an account created twice, a hire
+    who never started. It removes the account, its difficulty tracking, <strong>and its audit-log
+    entries</strong>. It cannot be undone, and there is no restore.
+  </p>
+  <p style="margin-bottom:0">
+    For anyone who has actually used the platform, <strong>deactivate instead</strong>. The
+    application enforces this for you: an account with session history cannot be deleted. Training
+    and compliance records must survive the person leaving.
+  </p>
+</div>
+
+<h4>Guardrails the system enforces for you</h4>
+<ul>
+  <li>You can only act on users in <strong>your own department</strong>.</li>
+  <li>You cannot act on <strong>yourself</strong> — use Change Password for your own password.</li>
+  <li>You cannot act on <strong>the other head</strong>, or any other account-managing role.</li>
+  <li>Every action writes an audit entry naming you as the actor. Passwords are never written to it.</li>
+  <li>Only the platform administrator can create or alter the heads themselves.</li>
+</ul>
+
+<div class="callout important">
+  <span class="ct">Important — deactivation does not end a live session</span>
+  A deactivated user who is <em>already signed in</em> keeps working until their session expires or
+  they are forced out. To remove someone immediately: <strong>deactivate first, then force logout</strong>.
+  In that order the account is blocked before the session is dropped, so they cannot simply sign in
+  again.
+</div>
+
+<h2 class="sec"><span class="num">8</span>Management playbooks</h2>
+<p class="sec-lede">
+  The screens are only half the system; the routine is the other half. These are the rounds worth
+  running, in the order that makes them quick.
+</p>
+
+<h3>8.1 The daily five minutes</h3>
+<ol class="steps">
+  <li><strong>Bell first.</strong> Open Notifications. Anything under Score Decay is a coaching conversation this week, not next month.</li>
+  <li><strong>Team Dashboard.</strong> Scan the banners and the Last Active column. Someone who has not drilled in ten days is the earliest signal you get.</li>
+  <li><strong>Act on one thing.</strong> One conversation, or one remediation assignment. A daily habit of one beats a monthly panic of ten.</li>
+</ol>
+
+<h3>8.2 The weekly review</h3>
+<ol class="steps">
+  <li><strong>Completion Tracker.</strong> Everyone in <em>At Risk</em> gets told the number they need per day. The column already calculates it.</li>
+  <li><strong>Weak Areas, last 30 days.</strong> Note the two lowest games with meaningful volume. If the same game is lowest three weeks running, it is a training gap, not an agent problem.</li>
+  <li><strong>Audit Digest, 7 days</strong> (heads). The two-minute security read in §7.2.</li>
+  <li><strong>Remediation.</strong> Close what is done, chase what is overdue, cancel what circumstances overtook.</li>
+</ol>
+
+<h3>8.3 Month-end certification close-out</h3>
+<ol class="steps">
+  <li><strong>Three days out</strong> — Completion Tracker. Anyone who still needs more than two per day will not make it; decide now whether that is a push or a documented exception.</li>
+  <li><strong>Last working day</strong> — add recert notes for every legitimate shortfall (leave, illness, transfer, injury). Write them in the month they belong to.</li>
+  <li><strong>Last working day</strong> — export <strong>Compliance Records</strong>. This is the point-in-time evidence file; store it wherever your department keeps training records.</li>
+  <li><strong>First days of the new month</strong> — the bell raises Missed Target for anyone who fell short. Work that list; the alerts clear themselves when the next month begins.</li>
+  <li><strong>Heads</strong> — open the Scorecard once the month closes and read the completed month against the previous one, then export it for the file.</li>
+</ol>
+
+<div class="callout">
+  <span class="ct">Tip — one file, every month, same place</span>
+  The Compliance Records export is the single artefact that answers “prove this team was trained”.
+  Taken monthly and filed consistently, it turns a stressful audit request into a folder.
+</div>
+
+<h3>8.4 Onboarding a new drill-taker</h3>
+<ol class="steps">
+  <li><strong>Create the account</strong> (head, User Management): Employee ID matching your existing convention, full name, a password of at least 8 characters, and the correct role.</li>
+  <li><strong>Hand the credentials over in person.</strong> There is no email delivery and no reset link.</li>
+  <li><strong>Watch the first sign-in.</strong> The five-step tour runs once; it is the best two minutes of training the platform gives.</li>
+  <li><strong>Have them change the password</strong> from the sidebar on that first sign-in.</li>
+  <li><strong>Set expectations explicitly:</strong> 20 sessions a month, 4 hours between scored drills, finish every session you start.</li>
+  <li><strong>Point them at Practice</strong> before their first scored drill, and at Resources for the rules PDFs.</li>
+  <li><strong>Note the mid-month join.</strong> A person hired on the 20th cannot reach 20 sessions that month. Add a recert note on the Completion Tracker the day they start, so the shortfall is explained before it is questioned.</li>
+</ol>
+
+<h3>8.5 Offboarding</h3>
+<ol class="steps">
+  <li><strong>Deactivate</strong> the account in User Management — the reversible block that keeps all history.</li>
+  <li><strong>Force logout</strong> immediately afterwards if they may still be signed in somewhere.</li>
+  <li><strong>Do not delete.</strong> The application will refuse for anyone with session history, and that is the correct outcome: their training record is departmental evidence.</li>
+  <li><strong>Expect them on the roster.</strong> Deactivated accounts remain on the Team Dashboard and Completion Tracker showing 0 sessions. Add a recert note — “left the department on 14 July” — so the row explains itself for the rest of the month.</li>
+  <li><strong>Cancel any open remediation</strong> so it does not sit overdue forever.</li>
+</ol>
+
+<h3>8.6 Coaching a weak game</h3>
+<ol class="steps">
+  <li><strong>Confirm it is real</strong> — Weak Areas over 90 days, and check the answer volume, not just the percentage.</li>
+  <li><strong>Check the questions, not only the people</strong> — Question Stats filtered to that game. A cluster of “Too Hard” flags may mean a badly worded question rather than a weak team.</li>
+  <li><strong>Assign remediation</strong> with a target of 3–5 and a due date about two weeks out. The form already suggests each person's weakest game.</li>
+  <li><strong>Tell them what you assigned and why.</strong> The card appears on their Dashboard, but a sentence in person is what makes it land.</li>
+  <li><strong>Re-read Weak Areas over 30 days</strong> after the due date. If the game has not moved, the problem is the material — take it to a floor briefing rather than assigning again.</li>
+</ol>
+
+<h3>8.7 Keeping the question pool healthy</h3>
+<ol class="steps">
+  <li><strong>Monthly</strong> — Question Stats, sort by Shown ascending. Questions never shown are either brand new or in a practice-only game.</li>
+  <li><strong>Review the flags.</strong> “Too Hard” below 40 % after 10 showings: read the question and verify the stored answer before blaming the team.</li>
+  <li><strong>Watch the 30-question line</strong> per game. Ultimate Texas Hold'em sits at exactly 30 today — retiring two questions puts it under the minimum.</li>
+  <li><strong>Retire by deactivating</strong>, never by rewriting a question into something different. Rewriting silently changes the meaning of every historical statistic attached to it.</li>
+  <li><strong>Add in small batches</strong> and answer each new question once in Practice to prove it works.</li>
+</ol>
+
+<h2 class="sec"><span class="num">9</span>Exports &amp; reporting</h2>
+<p class="sec-lede">
+  Every management screen exports to Excel. Exports always reflect the filters you have applied and
+  the department you belong to — there is no way to export another department's data.
+</p>
+
+<table>
+  <thead><tr><th style="width:24%">Screen</th><th style="width:30%">Filters applied first</th><th>What the file contains</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Team Dashboard</td><td>—</td><td>One row per drill-taker: Employee ID, name, role, active yes/no, sessions this month, average score, last session.</td></tr>
+    <tr><td class="k">Agent Detail</td><td>The agent you are viewing</td><td>That person's session history and per-game performance.</td></tr>
+    <tr><td class="k">Completion Tracker</td><td>—</td><td>Sessions this month, required, status, last month's count, missed-last-month flag, and the recert note.</td></tr>
+    <tr><td class="k">Completion → Compliance Records</td><td>Current month</td><td><strong>Two sheets.</strong> Summary with a Compliant column, and Session Detail — every completed session with date, time, score, and duration.</td></tr>
+    <tr><td class="k">Weak Areas</td><td>Date range · agent · game</td><td>Per-game accuracy, the most-failed questions, and per-agent weakest areas as displayed.</td></tr>
+    <tr><td class="k">Question Stats</td><td>Game · difficulty · status · search</td><td>Question text, game, category, difficulty, shown, correct, accuracy — department-scoped.</td></tr>
+    <tr><td class="k">Audit Log</td><td>Date range · employee · action category · search</td><td>The rows on screen — remember the 500-row cap.</td></tr>
+    <tr><td class="k">Scorecard <span class="chip b">head</span></td><td>Six months</td><td>Monthly KPI rows and the per-game accuracy matrix.</td></tr>
+    <tr><td class="k">Audit Digest <span class="chip b">head</span></td><td>Period (24h / 7d / 30d / 90d)</td><td>Totals by action, most active users, and the failed-login summary.</td></tr>
+    <tr><td class="k">Remediation <span class="chip b">head</span></td><td>—</td><td>Assignment, focus, progress, status, due date, and note.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout important">
+  <span class="ct">Important — exported files are uncontrolled</span>
+  A downloaded workbook leaves the platform's protections behind: no department wall, no role check,
+  no audit trail. It contains named staff and their performance. Store exports in the department's
+  restricted folder, share them only with people who could have seen the same data in the app, and
+  do not attach them to open distribution lists. See §12.
+</div>
+
+<!-- ══════════════════════════════ PART IV ══════════════════════════════ -->
+<div class="part-divider">
+  <div class="kicker">Part IV</div>
+  <h2>Reference</h2>
+  <p>Who can do what, what every number means, and how the platform protects the data it holds.
+     Three sections to look things up in rather than read end to end.</p>
+</div>
+
+<h2 class="sec cont"><span class="num">10</span>Roles &amp; access</h2>
+<p class="sec-lede">
+  Access is decided by role and confined by department. Nothing in the table below can be granted
+  ad hoc — a capability arrives with a role change, made by a department head (for their own staff)
+  or by the platform administrator (for the heads themselves).
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:38%">Capability</th>
+      <th class="c">Agent / Pit Mgr</th>
+      <th class="c">Supervisor / Shift Mgr</th>
+      <th class="c">Director / Casino Mgr</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="k">Run scored drills</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+    <tr><td class="k">Practice &amp; skill trainers</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+    <tr><td class="k">Resources library</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+    <tr><td class="k">Own history &amp; certification</td><td class="c yes">✓</td><td class="c no">—</td><td class="c no">—</td></tr>
+    <tr><td class="k">Change own password</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Team Dashboard &amp; Agent Detail</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Completion Tracker &amp; recert notes</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Weak Areas</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Question Stats</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Question Editor (create &amp; edit)</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Audit Log</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Notifications (bell)</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Excel exports</td><td class="c no">—</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Scorecard</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Audit Digest</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Remediation</td><td class="c part">receives</td><td class="c no">—</td><td class="c yes">assigns</td></tr>
+    <tr><td class="k">User Management (accounts, passwords)</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">✓</td></tr>
+    <tr><td class="k">Create or change a department head</td><td class="c no">—</td><td class="c no">—</td><td class="c no">admin only</td></tr>
+  </tbody>
+</table>
+
+<div class="callout note">
+  <span class="ct">Note — management does not drill</span>
+  Supervisors, shift managers, and heads have no Drill or Practice pages: their accounts are not
+  drill-takers, they never appear on a leaderboard, and they are not subject to the 20-session
+  requirement. A manager who wants to try the drills needs a separate drill-taker account.
+</div>
+
+<div class="callout important">
+  <span class="ct">Important — everything above is also department-walled</span>
+  Every ✓ in this table is limited to your own department. A Director sees Surveillance; a Casino
+  Manager sees Pit. Neither can see the other's people, sessions, notes, or audit entries, and no
+  setting in the application changes that.
+</div>
+
+<h2 class="sec"><span class="num">11</span>Metric definitions</h2>
+<p class="sec-lede">
+  One table, every number. When two screens seem to disagree, the answer is almost always that they
+  are measuring different windows or different populations — this is where to check.
+</p>
+
+<table>
+  <thead><tr><th style="width:22%">Metric</th><th style="width:20%">Where it appears</th><th>Definition, window, and population</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Session score</td><td>Results, History, everywhere</td><td><code>correct × 10 × multiplier</code>, rounded. Multiplier ×1.5 ≤5 min, ×1.25 ≤7½ min, ×1.0 thereafter. Max 150. Abandoned = 0.</td></tr>
+    <tr><td class="k">Sessions this month</td><td>Dashboard, Team Dashboard, Completion</td><td>Sessions with status <em>completed</em> in the current calendar month, per person. Server-side, UTC month boundary (see §14.1).</td></tr>
+    <tr><td class="k">Avg score (person)</td><td>Team Dashboard, Completion</td><td>Mean score of that person's completed sessions <strong>this calendar month</strong>. Empty until they complete one.</td></tr>
+    <tr><td class="k">Avg score · 14 days</td><td>Agent Dashboard</td><td>Mean score of the person's completed sessions in the last 14 days — a rolling window, not a month.</td></tr>
+    <tr><td class="k">Team Avg Score</td><td>Team Dashboard tile</td><td>Mean of each roster member's monthly average — an average of averages. Every person counts equally regardless of session count.</td></tr>
+    <tr><td class="k">Avg Score (Scorecard)</td><td>Scorecard</td><td>Mean of every completed session in the department that month — session-weighted. Will not match the Team Dashboard tile, by design.</td></tr>
+    <tr><td class="k">Accuracy (game)</td><td>Weak Areas, Scorecard</td><td><code>correct answers ÷ answers shown</code> for that game, from completed sessions only, within the selected window. Practice excluded.</td></tr>
+    <tr><td class="k">Accuracy (question)</td><td>Question Stats</td><td><code>times correct ÷ times shown</code>, recomputed for <strong>your department only</strong> from completed sessions.</td></tr>
+    <tr><td class="k">Active (Scorecard)</td><td>Scorecard</td><td>Distinct drill-takers with ≥1 completed session that month.</td></tr>
+    <tr><td class="k">Recert rate</td><td>Scorecard</td><td>Drill-takers reaching 20 completed sessions that month ÷ <strong>today's active roster</strong>. See the caveat in §7.1.</td></tr>
+    <tr><td class="k">On Track</td><td>Team Dashboard, Completion</td><td>Completed sessions this month ≥ 20.</td></tr>
+    <tr><td class="k">At Risk</td><td>Completion</td><td>Below 20, and <code>(20 − completed) ÷ days left &gt; 1.5</code>.</td></tr>
+    <tr><td class="k">Flagged</td><td>Completion</td><td>Below 20 on the last day of the month.</td></tr>
+    <tr><td class="k">Score decay</td><td>Notifications, Team Dashboard chip</td><td>Average of last 14 days vs. the 14 days before, drop ≥ 15 %, requiring ≥3 completed sessions in <em>each</em> window.</td></tr>
+    <tr><td class="k">Cooldown remaining</td><td>Sidebar, Dashboard</td><td>4 hours minus the time since the last <em>completed</em> session. Abandoned sessions do not start it. Server-authoritative.</td></tr>
+    <tr><td class="k">Difficulty level</td><td>Drill tag, Results</td><td>Per person, per game, 1–3. +1 after 3 consecutive correct; −1 after 2 consecutive wrong. Scored drills only.</td></tr>
+    <tr><td class="k">Remediation progress</td><td>Remediation, agent Dashboard</td><td>Qualifying drills + practice credits since the assignment was created. 10 focused practice questions = 1 credit. Auto-completes at target, but only with ≥1 real drill.</td></tr>
+    <tr><td class="k">Pool health</td><td>Question Stats, Question Editor</td><td>Active questions per game; warning below 30. Procedures counted as its own pool.</td></tr>
+    <tr><td class="k">Too Easy / Too Hard</td><td>Question Stats</td><td>≥90 % / ≤40 % accuracy after at least 10 showings in your department.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sec"><span class="num">12</span>Security, privacy &amp; data</h2>
+<p class="sec-lede">
+  A training platform that holds named performance data has to be defensible. This section states
+  what is protected, what is recorded, and what management is responsible for.
+</p>
+
+<h3>12.1 Controls in place</h3>
+<table>
+  <thead><tr><th style="width:28%">Control</th><th>How it works</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Authentication</td><td>Managed identity provider. Passwords are stored hashed by the auth service — no one, including the platform administrator, can read an existing password. Setting a new one is the only option.</td></tr>
+    <tr><td class="k">Failed-login lockout</td><td>5 failed attempts in 15 minutes locks the Employee ID temporarily. Every attempt is recorded.</td></tr>
+    <tr><td class="k">Session timeout</td><td>Automatic sign-out after 30 minutes of inactivity.</td></tr>
+    <tr><td class="k">Forced logout</td><td>A head can end a live session; the signed-in browser checks for this roughly every 45 seconds and on window focus.</td></tr>
+    <tr><td class="k">Row-level security</td><td>Access rules live in the database, not the interface. A user's role and department are re-derived from their signed-in identity on every query, so a hand-typed address or a modified page cannot reach another department's data.</td></tr>
+    <tr><td class="k">Privileged actions</td><td>Creating accounts, resetting passwords, and deleting accounts require a privileged key that never reaches the browser. They run server-side, re-verifying that the caller is an active head acting inside their own department.</td></tr>
+    <tr><td class="k">Audit log</td><td>Append-only. Drill-takers have no access at all. It records who did what and when — never passwords.</td></tr>
+    <tr><td class="k">Login attempts</td><td>Held in a table with no direct read access; readable only through the department-scoped summary in the Audit Digest.</td></tr>
+    <tr><td class="k">Session integrity</td><td>Options are shuffled per display, payout answers are validated against a computed value, the cooldown is enforced on the server, and every session records IP address and device.</td></tr>
+    <tr><td class="k">Client storage</td><td>No performance data or credentials are kept in the browser. Only convenience state — dismissed alerts and a short-lived cooldown cache.</td></tr>
+  </tbody>
+</table>
+
+<h3>12.2 What is stored about a person</h3>
+<ul>
+  <li><strong>Identity</strong> — Employee ID, name, role, active flag, last session time.</li>
+  <li><strong>Sessions</strong> — start and finish times, duration, status, score, IP address, device string, and an abandon reason where given.</li>
+  <li><strong>Answers</strong> — every question answered, what was submitted, whether it was correct, the bet shown on payout drills, and the game.</li>
+  <li><strong>Practice</strong> — a per-game count of questions answered and correct, appended when a practice run ends.</li>
+  <li><strong>Audit entries</strong> — logins, logouts, password changes, drill and practice events, question edits, account administration, remediation.</li>
+  <li><strong>Notes</strong> — recert exception notes and remediation notes written by management.</li>
+  <li><strong>Login attempts</strong> — Employee ID, outcome, and time.</li>
+</ul>
+
+<h3>12.3 Retention — a decision management owns</h3>
+<div class="callout important">
+  <span class="ct">Important — nothing is deleted automatically</span>
+  <p>
+    The platform has <strong>no automatic retention or purge</strong>. Sessions, answers, audit
+    entries, and login attempts accumulate indefinitely, which is what you want for training
+    evidence and what you must be deliberate about for privacy. There is no “delete my data” button,
+    and the only removal path is the permanent delete of an account that has never run a session —
+    which also removes that account's audit entries.
+  </p>
+  <p style="margin-bottom:0">
+    If the resort's records policy requires a retention limit, that is a decision to take with the
+    platform administrator and apply deliberately. Document whatever you decide; an undocumented
+    “keep everything forever” is a position, and it should be a chosen one.
+  </p>
+</div>
+
+<h3>12.4 Management's responsibilities</h3>
+<ul>
+  <li><strong>Credentials are handed over in person.</strong> Never send a password by chat, note, or shared document. Set it, hand it over, and have the person change it at first sign-in.</li>
+  <li><strong>Exports leave the perimeter.</strong> Treat every downloaded workbook as a confidential HR-adjacent document (§9).</li>
+  <li><strong>Use the audit trail before the accusation.</strong> IP and device data exists to confirm or clear a specific concern, not for routine monitoring of staff.</li>
+  <li><strong>Offboard the same day.</strong> Deactivate, then force logout — see §8.5.</li>
+  <li><strong>Review the notable events weekly.</strong> An admin password reset or forced logout that no head performed is the signal that matters most.</li>
+  <li><strong>Keep the head accounts small.</strong> Account powers belong to the two heads; the platform administrator creates and changes those two accounts and nobody else should hold that access.</li>
+</ul>
+
+<!-- ══════════════════════════════ PART V ══════════════════════════════ -->
+<div class="part-divider">
+  <div class="kicker">Part V</div>
+  <h2>Support</h2>
+  <p>The questions people actually ask, the behaviours that surprise people, and one page you can
+     print and pin up.</p>
+</div>
+
+<h2 class="sec cont"><span class="num">13</span>Frequently asked questions</h2>
+
+<h3>13.1 For drill-takers</h3>
+
+<div class="faq"><div class="q"><em>Q.</em> I forgot my password.</div>
+<div class="a">There is no self-service reset — the login address is synthetic and cannot receive mail. Ask your supervisor or department head; a head can set a new one in seconds and hand it to you.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> My account is locked.</div>
+<div class="a">Five failed sign-ins within 15 minutes triggers a temporary lock. Wait for the window to clear, or ask a head.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> The Drill link is greyed out.</div>
+<div class="a">You are inside the 4-hour cooldown after a completed session; the countdown is on the link itself. Practice is always available and never blocked.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> I was signed out unexpectedly.</div>
+<div class="a">Either 30 minutes of inactivity, or a head ended the session. Sign back in — a forced logout does not block your account.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Does practice affect my score or my ranking?</div>
+<div class="a">No. Practice never changes your score, cooldown, difficulty, certification count, or the question statistics. It is logged as activity and it earns credit toward an assigned remediation, but it can never harm your record.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> My session says “abandoned”.</div>
+<div class="a">It was left before the tenth question — closed, navigated away from, timed out, or past the 10-minute cap. It scores 0 and does not count toward your 20. Finish every session you start.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> I answered the payout right but it was marked wrong.</div>
+<div class="a">Payouts are checked against <code>bet × ratio</code> within two cents. Check that you read the full chip stack — mixed stacks of $1 and $5 chips are deliberate. If the stored answer really is wrong, tell your supervisor: they can correct the question, and Question Stats will show it failing for everybody.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why do I keep getting the same game?</div>
+<div class="a">You should not get more than 4 questions from one game in a session, and questions from your last three sessions are skipped. Weaker games do surface more often — that is the point — but only about 1.5× more, not four times.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why don't I see Craps in scored drills?</div>
+<div class="a">Craps is practice-only for now: drill it as much as you like in Practice, but its questions are held out of scored sessions until the department decides they count. Craps <em>procedure</em> questions do appear in scored drills.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why don't I see the other department?</div>
+<div class="a">By design. Surveillance and Pit are walled off from each other's people and results. Questions, games, and resources are shared; performance is not.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can I use my phone?</div>
+<div class="a">Yes — the app is fully responsive. On payout drills the keyboard opens only when you tap the amount field, so the table layout stays visible while you work out the payout.</div></div>
+
+<h3>13.2 For management</h3>
+
+<div class="faq"><div class="q"><em>Q.</em> The Team Dashboard says the team average is 79.4 and the Scorecard says 82. Which is right?</div>
+<div class="a">Both. The Team Dashboard tile averages each person's monthly average, so everyone counts equally. The Scorecard averages every session, so heavy drillers weigh more. Quote the Scorecard for department performance and the Team Dashboard for “how is each person doing”.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Everyone's average went blank on the 1st. Did we lose data?</div>
+<div class="a">No. The Team Dashboard and Completion Tracker are current-calendar-month views and they empty at month rollover. History is intact on Agent Detail, in My History, and in the Scorecard.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> When exactly does the month roll over?</div>
+<div class="a">The certification counters are calculated on the server, which runs on UTC — <strong>20:00 Aruba time</strong> on the last day of the month. A session finished at 21:00 on 31 July counts toward August. Tell anyone chasing their twentieth session to be finished before 8 pm on the last day. See §14.1.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why is a person who left still on my roster?</div>
+<div class="a">Deactivated accounts stay on the Team Dashboard and Completion Tracker — with Status <em>Inactive</em> and 0 sessions — because their training history is retained. They drop off the leaderboard and out of notifications immediately. Add a recert note explaining the departure; see §8.5.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can I delete someone who left the department?</div>
+<div class="a">Not if they have ever completed a session — the platform refuses, deliberately. Deactivate instead. Permanent delete exists only for accounts created in error.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> An agent insists they completed a session but the count did not move.</div>
+<div class="a">Check three things on Agent Detail: the session status (abandoned scores 0 and does not count), the completion time against the 20:00 month boundary, and whether they are looking at a cached page — the management notification data refreshes every five minutes.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can I change the 20-session requirement, the 4-hour cooldown, or the scoring multipliers?</div>
+<div class="a">The 20 sessions and 4 hours are stored as configurable values and can be changed by the platform administrator — there is no screen for it. The scoring multipliers are fixed in the application; an admin settings panel is a deferred v2 item. Changing either affects everyone in both departments immediately, so agree it before it is changed.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why does the Question Stats accuracy differ between me and the other department's head?</div>
+<div class="a">Because it is department-scoped by design: the pool is shared, the experience of it is not. Your figures come only from your department's answers.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Why does my Audit Log show no question edits, when I know questions were edited?</div>
+<div class="a">The Audit Log page lists drill-takers only. Edits made by a supervisor or head are recorded against that manager, so they appear in the <strong>Audit Digest</strong> totals instead. See the correction in §6.7.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Someone's password was reset and I did not do it. How do I find out who?</div>
+<div class="a">Audit Digest → Notable events, over a period covering the date. Admin password resets, forced logouts, and account creations are all attributed to the head who performed them. Only the two heads and the platform administrator can perform them at all.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> How far back does the Audit Log go?</div>
+<div class="a">Everything is kept — but the page displays the most recent 500 matching entries. Narrow the date range to read older detail, and use the Audit Digest whenever you need counts rather than rows.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can agents see each other's scores?</div>
+<div class="a">Only as a leaderboard of Employee IDs with a monthly average, inside their own department. No agent can open another agent's history, answers, or detail page.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can a supervisor assign remediation?</div>
+<div class="a">No — Remediation is a head tool. Supervisors identify the need from Weak Areas and Agent Detail and ask the head to assign it, or coach directly.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can I tell whether people actually practise?</div>
+<div class="a">Yes. The Audit Digest counts practice starts for the period, the Audit Log has a Practice filter showing what each drill-taker practised, and any open remediation shows the drills-plus-practice split per person.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> A decay alert fired for someone whose scores look fine to me.</div>
+<div class="a">The rule is a 15 % or greater drop between the last 14 days and the 14 before, with at least 3 completed sessions in each window. It is often a real signal — a run of fast, sloppy sessions, or a shift change. Open Agent Detail and read the last ten sessions before deciding.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> I dismissed an alert and it came back / my colleague still sees it.</div>
+<div class="a">Dismissals are stored in your own browser, not on the server. They return on another device and after clearing browser data, and decay alerts resurface weekly while the decline continues. Coordinate through Remediation, which is stored centrally.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Recert Rate on the Scorecard reads 0 % but people are drilling.</div>
+<div class="a">Mid-month it will: almost nobody has 20 completed sessions by the 10th. The current month is marked MTD for exactly this reason. Judge an open month on avg score and accuracy.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can I get a report for one specific past month?</div>
+<div class="a">The Scorecard gives the monthly KPI row for each of the last six months. For named, per-person detail of a past month, use the Compliance Records export taken during that month — which is why §8.3 makes it a monthly habit.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> An agent cannot sign in. What do I check, in order?</div>
+<div class="a">1. Is the account active? 2. Are they locked out — five failures in 15 minutes? 3. Is the Employee ID typed exactly as issued (case does not matter, stray spaces do)? 4. If all three are clear, reset the password from User Management and hand it over.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> How do I remove someone's access immediately?</div>
+<div class="a">Deactivate, then force logout — in that order. Deactivation alone blocks the next sign-in but leaves an open session running.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Are there email notifications?</div>
+<div class="a">No. Alerts are in-app only, on the bell in the management sidebar. Email is a deferred v2 item. Anyone who needs to know must be told; the platform will not tell them.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Can agents game the system?</div>
+<div class="a">The obvious routes are closed: options are shuffled on every display, payout answers are computed rather than matched to text, the cooldown is enforced on the server, questions from recent sessions are excluded, abandoned sessions are logged with a reason, and every session records IP and device. The remaining risk is one person drilling on another's account — which is exactly what the IP and device column exists to check.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> What do I hand over when someone asks for proof of training?</div>
+<div class="a">The Compliance Records export from the Completion Tracker: sheet one is who was compliant, sheet two is every session with date, time, score, and duration. Add the recert notes — they are in the export — and the file explains itself.</div></div>
+
+<div class="faq"><div class="q"><em>Q.</em> Something in the application disagrees with this manual.</div>
+<div class="a">The application is right. Tell the platform administrator so the manual is corrected — that is exactly how this edition came about.</div></div>
+
+<h2 class="sec"><span class="num">14</span>Known behaviours &amp; limits</h2>
+<p class="sec-lede">
+  None of the following are faults, but each has surprised somebody. They are documented here so
+  they are read rather than discovered.
+</p>
+
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:30%">Behaviour</th><th>What it means in practice</th></tr></thead>
+  <tbody>
+    <tr><td class="k">14.1</td><td>The month boundary is 20:00 Aruba time</td><td>Certification counters are computed on a UTC server, so a calendar month turns over at 20:00 local on the last day. Sessions completed between 20:00 and midnight count toward the following month. Some browser-side views (last month's banner and notifications) use local midnight, so during that four-hour window the two can disagree by one session. Finish month-end sessions before 8 pm.</td></tr>
+    <tr><td class="k">14.2</td><td>The Audit Log lists drill-takers only</td><td>Management's own actions are recorded but read in the Audit Digest. The “Question edits” filter on the Audit Log page will normally be empty. §6.7.</td></tr>
+    <tr><td class="k">14.3</td><td>Deactivated accounts stay on the roster</td><td>They appear on the Team Dashboard and Completion Tracker with 0 sessions and count toward “below target” totals, though not in the notification bell, which lists active users only. §6.1.</td></tr>
+    <tr><td class="k">14.4</td><td>Notification dismissals are per browser</td><td>Not shared between managers and not synced across devices. §6.8.</td></tr>
+    <tr><td class="k">14.5</td><td>Scorecard recert rate uses today's roster</td><td>Historic months are expressed against the current headcount. §7.1.</td></tr>
+    <tr><td class="k">14.6</td><td>Two different “average score” definitions</td><td>Average of averages on the Team Dashboard; session-weighted on the Scorecard. Both are correct for their purpose. §11.</td></tr>
+    <tr><td class="k">14.7</td><td>Craps is excluded from scored drills</td><td>74 active questions available in Practice only, so they will always read “never shown” in Question Stats. §5.5.</td></tr>
+    <tr><td class="k">14.8</td><td>The Audit Log shows 500 rows</td><td>A display and export cap, not a retention limit. Use the Digest for totals. §6.7.</td></tr>
+    <tr><td class="k">14.9</td><td>Deactivation does not end a live session</td><td>Pair it with force logout. §7.4.</td></tr>
+    <tr><td class="k">14.10</td><td>Permanent delete removes audit history</td><td>Only possible for accounts with no sessions, but within that limit it does erase that account's audit entries. §7.4.</td></tr>
+    <tr><td class="k">14.11</td><td>No screen for thresholds</td><td>20 sessions and 4 hours are configurable in the database by the administrator; the scoring multipliers are fixed in the application.</td></tr>
+    <tr><td class="k">14.12</td><td>The Shift Manager role is unused</td><td>Built and ready — Pit-side management access without account powers — but no account holds it today.</td></tr>
+    <tr><td class="k">14.13</td><td>Alerts are in-app only</td><td>No email, no push. If someone must act, tell them.</td></tr>
+  </tbody>
+</table>
+
+<h3>Deferred to a future version</h3>
+<p>
+  Email notifications for missed recertification · an admin settings panel for scoring multipliers
+  and thresholds · difficulty-tier indicators and a points leaderboard · two-factor authentication
+  for management accounts · shift-correlation and time-pressure analytics · video-clip drills ·
+  pre- and post-training comparison reporting.
+</p>
+
+<h2 class="sec"><span class="num">15</span>Quick reference card</h2>
+<p class="sec-lede">Every number that matters, on one page. Print it and pin it up.</p>
+
+<div class="grid3" style="margin-bottom:6mm">
+  <div class="kpi"><div class="l">Questions per session</div><div class="v">10</div></div>
+  <div class="kpi"><div class="l">Session time cap</div><div class="v">10 min</div></div>
+  <div class="kpi"><div class="l">Max score</div><div class="v">150</div></div>
+  <div class="kpi"><div class="l">Points per correct</div><div class="v">10</div></div>
+  <div class="kpi"><div class="l">Cooldown</div><div class="v">4 h</div></div>
+  <div class="kpi"><div class="l">Sessions per month</div><div class="v">20</div></div>
+  <div class="kpi"><div class="l">Idle sign-out</div><div class="v">30 min</div></div>
+  <div class="kpi"><div class="l">Lockout</div><div class="v">5 / 15 min</div></div>
+  <div class="kpi"><div class="l">Min. password</div><div class="v">8 ch.</div></div>
+</div>
+
+<div class="grid2">
+  <div>
+    <h4>Scoring</h4>
+    <table class="compact">
+      <tbody>
+        <tr><td class="k">≤ 5:00</td><td>×1.5 — 150 max</td></tr>
+        <tr><td class="k">5:00 – 7:30</td><td>×1.25 — 125 max</td></tr>
+        <tr><td class="k">7:30 – 10:00</td><td>×1.0 — 100 max</td></tr>
+        <tr><td class="k">Abandoned</td><td>0, and does not count</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Adaptive difficulty</h4>
+    <table class="compact">
+      <tbody>
+        <tr><td class="k">Step up</td><td>3 correct in a row (per game)</td></tr>
+        <tr><td class="k">Step down</td><td>2 wrong in a row</td></tr>
+        <tr><td class="k">Range</td><td>1 Easy → 3 Hard</td></tr>
+        <tr><td class="k">Practice</td><td>Never changes it</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Session draw</h4>
+    <table class="compact">
+      <tbody>
+        <tr><td class="k">Freshness</td><td>Skips your last 3 sessions' questions</td></tr>
+        <tr><td class="k">Per game</td><td>Max 4 of 10</td></tr>
+        <tr><td class="k">Procedures</td><td>Max 4 of 10; max 2 per category</td></tr>
+        <tr><td class="k">Weak-area lean</td><td>≈1.5× toward weaker games</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h4>Management thresholds</h4>
+    <table class="compact">
+      <tbody>
+        <tr><td class="k">On Track</td><td>≥ 20 sessions this month</td></tr>
+        <tr><td class="k">At Risk</td><td>Needs &gt; 1.5 sessions/day to finish</td></tr>
+        <tr><td class="k">Flagged</td><td>Short on the last day of the month</td></tr>
+        <tr><td class="k">Score decay</td><td>≥15 % drop, 14 vs 14 days, ≥3 sessions each</td></tr>
+        <tr><td class="k">Pool health</td><td>Warns below 30 active questions per game</td></tr>
+        <tr><td class="k">Too Easy</td><td>≥90 % after 10 showings</td></tr>
+        <tr><td class="k">Too Hard</td><td>≤40 % after 10 showings</td></tr>
+        <tr><td class="k">Audit Log</td><td>Newest 500 rows displayed</td></tr>
+        <tr><td class="k">Remediation</td><td>Target default 3 · 10 practice Qs = 1 credit · needs ≥1 drill</td></tr>
+        <tr><td class="k">Month boundary</td><td>20:00 Aruba time on the last day</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h4>Who to ask</h4>
+<table class="compact">
+  <thead><tr><th style="width:34%">Subject</th><th>Who handles it</th></tr></thead>
+  <tbody>
+    <tr><td class="k">Forgotten password, lockout</td><td>Your department head — Director (Surveillance) or Casino Manager (Pit)</td></tr>
+    <tr><td class="k">New account, deactivation, role change</td><td>Your department head</td></tr>
+    <tr><td class="k">A wrong or unclear question</td><td>Any supervisor or head, via the Question Editor</td></tr>
+    <tr><td class="k">Head accounts, thresholds, database changes</td><td>The platform administrator</td></tr>
+    <tr><td class="k">This manual is out of date</td><td>The platform administrator — the application is authoritative</td></tr>
+  </tbody>
+</table>
+
+<div class="footer-note">
+  <strong>A.S.S.E.T. — Aruba Surveillance Skill Enhancement &amp; Training.</strong>
+  Internal training platform for the Surveillance and Pit departments, Aruba Marriott Resort &amp;
+  Stellaris Casino. User Manual &amp; Management Guide, version 2.0, July 2026 — audited against the
+  live application and database. Screenshots use demonstration data; live screens show your real
+  team. For account help, contact your department head. Where this document and the application
+  disagree, the application is authoritative — report the difference so the manual can be corrected.
+</div>
+
+</body>
+</html>
