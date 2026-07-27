@@ -4,3 +4,6 @@ dist
 .env.*.local
 *.log
 .DS_Store
+
+# Working screenshot captures (optimized copies live in docs/assets)
+shots/
