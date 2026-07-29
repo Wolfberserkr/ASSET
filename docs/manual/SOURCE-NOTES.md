@@ -7,13 +7,18 @@ Everything the manual states was verified against the application source in this
 live Supabase project (`wcrxiyterasmmfhfdwtz`, read-only) on 2026-07-27. The 25 screenshots in
 `img/` are captures of the live application using the demonstration data set.
 
+**Property name:** the manual carries no property, resort, or casino brand name anywhere in its
+text, and `img/fig-create-user.png` has the hint line under the Employee ID field blanked, because
+it displayed the derived login domain. See §C below for the places the *application* still emits
+that name.
+
 ---
 
 ## A. Where each stated rule was verified
 
 | Manual section | Statement | Verified in |
 |---|---|---|
-| §2 | Login derives `{employee_id}@stellaris.local`; lockout 5 / 15 min; 30-min idle sign-out; forced logout within ~1 min | `context/AuthContext.jsx`, `pages/Login.jsx` |
+| §2 | Login derives the synthetic internal address from the Employee ID; lockout 5 / 15 min; 30-min idle sign-out; forced logout within ~1 min | `context/AuthContext.jsx`, `pages/Login.jsx` |
 | §2.2 | Self-service password: ≥ 8 characters, ≥ 1 number, must match | `pages/agent/ChangePassword.jsx` |
 | §5.1 | `score = round(correct × 10 × multiplier)`; ×1.5 / ×1.25 / ×1.0 bands | `pages/agent/DrillSession.jsx::computeScore` |
 | §5.2–5.3 | 4-hour cooldown, 20 sessions/month | `recertification_rules` (live: 4 / 20), `check_cooldown`, `get_recertification_status` |
@@ -55,6 +60,15 @@ each is a small change if the app should match the obvious expectation instead.
 4. **Notification dismissals are device-local** — one manager dismissing an alert does not clear
    it for the other. A small `notification_dismissals` table would make the bell a shared
    worklist. *Documented in §6.8 and §14.4.*
-5. **Pool headroom** — Ultimate Texas Hold'em sits at exactly 30 active questions and Roulette at
+5. **Exported filenames carry the property name** — every Excel export is written as
+   `<property>_team_dashboard_<date>.xlsx`, `<property>_scorecard_…`, `<property>_audit_digest_…`,
+   `<property>_remediation_…` and so on (`lib/exportXlsx.js` plus the `filename:` values in
+   `Scorecard.jsx`, `Remediation.jsx`, `AuditDigest.jsx`, and `TeamDashboard.jsx`). The
+   User Management create-user dialog also prints the derived login domain under the Employee ID
+   field (`UserManagement.jsx`). Both are user-facing and both circulate outside the app —
+   rename the export prefixes to `asset_` and reword that hint if the name may not appear in
+   distributed material. The auth domain itself (`AuthContext.jsx`) cannot be changed without
+   migrating every existing login.
+6. **Pool headroom** — Ultimate Texas Hold'em sits at exactly 30 active questions and Roulette at
    31, the "ready" minimum. Deactivating a couple in either drops the game below the line.
    *Documented in §6.5 and §8.7.*
