@@ -1,0 +1,6 @@
+# Build outputs — regenerate with `python3 render.py && python3 build_pptx.py`.
+# The PPTX is deliberately untracked: git stores binaries whole, so every
+# rebuild would add another full ~19 MB to the repo permanently.
+*.pptx
+png/
+pptx_img/
