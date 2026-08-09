@@ -22,7 +22,10 @@ does not give.
 | `slides.html` | All 24 slides, one `<section class="slide">` each |
 | `style.css` | Design system — brand tokens, type scale, slide layouts |
 | `render.py` | Renders each slide to `png/slide-NN.png` at 3840×2160, and audits layout |
-| `build_pptx.py` | Downscales to 2560×1440, assembles the PPTX, attaches speaker notes |
+| `build_pptx.py` | **Flat build** — one full-bleed image per slide |
+| `extract.py` | Pulls per-element geometry + computed type styles to `layout.json`, and renders text-free background plates to `bg/` |
+| `build_editable.py` | **Editable build** — background plate + real PowerPoint text boxes |
+| `notes.json` | Speaker notes, keyed by slide number (shared by both builds) |
 | `img/` | Screenshots extracted from the User Manual PDF (`*_c.png` = content-cropped) |
 | `fonts/` | Inter + Space Mono, copied from `src/assets/fonts/` |
 
@@ -30,9 +33,37 @@ does not give.
 
 ```bash
 pip install playwright python-pptx pillow numpy
-python3 render.py      # -> png/slide-01.png … slide-24.png
-python3 build_pptx.py  # -> ASSET-Pit-Operations-Briefing.pptx
+
+# flat deck — every slide a single image
+python3 render.py && python3 build_pptx.py
+#   -> ASSET-Pit-Operations-Briefing.pptx
+
+# editable deck — live text over rendered background plates
+python3 extract.py && python3 build_editable.py
+#   -> ASSET-Pit-Operations-Briefing-editable.pptx
 ```
+
+### The two builds
+
+The flat build is the reference: whatever Chromium renders is exactly what ships.
+The editable build reproduces it with every headline, bullet, table cell and
+callout as a real PowerPoint text box, so wording can be changed without coming
+back to this pipeline.
+
+`extract.py` walks the DOM and keeps only the **outermost** element with direct
+text; inline `<b>`/`<i>` descendants become runs on the same paragraph rather
+than separate boxes, and `<br>` becomes `a:br`. Background plates are rendered
+by forcing `color: transparent` (not `visibility: hidden`) so `::after` rules,
+gradient bars, and the gradient-clipped section numerals survive.
+
+Text boxes are sized to Chromium's exact measured width. Because PowerPoint's
+font metrics differ slightly, single-line blocks are built with wrap disabled
+and multi-line blocks get 8px of slack — without that, lines break a word early
+(`assetdrills.co` / `m`).
+
+> **Install Inter and Space Mono** (both free, both already in `fonts/`) on any
+> machine that presents the editable deck. The text is live, so a missing family
+> is substituted and the layout reflows. The flat build is immune to this.
 
 `render.py` expects Chromium at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
 Change `CHROME` at the top of the file for a different machine, or run
