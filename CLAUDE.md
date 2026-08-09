@@ -120,6 +120,12 @@ Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_ro
 `games.practice_only` (boolean, default FALSE) gates a game to **Practice mode only** — it appears in the Practice game picker and in Mixed practice, but `buildSession` (scored Drills) excludes its questions. **Craps ships with `practice_only = TRUE`** so agents can drill it without it counting toward scored sessions until the whole team is ready. To promote Craps to scored Drills later:
 > `UPDATE public.games SET practice_only = FALSE WHERE name = 'Craps';`
 
+**The gate covers shared procedure questions too.** A game's procedure questions carry `game_id = NULL` (e.g. the 30 `craps_procedure` rows), so the `games(practice_only)` join can't reach them — they used to leak into scored drills. `makeDrillEligibilityFilter(practiceOnlyGameNames)` in `sessionDraw.js` now excludes a question when **either** its joined game is practice-only **or** its `category` belongs to a practice-only game. Category ownership is resolved by `gameCategorySlugs()`: the game name lowercased with non-alphanumerics collapsed to `_`, plus short aliases for the seeded categories that don't use the full name (`csp_`/`caribbean_stud_` → Caribbean Stud Poker, `uth_`, `lir_`, `tcp_`). `buildSession` fetches the practice-only game names alongside the pool and unions them with any flag carried on the question rows, so a failed `games` fetch can't reopen the gate.
+
+`games.practice_only` stays the **single source of truth** — flipping Craps to FALSE returns its game questions *and* its `craps_procedure` questions to scored drills with no other change. New Craps questions added through the Question Editor are covered automatically as long as they use a `craps_*` category (the editor's category dropdown offers them).
+
+The Remediation focus picker labels practice-only games and warns that such an assignment can't auto-complete (the drill floor requires a scored drill, which a practice-only game never produces) — the head marks it complete by hand.
+
 ### Chip Denominations (used in payout drill randomization)
 White ($1), Red ($5), Green ($25), Black ($100), Purple ($500), Pink ($1,000)
 
