@@ -8,6 +8,7 @@ import {
   gameWeight,
   shuffle,
   drawDiverseSession,
+  makeDrillEligibilityFilter,
 } from './sessionDraw'
 
 // ─── Per-game accuracy ────────────────────────────────────────────────────────
@@ -84,6 +85,28 @@ async function fetchRecentQuestionIds(userId) {
   return new Set((answers ?? []).map(a => a.question_id))
 }
 
+// ─── Practice-only games ─────────────────────────────────────────────────────
+
+/**
+ * Names of every game flagged `practice_only` — these are excluded from
+ * scored drills (their own questions AND their shared procedure questions,
+ * which carry game_id NULL and so can't be caught by the join).
+ * Returns [] on error; buildSession then falls back to the practice_only
+ * flag carried on the joined question rows.
+ */
+async function fetchPracticeOnlyGameNames() {
+  const { data, error } = await supabase
+    .from('games')
+    .select('name')
+    .eq('practice_only', true)
+
+  if (error) {
+    console.warn('questionRandomizer: could not fetch practice-only games', error)
+    return []
+  }
+  return (data ?? []).map(g => g.name).filter(Boolean)
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -112,10 +135,11 @@ async function fetchRecentQuestionIds(userId) {
  * @returns {Promise<Question[]>} — array of 10 question objects, shuffled
  */
 export async function buildSession(userId, difficultyMap = {}) {
-  // 1. Load per-game accuracy + recently-seen question IDs
-  const [accuracyMap, recentIds] = await Promise.all([
+  // 1. Load per-game accuracy, recently-seen question IDs, practice-only games
+  const [accuracyMap, recentIds, practiceOnlyGames] = await Promise.all([
     fetchGameAccuracy(userId),
     fetchRecentQuestionIds(userId),
+    fetchPracticeOnlyGameNames(),
   ])
 
   // 2. Fetch all active questions (paged — the pool is past Supabase's
@@ -147,8 +171,15 @@ export async function buildSession(userId, difficultyMap = {}) {
   if (!questions || questions.length === 0) throw new Error('Question pool is empty.')
 
   // Exclude practice-only games (e.g. a game still ramping up) from scored
-  // drills. Shared procedure questions (game_id NULL) are always eligible.
-  const pool = questions.filter(q => !q.games?.practice_only)
+  // drills — both their own questions and their shared procedure questions
+  // (game_id NULL, e.g. 'craps_procedure'), which the games join can't reach.
+  // Union the games-table names with any carried on the question rows so a
+  // failed games fetch can't silently reopen the gate.
+  const practiceOnlyNames = new Set(practiceOnlyGames)
+  for (const q of questions) {
+    if (q.games?.practice_only && q.games?.name) practiceOnlyNames.add(q.games.name)
+  }
+  const pool = questions.filter(makeDrillEligibilityFilter([...practiceOnlyNames]))
   if (pool.length === 0) throw new Error('Question pool is empty.')
 
   // 3. Build weight function

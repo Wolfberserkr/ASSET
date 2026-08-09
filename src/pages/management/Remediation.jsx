@@ -43,7 +43,7 @@ export default function Remediation() {
     const [listRes, agentsRes, gamesRes] = await Promise.all([
       supabase.rpc('list_remediation'),
       supabase.rpc('get_all_agents'),
-      supabase.from('games').select('id, name').order('name'),
+      supabase.from('games').select('id, name, practice_only').order('name'),
     ])
     if (listRes.error) {
       if (listRes.error.code === MISSING_TABLE || /remediation_assignments/.test(listRes.error.message)) {
@@ -322,9 +322,20 @@ export default function Remediation() {
                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--color-brand-muted)' }}>Focus area</label>
                 <select value={form.game} onChange={e => setForm(f => ({ ...f, game: e.target.value }))} className={inputCls} style={inputStyle}>
                   <option value="">Select a focus…</option>
-                  {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  {games.map(g => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}{g.practice_only ? ' (practice only)' : ''}
+                    </option>
+                  ))}
                   <option value={PROCEDURES}>Procedures (shared)</option>
                 </select>
+                {games.find(g => g.id === form.game)?.practice_only && (
+                  <p className="mt-1.5 text-xs" style={{ color: 'var(--color-brand-muted)' }}>
+                    This game is practice-only, so it never appears in scored drills.
+                    Practice credits still count, but auto-completion requires at least
+                    one drill — you'll need to mark this assignment complete by hand.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

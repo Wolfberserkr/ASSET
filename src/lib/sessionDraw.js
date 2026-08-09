@@ -43,6 +43,61 @@ export function gameWeight(accuracy) {
   return 0.5 + 0.5 * (1 - a)
 }
 
+// ─── Practice-only gating ────────────────────────────────────────────────────
+
+/**
+ * Short category prefixes used by seeded questions that don't match the
+ * slugified game name (e.g. Caribbean Stud Poker uses both `csp_*` and
+ * `caribbean_stud_*`). Keyed by lowercased game name.
+ */
+const CATEGORY_ALIASES = {
+  'caribbean stud poker':    ['csp', 'caribbean_stud'],
+  "ultimate texas hold'em":  ['uth'],
+  'let it ride':             ['lir'],
+  'three card poker':        ['tcp'],
+}
+
+/**
+ * Category prefixes that belong to a game.
+ *
+ * Shared procedure questions carry `game_id = NULL`, so their category is
+ * the only link back to the game they teach — `craps_procedure` belongs to
+ * Craps even though the row has no game reference. Slug = the game name
+ * lowercased with non-alphanumerics collapsed to `_`, plus any alias above.
+ */
+export function gameCategorySlugs(gameName) {
+  const name = (gameName ?? '').toLowerCase().trim()
+  if (!name) return []
+  const slug = name.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+  return [...new Set([slug, ...(CATEGORY_ALIASES[name] ?? [])])].filter(Boolean)
+}
+
+/**
+ * Builds the scored-drill eligibility predicate for a set of practice-only
+ * games. A question is excluded from scored drills when either:
+ *   - its joined game row has `practice_only = TRUE`, or
+ *   - its category belongs to a practice-only game (catches the shared
+ *     `game_id NULL` procedure questions the join can't reach)
+ *
+ * `games.practice_only` stays the single source of truth: flipping Craps to
+ * FALSE returns both its game questions AND its procedure questions to
+ * scored drills with no other change.
+ *
+ * @param {string[]} practiceOnlyGameNames — names of games flagged practice-only
+ * @returns {(q: object) => boolean} true when the question may be drilled
+ */
+export function makeDrillEligibilityFilter(practiceOnlyGameNames = []) {
+  const prefixes = practiceOnlyGameNames.flatMap(gameCategorySlugs)
+
+  return function isDrillEligible(q) {
+    if (q?.games?.practice_only) return false
+    if (prefixes.length === 0) return true
+    const cat = (q?.category ?? '').toLowerCase().trim()
+    if (!cat) return true
+    return !prefixes.some(p => cat === p || cat.startsWith(`${p}_`))
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function shuffle(arr) {
