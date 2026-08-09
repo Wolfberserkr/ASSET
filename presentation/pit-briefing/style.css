@@ -171,3 +171,72 @@ tr:last-child td{border-bottom:none;}
 .pool .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--grad-a),var(--grad-b));border-radius:5px;}
 .pool .bar i.po{background:linear-gradient(90deg,#8a6a20,var(--gold));}
 .pool .v{width:60px;text-align:right;font-family:'Space Mono',monospace;font-size:19px;font-weight:700;color:var(--ink);flex-shrink:0;}
+
+/* ══ POLISH PASS ══════════════════════════════════════════ */
+
+/* Cards gain a hairline top highlight — the light-from-above cue that keeps
+   a flat fill from reading as a grey rectangle. */
+.card{position:relative;}
+.card::before{
+  content:'';position:absolute;left:20px;right:20px;top:0;height:1px;border-radius:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.11),transparent);
+}
+.card.hl::before{background:linear-gradient(90deg,transparent,rgba(79,168,255,.46),transparent);}
+.card.gold-hl::before{background:linear-gradient(90deg,transparent,rgba(212,168,67,.5),transparent);}
+.card.stat::before{left:0;right:0;height:2px;opacity:.72;
+  background:linear-gradient(90deg,var(--grad-a),var(--grad-b));}
+
+/* Screenshots sit in light rather than on a flat plane. */
+.fig{
+  box-shadow:
+    0 30px 66px rgba(0,0,0,.60),
+    0 14px 54px rgba(46,107,255,.13),
+    0 0 0 1px rgba(79,168,255,.07);
+}
+
+/* Callouts: soften the slab, keep the accent rail. */
+.callout{border-radius:0 14px 14px 0;}
+.callout::after{content:'';}
+
+/* Divider slides carry the section's contents, so the break earns its space. */
+.divider .topics{
+  margin-top:40px;font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
+  letter-spacing:.20em;text-transform:uppercase;
+}
+.divider .topics{color:#5f719a;line-height:2.1;max-width:1080px;}
+.divider .topics b{color:var(--cyan);font-weight:700;}
+
+/* Deck progress — a 3px hairline along the bottom edge. */
+.prog{position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:rgba(34,48,82,.42);z-index:2;}
+.prog i{display:block;height:100%;border-radius:0 2px 2px 0;
+  background:linear-gradient(90deg,var(--grad-a),var(--grad-b));}
+
+/* ── Density pass ──────────────────────────────────────────
+   Cards were floating small type inside generous boxes, leaving 40-50% of
+   several slides empty. Larger internals read as more confident and close
+   the void without touching a word of copy. */
+.card{padding:34px 32px;}
+.card p{font-size:20.5px;line-height:1.6;}
+.card h3{font-size:28px;}
+.card .k{font-size:13.5px;margin-bottom:18px;}
+.stat .n{font-size:62px;}
+.stat .l{font-size:18.5px;margin-top:14px;}
+.cols-3{gap:32px;}
+.cols-4{gap:30px;}
+
+/* Department wall: two facing lists deserve full-size bullets. */
+#s20 .card{padding:40px 38px;}
+#s20 ul.ticks.tight li{font-size:20.5px;line-height:1.55;}
+#s20 ul.ticks.tight{gap:20px;}
+
+/* Closing slide was the emptiest in the deck. */
+#s24 .card{padding:40px 36px;}
+#s24 .card h3{font-size:31px;}
+#s24 .card p{font-size:21.5px;}
+
+/* Pool bars carry the weight of the "where it stands" slide. */
+#s23 .pool{gap:16px;}
+#s23 .pool .bar{height:32px;}
+#s23 .pool .nm{font-size:20.5px;}
+#s23 .pool .v{font-size:20.5px;}

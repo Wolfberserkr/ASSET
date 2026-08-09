@@ -12,6 +12,8 @@ with sync_playwright() as p:
     pg.goto((HERE/"slides.html").as_uri())
     pg.wait_for_timeout(2500)
 
+    pg.evaluate(pathlib.Path(HERE/'decorate.js').read_text())
+    pg.wait_for_timeout(300)
     ids = pg.eval_on_selector_all("section.slide", "els => els.map(e => e.id)")
     print(f"slides: {len(ids)}")
 

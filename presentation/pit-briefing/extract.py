@@ -89,6 +89,8 @@ with sync_playwright() as p:
     pg.goto((HERE/"slides.html").as_uri())
     pg.wait_for_timeout(2500)
 
+    pg.evaluate(pathlib.Path(HERE/'decorate.js').read_text())
+    pg.wait_for_timeout(300)
     data = pg.evaluate(JS_EXTRACT, SKIP)
     (HERE/"layout.json").write_text(json.dumps(data, indent=1))
     print("slides:", len(data),
