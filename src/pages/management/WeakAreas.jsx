@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
 import { fetchInChunks } from '../../lib/fetchInChunks'
+import { exportXlsx } from '../../lib/exportXlsx'
 import { BarChart2, Download, AlertTriangle, Users, HelpCircle } from 'lucide-react'
 
 const DATE_RANGES = [
@@ -176,24 +177,15 @@ export default function WeakAreas() {
   useEffect(() => { loadData() }, [loadData])
 
   // ── Export ────────────────────────────────────────────────────────────────
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
-    const wb = XLSX.utils.book_new()
-
+  const exportExcel = () => {
     const gameRows = gameStats.map(g => ({
       Game: g.name, Correct: g.correct, Total: g.total, 'Accuracy %': g.pct ?? '—',
     }))
-    const ws1 = XLSX.utils.json_to_sheet(gameRows)
-    ws1['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }]
-    XLSX.utils.book_append_sheet(wb, ws1, 'By Game')
 
     const qRows = worstQs.map(q => ({
       Question: q.text, Game: q.gameName, Category: q.category,
       Correct: q.correct, Total: q.total, 'Accuracy %': q.pct,
     }))
-    const ws2 = XLSX.utils.json_to_sheet(qRows)
-    ws2['!cols'] = [{ wch: 60 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }]
-    XLSX.utils.book_append_sheet(wb, ws2, 'Worst Questions')
 
     const agentRows2 = agentRows.map(ag => {
       const row = { 'Name': ag.name, 'Employee ID': ag.employee_id, 'Overall %': ag.overall ?? '—' }
@@ -203,10 +195,15 @@ export default function WeakAreas() {
       }
       return row
     })
-    const ws3 = XLSX.utils.json_to_sheet(agentRows2)
-    XLSX.utils.book_append_sheet(wb, ws3, 'By Agent')
 
-    XLSX.writeFile(wb, `weak_areas_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: 'weak_areas',
+      sheets: [
+        { name: 'By Game', rows: gameRows, cols: [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }] },
+        { name: 'Worst Questions', rows: qRows, cols: [{ wch: 60 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }] },
+        { name: 'By Agent', rows: agentRows2 },
+      ],
+    })
   }
 
   const overallPct = gameStats.length

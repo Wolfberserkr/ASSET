@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
+import { exportXlsx } from '../../lib/exportXlsx'
 import {
   CheckSquare, Download, AlertTriangle, Flag, X, FileCheck,
   MessageSquare, ChevronDown, ChevronUp, Save, Trash2,
@@ -229,8 +230,7 @@ export default function Completion() {
   const onTrackCount     = enriched.filter(a => a.status === 'on-track').length
   const missedLastCount  = enriched.filter(a => a.missedLast).length
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = enriched.map(a => ({
       'Employee ID':         a.employee_id,
       'Name':                a.name,
@@ -241,18 +241,18 @@ export default function Completion() {
       'Missed Last Month':   a.missedLast ? 'Yes' : 'No',
       'Recert Note':         a.currentNote?.reason ?? '',
     }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Completion Tracker')
-    ws['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 40 }]
-    XLSX.writeFile(wb, `completion_tracker_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: 'completion_tracker',
+      sheet: 'Completion Tracker',
+      rows,
+      cols: [{ wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 40 }],
+    })
   }
 
   const [complianceLoading, setComplianceLoading] = useState(false)
 
   const exportComplianceRecords = useCallback(async () => {
     setComplianceLoading(true)
-    const XLSX = await import('xlsx')
     const now = new Date()
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const label = now.toLocaleString('default', { month: 'long', year: 'numeric' })
@@ -263,8 +263,6 @@ export default function Completion() {
       .eq('status', 'completed')
       .gte('completed_at', firstOfMonth)
       .order('completed_at', { ascending: true })
-
-    const wb = XLSX.utils.book_new()
 
     // Sheet 1 — Summary
     const summaryRows = enriched.map(a => ({
@@ -278,10 +276,6 @@ export default function Completion() {
       'Missed Prev':      a.missedLast ? 'Yes' : 'No',
       'Recert Note':      a.currentNote?.reason ?? '',
     }))
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }]
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary')
-
     // Sheet 2 — Session Detail
     const detailRows = (sessions ?? []).map(s => ({
       'Employee ID':   s.users?.employee_id ?? '—',
@@ -291,12 +285,13 @@ export default function Completion() {
       'Score':         s.score ?? '',
       'Duration (min)': s.total_time_seconds ? Math.round(s.total_time_seconds / 60) : '',
     }))
-    const wsDetail = XLSX.utils.json_to_sheet(detailRows)
-    wsDetail['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 16 }]
-    XLSX.utils.book_append_sheet(wb, wsDetail, 'Session Detail')
-
-    const filename = `compliance_records_${label.replace(' ', '_')}_${now.toISOString().slice(0, 10)}.xlsx`
-    XLSX.writeFile(wb, filename)
+    await exportXlsx({
+      filename: `compliance_records_${label.replace(' ', '_')}`,
+      sheets: [
+        { name: 'Summary', rows: summaryRows, cols: [{ wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }] },
+        { name: 'Session Detail', rows: detailRows, cols: [{ wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 16 }] },
+      ],
+    })
     setComplianceLoading(false)
   }, [enriched])
 

@@ -9,6 +9,7 @@ import {
   ChevronRight, AlertTriangle, Search, TrendingDown, X,
 } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
+import { exportXlsx } from '../../lib/exportXlsx'
 
 // ── Dismissable banner key helpers ─────────────────────────────
 function currentMonthKey() {
@@ -25,8 +26,7 @@ function makeDismissKey(prefix, ids) {
 }
 
 // ── Export helpers ─────────────────────────────────────────────
-async function exportToExcel(agents, dateRange) {
-  const XLSX = await import('xlsx')
+function exportToExcel(agents) {
   const rows = agents.map(a => ({
     'Employee ID':        a.employee_id,
     'Name':               a.name,
@@ -39,18 +39,15 @@ async function exportToExcel(agents, dateRange) {
       : 'Never',
   }))
 
-  const ws = XLSX.utils.json_to_sheet(rows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Team Dashboard')
-
-  // Column widths
-  ws['!cols'] = [
-    { wch: 14 }, { wch: 24 }, { wch: 12 }, { wch: 8 },
-    { wch: 18 }, { wch: 12 }, { wch: 22 },
-  ]
-
-  const today = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(wb, `stellaris_team_dashboard_${today}.xlsx`)
+  exportXlsx({
+    filename: 'stellaris_team_dashboard',
+    sheet: 'Team Dashboard',
+    rows,
+    cols: [
+      { wch: 14 }, { wch: 24 }, { wch: 12 }, { wch: 8 },
+      { wch: 18 }, { wch: 12 }, { wch: 22 },
+    ],
+  })
 }
 
 export default function TeamDashboard() {

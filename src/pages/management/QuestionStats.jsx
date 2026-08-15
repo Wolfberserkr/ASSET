@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import { fetchAllRows } from '../../lib/fetchAllRows'
+import { exportXlsx } from '../../lib/exportXlsx'
 import Layout from '../../components/Layout'
 import { ClipboardList, Download, Search, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react'
 
@@ -136,8 +137,7 @@ export default function QuestionStats() {
   })
   const neverShown = activeQs.filter(q => q.times_shown === 0).length
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = displayed.map(q => {
       const pct = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : ''
       const flag = q.times_shown >= EASY_FLOOR ? effectivenessFlag(pct, q.times_shown) : null
@@ -153,14 +153,15 @@ export default function QuestionStats() {
         'Active':        q.is_active ? 'Yes' : 'No',
       }
     })
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Question Stats')
-    ws['!cols'] = [
-      { wch: 18 }, { wch: 20 }, { wch: 12 }, { wch: 60 },
-      { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 8 },
-    ]
-    XLSX.writeFile(wb, `question_stats_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: 'question_stats',
+      sheet: 'Question Stats',
+      rows,
+      cols: [
+        { wch: 18 }, { wch: 20 }, { wch: 12 }, { wch: 60 },
+        { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 8 },
+      ],
+    })
   }
 
   return (

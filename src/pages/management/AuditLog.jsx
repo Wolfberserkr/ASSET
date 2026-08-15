@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
+import { exportXlsx } from '../../lib/exportXlsx'
 import { FileText, Download, Search, RefreshCw, MessageSquare, X } from 'lucide-react'
 
 const DATE_RANGES = [
@@ -149,8 +150,7 @@ export default function AuditLog() {
     pwChanges:  displayed.filter(l => l.action === 'PASSWORD_CHANGE').length,
   }), [displayed])
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = displayed.map(l => ({
       'Timestamp':   new Date(l.created_at).toLocaleString(),
       'Agent':       l.users?.name ?? '—',
@@ -158,13 +158,12 @@ export default function AuditLog() {
       'Action':      l.action,
       'Details':     l.details ? JSON.stringify(l.details) : '',
     }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Audit Log')
-    ws['!cols'] = [
-      { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 },
-    ]
-    XLSX.writeFile(wb, `audit_log_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: 'audit_log',
+      sheet: 'Audit Log',
+      rows,
+      cols: [{ wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 }],
+    })
   }
 
   return (

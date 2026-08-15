@@ -5,6 +5,7 @@ import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import { ArrowLeft, Download, Trophy, Clock, CheckSquare, TrendingUp, Target, TrendingDown } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
+import { exportXlsx } from '../../lib/exportXlsx'
 
 // ── Score Trend Chart ─────────────────────────────────────────────────────────
 function ScoreTrend({ sessions }) {
@@ -211,8 +212,7 @@ export default function AgentDetail() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
   }).length
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = sessions.map(s => ({
       'Date': s.completed_at ? new Date(s.completed_at).toLocaleString() : new Date(s.started_at).toLocaleString(),
       'Status': s.status,
@@ -221,11 +221,14 @@ export default function AgentDetail() {
       'IP Address': s.ip_address ?? '',
       'Device': s.user_agent ?? '',
     }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Sessions')
-    ws['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 40 }]
-    XLSX.writeFile(wb, `agent_${agent?.employee_id}_sessions.xlsx`)
+    // Note: exportXlsx appends today's date, which this filename previously
+    // lacked — two exports for the same agent used to overwrite each other.
+    exportXlsx({
+      filename: `agent_${agent?.employee_id}_sessions`,
+      sheet: 'Sessions',
+      rows,
+      cols: [{ wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 40 }],
+    })
   }
 
   if (loading) {
