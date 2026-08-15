@@ -30,7 +30,7 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 - **Roles:** `agent`, `supervisor`, `director` (Surveillance) + `pit_manager`, `shift_manager`, `casino_manager` (Pit)
   - `shift_manager` (added in `supabase/add_user_management.sql`) is the Pit-side equivalent of `supervisor`: full management-portal access, scoped to Pit staff by the department wall, but it is **not** an account manager.
 - **RLS helpers:** `public.get_my_role()` avoids recursion in policies; `get_role_department()` / `get_my_department()` / `get_user_department()` / `get_my_drill_role()` (added in `supabase/add_pit_roles.sql`) enforce the department wall
-- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents`, `get_team_leaderboard`, `get_question_stats`
+- **RPC functions:** `check_login_lockout`, `log_login_attempt`, `check_cooldown`, `get_recertification_status`, `get_team_benchmark`, `update_question_stats`, `log_audit_event`, `get_all_agents(p_month)`, `get_team_leaderboard`, `get_question_stats(p_month)`, plus the month helpers `report_month_start(p_month)` / `report_month_end(p_month)` (see Historical Month Reporting)
 
 ### Departments (Surveillance vs Pit)
 Department is **derived from role** — no extra column:
@@ -42,7 +42,8 @@ Rules (enforced server-side via RLS + RPC guards, migration `supabase/add_pit_ro
 - **Raquel (casino_manager)** uses the same management portal pages as Henk/Angelo but only ever sees Pit staff. She can create/edit questions in the shared pool.
 - **Department wall (bidirectional):** surveillance staff never see pit staff data (profiles, sessions, answers, audit entries, recert notes) and vice versa. `get_all_agents`, `get_team_leaderboard`, and `get_team_benchmark` are scoped to the caller's department — benchmarks/leaderboards never mix departments.
 - **Shared across departments:** questions, games, resources. `get_my_drill_role()` returns `agent` or `pit_manager` so queries/RPCs list the correct drill-takers; the frontend exposes this as `drillRole` from `AuthContext` (used in Layout notifications, WeakAreas, AuditLog).
-- **Question Stats is department-scoped** (migration `supabase/add_department_question_stats.sql`): the `get_question_stats()` RPC recomputes per-question `times_shown` / `times_correct` from `session_answers` restricted to the caller's department, so Raquel sees pit-only accuracy and Henk/Angelo see surveillance-only accuracy over the same shared pool. The global `questions.times_shown` / `times_correct` counters still exist (incremented by `update_question_stats`) but the management Question Stats page no longer reads them.
+- **Question Stats is department-scoped** (migration `supabase/add_department_question_stats.sql`, superseded by `add_month_scoped_reports.sql`): the `get_question_stats(p_month)` RPC recomputes per-question counts from `session_answers` restricted to the caller's department, so Raquel sees pit-only accuracy and Henk/Angelo see surveillance-only accuracy over the same shared pool. It returns both month-scoped (`times_*`) and all-time (`lifetime_*`) counts — see Historical Month Reporting. The global `questions.times_shown` / `times_correct` counters still exist (incremented by `update_question_stats`) but the management Question Stats page no longer reads them.
+  - Answers from **abandoned** sessions count toward the `lifetime_*` columns (matching how `update_question_stats` increments the global counters as each answer is submitted) but not toward a month, since `completed_at` is NULL on those rows. There are ~117 such answers in production.
 - Rick creates pit accounts the same way (`{employee_id}@stellaris.local`) with the new role in user metadata.
 
 ## Database Tables
@@ -226,20 +227,54 @@ The **User Management** page (sidebar → Admin, route `/management/users`) is v
 
 ### Head Reports & Remediation (heads-only: director / casino_manager, gated by `canManageUsers`)
 Three pages sit under the heads-only routes (`src/App.jsx`) and nav (`headsNav` in `Layout.jsx`), all department-scoped:
-- **Scorecard** (`/management/scorecard`, `src/pages/management/Scorecard.jsx`) — month-over-month department KPIs (avg score, completed sessions, active drill-takers, recert-compliance rate, avg accuracy) with MoM delta arrows + sparklines, plus a per-game accuracy breakdown. Backed by `get_department_scorecard(p_months)` / `get_department_scorecard_games(p_months)` (migration `supabase/add_department_scorecard.sql`) — the first multi-month RPCs (every other RPC only compares to the current month). Current month is labeled MTD. Zero-filled months keep trend lines continuous.
-- **Audit Digest** (`/management/audit-digest`, `AuditDigest.jsx`) — period rollup (24h/7d/30d/90d) of the department-scoped `audit_log`: exact counts by action (via `get_audit_digest(p_since)` so the 500-row Audit Log cap doesn't distort totals), most-active users, notable/security events, and a failed-login summary from the RPC-only `login_attempts` table via `get_failed_login_summary(p_since)` (matched to the caller's department roster). Migration `supabase/add_audit_digest.sql`.
+- **Scorecard** (`/management/scorecard`, `src/pages/management/Scorecard.jsx`) — month-over-month department KPIs (avg score, completed sessions, active drill-takers, recert-compliance rate, avg accuracy) with MoM delta arrows + sparklines, plus a per-game accuracy breakdown. Backed by `get_department_scorecard(p_months, p_end_month)` / `get_department_scorecard_games(p_months, p_end_month)` (migrations `supabase/add_department_scorecard.sql`, then `supabase/add_month_scoped_reports.sql`). The month picker selects the **end month** of the trailing 6-month window; `MONTHS = 6` is still a const, and the server clamps `p_months` to 24, so a window-length control is a one-line follow-up. MTD is labeled only when the anchor is the current month. Zero-filled months keep trend lines continuous. **Recert rate is measured against the current active roster**, not the roster as it stood in each month — there is no roster-history table.
+- **Audit Digest** (`/management/audit-digest`, `AuditDigest.jsx`) — rollup of the department-scoped `audit_log`: exact counts by action (via `get_audit_digest(p_since, p_until)`), most-active users, notable/security events, and a failed-login summary from the RPC-only `login_attempts` table via `get_failed_login_summary(p_since, p_until)` (matched to the caller's department roster). Migrations `supabase/add_audit_digest.sql`, then `supabase/add_month_scoped_reports.sql`. **This is the one page where rolling windows and calendar months coexist** — one `<select>` split by `<optgroup>` ("Rolling" 24h/7d/30d/90d, "Calendar month") — because here the rolling window is the product. It keeps its own period state rather than the shared `?m=`, so picking a rolling window doesn't change the month other pages are showing.
 - **Remediation** (`/management/remediation`, `Remediation.jsx`) — heads assign a drill-taker a focus (a game or Procedures) with a note/due date; the agent sees an **Assigned Practice** card on their Dashboard (`get_my_remediation()`) with a **Practice** button that deep-links to focused Practice on the target game (`/practice?game=<id|procedure>`) and a **Start Drill** button. The assign form pre-suggests each agent's weakest game (reusing the same per-game accuracy computation as WeakAreas/Dashboard). Table `remediation_assignments` + RPCs `assign_remediation` / `set_remediation_status` / `list_remediation` / `get_my_remediation` (migration `supabase/add_remediation.sql`; internal helpers `remediation_progress` / `remediation_practice_credits` / `remediation_autocomplete` are locked to owner-only). Writes `REMEDIATION_ASSIGNED` / `REMEDIATION_COMPLETED` / `REMEDIATION_CANCELLED`.
   - **Completion model (hybrid, auto + manual):** progress = qualifying scored **drills** (a completed session touching the target game; any completed session for a Procedures focus) **+ practice credits** (every 10 answered focused-practice questions in the target game = 1 credit). An assignment auto-completes when `drills + credits ≥ target_sessions` **AND at least one real drill** has happened (the **drill floor** — practice can never certify completion on its own, preserving assessment integrity). Heads can also mark complete/cancel by hand. Both the agent card and the head's Remediation row show the `drills + practice` split.
   - **Practice tracking:** focused Practice logs to the append-only `public.practice_activity` table (`user_id, game_id, scope, questions_answered, correct`) — the **only** thing Practice ever writes (still no sessions/scores/cooldown/adaptive-difficulty). `Practice.jsx` flushes a row per game on leave/unmount; `remediation_practice_credits()` turns it into credits. Migration `supabase/add_practice_tracking.sql` (also DROP+recreates `list_remediation` / `get_my_remediation` to return the `drill_progress` / `practice_credits` / `progress` split).
 
 Shared: `src/lib/exportXlsx.js` — reusable SheetJS export helper used by the new pages. The five migrations + the redeployed `admin-users` edge function were applied to production 2026-07-23.
 
+### Historical Month Reporting (all management roles)
+Every reporting page carries a **reporting-month picker** so Henk, Raquel, Angelo and shift managers can look up and export any past month, not just the current one. Migration `supabase/add_month_scoped_reports.sql`, applied to production 2026-08-15.
+
+**Pages:** Team Dashboard, Completion Tracker, Agent Detail, Weak Areas, Question Stats, Audit Log, Audit Digest, Scorecard. The picker itself carries no role gate — historical data is no more sensitive than current data and the department wall already scopes it — but **page access is unchanged**, so Scorecard and Audit Digest remain heads-only routes and supervisors get the picker on the six pages they can already reach.
+
+#### The UTC month contract — read before touching any date logic
+**A calendar month is defined in UTC on both sides of the wire.** `MONTH_TZ` in `src/lib/monthRange.js` and `SET TimeZone = 'UTC'` on every RPC in `add_month_scoped_reports.sql` are the two places to change it, and they must agree.
+
+Why: `date_trunc('month', NOW())` runs in the database timezone (UTC on Supabase — verified), so every number this platform has ever displayed is already bucketed on UTC boundaries. Building boundaries from local time instead (`new Date(y, m, 1)` is local midnight) would shift them by the operator's offset — Aruba is UTC−4 — and silently restate reported history.
+
+**Accepted consequence:** a session completed 2026-03-31 23:00 in Aruba is 2026-04-01 03:00Z and counts toward **April**. That is pre-existing behavior, not something this feature introduced.
+
+**`SET TimeZone = 'UTC'` on the scorecard pair is load-bearing, not hygiene.** Those functions bucket with `date_trunc('month', completed_at)` while building their month series from a UTC-pinned anchor. Unpinned on a non-UTC database the two disagree, every `LEFT JOIN` misses, and the page renders **zero-filled rows for every month with no error** — verified by reproducing it against a scratch Postgres.
+
+#### Shared modules
+- `src/lib/monthRange.js` — pure, Node-testable (the `sessionDraw.js` convention): month keys, UTC boundaries, labels, option lists, clamping. `daysLeftInMonthKey` returns 0 for any closed month, which is what makes Completion's `getStatus` resolve a past month to Flagged/On Track and never "At Risk"; it is UTC on both sides and clamped at zero, because mixing clocks yields −1 at the boundary and flips agents to the wrong status.
+- `src/hooks/useMonthSelection.js` + `src/components/MonthPicker.jsx` — month lives in `?m=YYYY-MM` (shareable, survives refresh) mirrored to `sessionStorage` (the sidebar `NavLink`s are static, so the URL alone would snap back to the current month on navigation). Keys are scoped per user id **and** cleared on logout via `src/lib/reportingMonthStorage.js` — `sessionStorage` is per-tab, not per-auth-session, so an unscoped key would hand the next person to sign in on that tab the previous user's month floor.
+- The dropdown floor is the earliest **session or audit_log** row, cached per tab. Audit rows can predate any completed session (a new hire's first weeks), so a completed-sessions-only floor would make those months unreachable on the one page that has data for them.
+
+#### Per-page semantics worth knowing
+- **"Now"-derived signals are current-month only:** decay alerts and the recert banner (Team Dashboard, Agent Detail) and pool-health warnings (Question Stats). `computeDecay` anchors to `Date.now()`, and `is_active` cannot be reconstructed for a past month. A muted line explains the absence rather than leaving a silent gap.
+- **Question Stats returns two windows.** `times_shown` / `times_correct` are month-scoped; `lifetime_shown` / `lifetime_correct` are all-time. Exposure and accuracy read the month columns; **"never shown" and the too-easy/too-hard effectiveness flags read lifetime**, because a month yields ~4 attempts per question across a ~720-question pool against a flag threshold of 10. The row badge is labeled `(lifetime)` since the accuracy beside it is monthly.
+- **`get_question_stats(NULL)` means ALL TIME**, deliberately breaking the convention every other function follows (NULL = current month). Its pre-existing semantics were all-time, and current-month semantics would have silently collapsed the live page's counts between the SQL run and the frontend deploy.
+- **The roster is not historical** anywhere. Every month view lists today's active drill-takers with their counts for that month. An agent hired in June shows 0 for March; one who left before March does not appear.
+- **Weak Areas and Audit Log lost their rolling 30/90/180-day pickers** — the month picker replaces them. Audit Log also lost its 500-row cap (a month is bounded, so the cap only ever truncated silently); it now pages with a 10,000-row safety stop.
+- **Agent Detail filters completed rows on `completed_at` and abandoned rows on `started_at`** in one `.or()`. Abandoned sessions have a NULL `completed_at` and would vanish under a pure `completed_at` bound; but a pure `started_at` bound would disagree with `get_all_agents` about a session that starts before midnight and completes after — the number the 20-session recert requirement is enforced on.
+
+#### Superseded migrations — DO NOT RE-RUN
+`add_month_scoped_reports.sql` changed six function signatures. Postgres treats a new parameter as a **new overload**, so re-running an older file that still declares the old signature creates a duplicate and PostgREST then fails with `PGRST203` for *both* call shapes, taking down Team Dashboard, Completion and Remediation together. These files have had their conflicting `CREATE` blocks commented out behind explanatory banners:
+`add_user_management.sql` (partially — everything else in it is still authoritative and re-runnable), `add_department_question_stats.sql`, `fix_team_dashboard_avg_monthly.sql`, `add_department_scorecard.sql`, `add_audit_digest.sql`.
+A `DROP FUNCTION IF EXISTS` guard does **not** help — it matches nothing, and the file's own `CREATE` then re-adds the overload.
+
 ---
 
 ## Excel Exports
-- All export views support filtering by: **date range**, **agent**, and **game** before export
+- Every export view is scoped by a **reporting month** (see Historical Month Reporting), and Weak Areas / Question Stats / Audit Log additionally filter by **agent**, **game**, difficulty or action category before export
 - Format is fully custom — no Marriott/corporate template required
-- Export available on: team dashboard, agent detail, completion tracker, weak areas, question stats, audit log
+- Export available on: team dashboard, agent detail, completion tracker, weak areas, question stats, audit log, audit digest, scorecard, remediation
+- **Every workbook carries two dates**, and they mean different things: the reporting month is in the filename (`completion_tracker_2026-03_2026-08-15.xlsx` is March's data pulled in August), and every workbook has a **Summary** sheet recording the period, the generation timestamp, and whatever filters were active. `exportXlsx` appends the generation date automatically; the caller supplies the month.
+- All exports go through `src/lib/exportXlsx.js` (`exportXlsx` + `summarySheet`) — no page hand-rolls SheetJS.
 
 ---
 
@@ -305,6 +340,9 @@ Roulette and Craps payout drills have a **2D / 3D view toggle** (top-right of th
 - Question effectiveness report
 - Audit log viewer
 - Filtered Excel export on all views + compliance training records export
+- **Historical month lookup + export on every reporting page** ✅ (see Historical Month Reporting; migration applied to production 2026-08-15)
+
+> **Note on Weak Areas numbers:** its per-game and per-question percentages were previously computed on a **truncated sample**. `fetchInChunks` guarded PostgREST's `.in()` list length but not the 1000-row response cap that applies to every query, so a 200-session chunk requesting ~2000 answer rows silently received 1000. Each chunk is now paged through `fetchAllRows`. Expect the reported percentages to move; that is the correction, not a regression.
 
 ### Phase 5 — Polish & Deploy
 - Agent session history page
@@ -389,11 +427,13 @@ Winner-call drills for the four poker games: a full hand is dealt face up and th
 ## Project Structure
 ```
 src/
-  components/    — Layout, ProtectedRoute, StatCard
+  components/    — Layout, ProtectedRoute, StatCard, MonthPicker
     tables/      — PayoutTable (2D SVG + dispatch), RouletteTable3D, CrapsTable3D, TableControls
   context/       — AuthContext (login, logout, session timeout, lockout)
-  hooks/         — useAdaptiveDifficulty, useSessionTimer, useCooldown
-  lib/           — supabase.js client, questionRandomizer.js, sessionDraw.js (pure draw/diversity engine)
+  hooks/         — useAdaptiveDifficulty, useSessionTimer, useCooldown, useMonthSelection
+  lib/           — supabase.js client, questionRandomizer.js, sessionDraw.js (pure draw/diversity engine),
+                   monthRange.js (pure month/UTC-boundary engine), reportingMonthStorage.js,
+                   exportXlsx.js, fetchAllRows.js, fetchInChunks.js
   pages/
     Login.jsx
     agent/       — Dashboard, DrillSession, Results, History, ChangePassword, Practice
