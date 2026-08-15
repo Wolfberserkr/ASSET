@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Countdown from './Countdown'
 import { supabase } from '../lib/supabase'
 import { computeDecay, decayDismissKey } from '../lib/decayUtils'
+import { currentMonthKey, monthLabel, monthRange, prevMonthKey } from '../lib/monthRange'
 import { useCooldown } from '../hooks/useCooldown'
 import {
   Shield, LayoutDashboard, KeyRound, LogOut,
@@ -14,26 +15,21 @@ import {
 
 const REQUIRED = 20
 
-function prevMonthKey() {
-  const d = new Date()
-  const y = d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear()
-  const m = String(d.getMonth() === 0 ? 12 : d.getMonth()).padStart(2, '0')
-  return `${y}-${m}`
-}
+// Month helpers come from lib/monthRange so the sidebar bell and the
+// Completion page agree on which month a session belongs to. They previously
+// disagreed: the bell built its range from LOCAL midnight while
+// get_all_agents counted in UTC, so the two could name different agents as
+// having missed last month while both were on screen.
+const bellPrevMonthKey = () => prevMonthKey(currentMonthKey())
 
-function prevMonthLabel() {
-  const d = new Date()
-  d.setDate(1)
-  d.setMonth(d.getMonth() - 1)
-  return d.toLocaleString('default', { month: 'long', year: 'numeric' })
-}
+const prevMonthLabel = () => monthLabel(bellPrevMonthKey())
 
 function loadDismissed() {
   try { return JSON.parse(localStorage.getItem('notif_dismissed') ?? '{}') } catch { return {} }
 }
 
 function notifKey(userId) {
-  return `${prevMonthKey()}_${userId}`
+  return `${bellPrevMonthKey()}_${userId}`
 }
 
 const agentNav = [
@@ -162,13 +158,11 @@ export default function Layout({ children, bg, contentKey }) {
       }
     } catch { /* ignore */ }
 
-    const now = new Date()
-    const firstLast  = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-    const firstThis  = new Date(now.getFullYear(), now.getMonth(),     1).toISOString()
-    const cutoff28   = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
+    const prev = monthRange(bellPrevMonthKey())
+    const cutoff28 = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
     Promise.all([
       supabase.from('sessions').select('user_id').eq('status', 'completed')
-        .gte('completed_at', firstLast).lt('completed_at', firstThis),
+        .gte('completed_at', prev.from).lt('completed_at', prev.to),
       supabase.from('users').select('id, name, employee_id').eq('role', drillRole).eq('is_active', true),
       supabase.from('sessions').select('user_id, score, completed_at')
         .eq('status', 'completed').gte('completed_at', cutoff28),

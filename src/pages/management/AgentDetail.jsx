@@ -5,7 +5,11 @@ import Layout from '../../components/Layout'
 import StatCard from '../../components/StatCard'
 import { ArrowLeft, Download, Trophy, Clock, CheckSquare, TrendingUp, Target, TrendingDown } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
-import { exportXlsx } from '../../lib/exportXlsx'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { fetchAllRows } from '../../lib/fetchAllRows'
+import { fetchInChunks } from '../../lib/fetchInChunks'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 
 // ── Score Trend Chart ─────────────────────────────────────────────────────────
 function ScoreTrend({ sessions }) {
@@ -150,6 +154,7 @@ function parseUA(ua) {
 export default function AgentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { month, setMonth, options, range, isCurrent, label, shortLabel } = useMonthSelection()
   const [agent,       setAgent]       = useState(null)
   const [sessions,    setSessions]    = useState([])
   const [gameAccuracy, setGameAccuracy] = useState([])
@@ -158,15 +163,34 @@ export default function AgentDetail() {
   useEffect(() => {
     if (!id) return
 
+    setLoading(true)
     Promise.all([
       supabase.from('users').select('*').eq('id', id).single(),
-      supabase
-        .from('sessions')
-        .select('id, score, status, completed_at, total_time_seconds, total_questions, started_at, ip_address, user_agent')
-        .eq('user_id', id)
-        .in('status', ['completed', 'abandoned'])
-        .order('started_at', { ascending: false })
-        .limit(50),
+      // Completed rows are bounded on completed_at, abandoned rows on
+      // started_at. Both halves are needed:
+      //
+      //   - abandoned sessions have a NULL completed_at, so a pure
+      //     completed_at bound would silently drop them from the history
+      //     table, which is one of the things this page exists to show;
+      //   - but bounding everything on started_at would put a session that
+      //     started 23:55 on the 31st and completed 00:03 the next day in a
+      //     different month here than in get_all_agents, which is the number
+      //     the 20-session recert requirement is enforced on.
+      //
+      // Each branch pins status, so the old .in('status', [...]) is redundant.
+      // The month bound replaces the previous .limit(50), which was an
+      // arbitrary cap that could already hide sessions from a busy agent.
+      fetchAllRows(() =>
+        supabase
+          .from('sessions')
+          .select('id, score, status, completed_at, total_time_seconds, total_questions, started_at, ip_address, user_agent')
+          .eq('user_id', id)
+          .or(
+            `and(status.eq.completed,completed_at.gte.${range.from},completed_at.lt.${range.to}),` +
+            `and(status.eq.abandoned,started_at.gte.${range.from},started_at.lt.${range.to})`
+          )
+          .order('started_at', { ascending: false })
+      ).then(data => ({ data })).catch(() => ({ data: [] })),
       supabase.from('games').select('id, name'),
     ]).then(async ([agentRes, sessionsRes, gamesRes]) => {
       setAgent(agentRes.data)
@@ -179,10 +203,13 @@ export default function AgentDetail() {
 
       let accuracy = []
       if (completedIds.length > 0) {
-        const { data: answers } = await supabase
-          .from('session_answers')
-          .select('is_correct, game_id')
-          .in('session_id', completedIds)
+        // Chunked now that the 50-row cap is gone — a long list would
+        // otherwise overflow PostgREST's .in() and truncate silently.
+        const answers = await fetchInChunks(completedIds, (chunk) =>
+          supabase
+            .from('session_answers')
+            .select('is_correct, game_id')
+            .in('session_id', chunk))
 
         const gamesMap = Object.fromEntries((gamesRes.data ?? []).map(g => [g.id, g.name]))
         const byGame = {}
@@ -198,19 +225,21 @@ export default function AgentDetail() {
       setGameAccuracy(accuracy)
       setLoading(false)
     })
-  }, [id])
+  }, [id, range.from, range.to])
 
   const completedSessions = sessions.filter(s => s.status === 'completed')
-  const decayMap   = computeDecay(completedSessions.map(s => ({ user_id: id, score: s.score, completed_at: s.completed_at })))
+  // Decay is a live signal (computeDecay anchors to Date.now()), so it is only
+  // meaningful while looking at the current month.
+  const decayMap   = isCurrent
+    ? computeDecay(completedSessions.map(s => ({ user_id: id, score: s.score, completed_at: s.completed_at })))
+    : {}
   const decayInfo  = decayMap[id]
   const avgScore = completedSessions.length
     ? (completedSessions.reduce((s, x) => s + x.score, 0) / completedSessions.length).toFixed(1)
     : '—'
-  const thisMonth = completedSessions.filter(s => {
-    const d = new Date(s.completed_at)
-    const now = new Date()
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  }).length
+  // The fetch is already bounded to the selected month, so this is just the
+  // count — no client-side re-filtering against "now".
+  const monthSessions = completedSessions.length
 
   const exportExcel = () => {
     const rows = sessions.map(s => ({
@@ -224,10 +253,15 @@ export default function AgentDetail() {
     // Note: exportXlsx appends today's date, which this filename previously
     // lacked — two exports for the same agent used to overwrite each other.
     exportXlsx({
-      filename: `agent_${agent?.employee_id}_sessions`,
-      sheet: 'Sessions',
-      rows,
-      cols: [{ wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 40 }],
+      filename: `agent_${agent?.employee_id}_sessions_${month}`,
+      sheets: [
+        { name: 'Sessions', rows, cols: [{ wch: 22 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 20 }, { wch: 40 }] },
+        summarySheet(label, {
+          'Agent': agent?.name ?? '',
+          'Employee ID': agent?.employee_id ?? '',
+          'Completed sessions': completedSessions.length,
+        }),
+      ],
     })
   }
 
@@ -248,7 +282,7 @@ export default function AgentDetail() {
     <Layout>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/management')} className="p-2 rounded-lg transition-colors"
+        <button onClick={() => navigate(`/management?m=${month}`)} className="p-2 rounded-lg transition-colors"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}
           aria-label="Back to team dashboard">
           <ArrowLeft size={16} />
@@ -257,6 +291,7 @@ export default function AgentDetail() {
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>{agent.name}</h1>
           <p className="text-sm font-mono" style={{ color: 'var(--color-brand-muted)' }}>{agent.employee_id}</p>
         </div>
+        <MonthPicker value={month} onChange={setMonth} options={options} />
         <button onClick={exportExcel}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
@@ -278,9 +313,9 @@ export default function AgentDetail() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <StatCard label="Avg Score"      value={avgScore}              icon={Trophy}      accent="var(--color-brand-cyan)" />
-        <StatCard label="This Month"     value={thisMonth}             icon={CheckSquare} accent={thisMonth >= 20 ? 'var(--color-brand-success)' : 'var(--color-brand-warning)'} sub="/ 20 required" />
-        <StatCard label="Total Sessions" value={completedSessions.length} icon={Clock} />
+        <StatCard label={`Avg Score (${shortLabel})`} value={avgScore} icon={Trophy} accent="var(--color-brand-cyan)" />
+        <StatCard label={label}          value={monthSessions}         icon={CheckSquare} accent={monthSessions >= 20 ? 'var(--color-brand-success)' : 'var(--color-brand-warning)'} sub="/ 20 required" />
+        <StatCard label="Sessions Shown" value={completedSessions.length} icon={Clock} sub={`completed in ${shortLabel}`} />
       </div>
 
       {/* Charts row */}
@@ -291,7 +326,7 @@ export default function AgentDetail() {
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={14} style={{ color: 'var(--color-brand-cyan)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>Score Trend</span>
-            <span className="text-xs ml-auto" style={{ color: 'var(--color-brand-muted)' }}>last 20 sessions</span>
+            <span className="text-xs ml-auto" style={{ color: 'var(--color-brand-muted)' }}>up to 20 sessions in {shortLabel}</span>
           </div>
           <ScoreTrend sessions={sessions} />
         </div>
