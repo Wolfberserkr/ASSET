@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logAudit } from '../lib/audit'
+import { clearMonthSelectionStorage } from '../lib/reportingMonthStorage'
 
 const AuthContext = createContext(null)
 
@@ -179,6 +180,11 @@ export function AuthProvider({ children }) {
     setUser(null)
     setProfile(null)
     profileRef.current = null
+
+    // sessionStorage is per-TAB, not per-auth-session, so the reporting-month
+    // state would otherwise survive into whoever signs in next on this tab —
+    // handing a Pit head a Surveillance month floor, or vice versa.
+    clearMonthSelectionStorage()
 
     navigate(
       reason === 'timeout' ? '/login?reason=timeout'

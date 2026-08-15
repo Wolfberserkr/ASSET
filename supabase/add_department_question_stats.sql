@@ -15,9 +15,30 @@
 -- counters are left untouched (the adaptive engine and the
 -- "never shown anywhere" semantics still use them server-side).
 --
--- Depends on the helpers in add_pit_roles.sql. Idempotent —
--- safe to re-run. Run once in the Supabase SQL Editor.
+-- Depends on the helpers in add_pit_roles.sql.
+--
+-- ############################################################
+-- ##  SUPERSEDED by add_month_scoped_reports.sql             ##
+-- ##  DO NOT RE-RUN THIS FILE. It is NO LONGER idempotent.   ##
+-- ##                                                          ##
+-- ##  get_question_stats is now get_question_stats(p_month). ##
+-- ##  Executing the zero-arg CREATE below would add a SECOND ##
+-- ##  overload rather than replacing anything, and PostgREST ##
+-- ##  would then fail with PGRST203 for BOTH call shapes,    ##
+-- ##  breaking the Question Stats page.                      ##
+-- ##                                                          ##
+-- ##  Do NOT add a DROP FUNCTION guard: DROP ...             ##
+-- ##  get_question_stats() matches nothing, the CREATE below ##
+-- ##  re-creates the overload, and you are back to PGRST203. ##
+-- ##  The block is commented out instead.                    ##
+-- ##                                                          ##
+-- ##  NOTE: this file was ALREADY superseded before that —   ##
+-- ##  add_user_management.sql (2026-07-22) postdates it and  ##
+-- ##  widened the role gate to include shift_manager.        ##
+-- ############################################################
 -- ============================================================
+
+/*  SUPERSEDED — see the banner above.
 
 CREATE OR REPLACE FUNCTION public.get_question_stats()
 RETURNS TABLE (
@@ -67,3 +88,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_question_stats() TO authenticated;
+
+*/

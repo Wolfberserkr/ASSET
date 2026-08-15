@@ -9,6 +9,9 @@ import {
   ChevronRight, AlertTriangle, Search, TrendingDown, X,
 } from 'lucide-react'
 import { computeDecay } from '../../lib/decayUtils'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 
 // ── Dismissable banner key helpers ─────────────────────────────
 function currentMonthKey() {
@@ -25,36 +28,41 @@ function makeDismissKey(prefix, ids) {
 }
 
 // ── Export helpers ─────────────────────────────────────────────
-async function exportToExcel(agents, dateRange) {
-  const XLSX = await import('xlsx')
+function exportToExcel(agents, month, label) {
   const rows = agents.map(a => ({
     'Employee ID':        a.employee_id,
     'Name':               a.name,
     'Role':               a.role,
     'Active':             a.is_active ? 'Yes' : 'No',
-    'Sessions (Month)':   Number(a.sessions_this_month ?? 0),
+    [`Sessions (${label})`]: Number(a.sessions_this_month ?? 0),
     'Avg Score':          a.avg_score != null ? Number(a.avg_score) : '',
     'Last Session':       a.last_session_at
       ? new Date(a.last_session_at).toLocaleString()
       : 'Never',
   }))
 
-  const ws = XLSX.utils.json_to_sheet(rows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Team Dashboard')
-
-  // Column widths
-  ws['!cols'] = [
-    { wch: 14 }, { wch: 24 }, { wch: 12 }, { wch: 8 },
-    { wch: 18 }, { wch: 12 }, { wch: 22 },
-  ]
-
-  const today = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(wb, `stellaris_team_dashboard_${today}.xlsx`)
+  exportXlsx({
+    filename: `stellaris_team_dashboard_${month}`,
+    sheets: [
+      {
+        name: 'Team Dashboard',
+        rows,
+        cols: [
+          { wch: 14 }, { wch: 24 }, { wch: 12 }, { wch: 8 },
+          { wch: 18 }, { wch: 12 }, { wch: 22 },
+        ],
+      },
+      summarySheet(label, {
+        'Agents listed': rows.length,
+        'Note': 'Roster is the team as it stands today; session counts are for the reporting month.',
+      }),
+    ],
+  })
 }
 
 export default function TeamDashboard() {
   const navigate = useNavigate()
+  const { month, setMonth, options, range, isCurrent, label } = useMonthSelection()
   const [agents,    setAgents]    = useState([])
   const [decayMap,  setDecayMap]  = useState({})
   const [loading,   setLoading]   = useState(true)
@@ -66,17 +74,23 @@ export default function TeamDashboard() {
   const loadAgents = useCallback(async () => {
     setLoading(true)
     setError(null)
+    // Decay is a LIVE signal: computeDecay anchors both of its windows to
+    // Date.now(), so it only means anything for the current month. Asking
+    // "was this agent decaying as of 31 March" would give a frozen answer to
+    // a question nobody asked, so the query is skipped entirely off-month.
     const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
     const [agentsRes, sessionsRes] = await Promise.all([
-      supabase.rpc('get_all_agents'),
-      supabase.from('sessions').select('user_id, score, completed_at')
-        .eq('status', 'completed').gte('completed_at', cutoff),
+      supabase.rpc('get_all_agents', { p_month: range.monthDate }),
+      isCurrent
+        ? supabase.from('sessions').select('user_id, score, completed_at')
+            .eq('status', 'completed').gte('completed_at', cutoff)
+        : Promise.resolve({ data: [] }),
     ])
     if (agentsRes.error) { setError(agentsRes.error.message); setLoading(false); return }
     setAgents(agentsRes.data ?? [])
-    setDecayMap(computeDecay(sessionsRes.data ?? []))
+    setDecayMap(isCurrent ? computeDecay(sessionsRes.data ?? []) : {})
     setLoading(false)
-  }, [])
+  }, [range.monthDate, isCurrent])
 
   useEffect(() => { loadAgents() }, [loadAgents])
 
@@ -101,8 +115,11 @@ export default function TeamDashboard() {
 
   const recertDismissKey = makeDismissKey('recert', belowTarget.map(a => a.id))
   const decayDismissKey  = makeDismissKey('decay',  decayAgents.map(a => a.id))
-  const showRecertBanner = belowTarget.length > 0 && dismissedRecert !== recertDismissKey
-  const showDecayBanner  = decayAgents.length > 0 && dismissedDecay  !== decayDismissKey
+  // Both banners are live signals about right now — telling Henk in August
+  // that three agents were below target in March is noise, and the Completion
+  // page reports a closed month's status properly.
+  const showRecertBanner = isCurrent && belowTarget.length > 0 && dismissedRecert !== recertDismissKey
+  const showDecayBanner  = isCurrent && decayAgents.length > 0 && dismissedDecay  !== decayDismissKey
 
   function dismissRecert() {
     localStorage.setItem('dismiss_recert_banner', recertDismissKey)
@@ -120,19 +137,28 @@ export default function TeamDashboard() {
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Team Dashboard</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>
-            {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })} performance
+            {label} performance{!isCurrent && ' · month closed'}
           </p>
         </div>
-        <button
-          onClick={() => exportToExcel(filtered)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}
-          aria-label="Export team dashboard to Excel"
-        >
-          <Download size={16} />
-          Export Excel
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <MonthPicker value={month} onChange={setMonth} options={options} />
+          <button
+            onClick={() => exportToExcel(filtered, month, label)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}
+            aria-label="Export team dashboard to Excel"
+          >
+            <Download size={16} />
+            Export Excel
+          </button>
+        </div>
       </div>
+
+      {!isCurrent && (
+        <p className="text-xs mb-5" style={{ color: 'var(--color-brand-muted)' }}>
+          Decay alerts and recertification warnings track the last 28 days and are shown for the current month only.
+        </p>
+      )}
 
       {/* Recert warning */}
       {showRecertBanner && (
@@ -187,7 +213,7 @@ export default function TeamDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <StatCard label="Total Agents"   value={totalAgents} icon={Users}       accent="var(--color-brand-blue)" />
         <StatCard label="Team Avg Score" value={avgScore}    icon={Trophy}      accent="var(--color-brand-cyan)" />
-        <StatCard label="On Track"       value={`${onTrack}/${totalAgents}`} icon={CheckSquare} accent="var(--color-brand-success)" sub="20 sessions this month" />
+        <StatCard label="On Track"       value={`${onTrack}/${totalAgents}`} icon={CheckSquare} accent="var(--color-brand-success)" sub={`20 sessions in ${label}`} />
       </div>
 
       {/* Agent table */}
@@ -291,7 +317,7 @@ export default function TeamDashboard() {
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => navigate(`/management/agent/${agent.id}`)}
+                        onClick={() => navigate(`/management/agent/${agent.id}?m=${month}`)}
                         className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors"
                         style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-muted)', border: '1px solid var(--color-brand-border)' }}
                       >

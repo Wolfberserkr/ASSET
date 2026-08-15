@@ -2,15 +2,16 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { fetchAllRows } from '../../lib/fetchAllRows'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 import { FileText, Download, Search, RefreshCw, MessageSquare, X } from 'lucide-react'
 
-const DATE_RANGES = [
-  { label: 'Last 24 hours', value: '1'   },
-  { label: 'Last 7 days',   value: '7'   },
-  { label: 'Last 30 days',  value: '30'  },
-  { label: 'Last 90 days',  value: '90'  },
-  { label: 'All time',      value: 'all' },
-]
+// The month picker replaces the old rolling range selector, and with every
+// query bounded to one calendar month the old 500-row cap is gone too. This
+// safety stop only exists so a pathological month cannot hang the page.
+const MAX_PAGES = 10   // 10 x 1000 rows
 
 const ACTION_CATEGORIES = [
   { label: 'All actions',   value: 'all'     },
@@ -80,13 +81,14 @@ function formatTs(iso) {
 
 export default function AuditLog() {
   const { drillRole } = useAuth()
+  const { month, setMonth, options, range, label } = useMonthSelection()
   const [logs,    setLogs]    = useState([])
   const [agents,  setAgents]  = useState([])
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
 
   // Filters
-  const [dateRange,     setDateRange]     = useState('all')
+  const [truncated,     setTruncated]     = useState(false)
   const [selectedAgent, setSelectedAgent] = useState('all')
   const [actionCat,     setActionCat]     = useState('all')
 
@@ -96,21 +98,21 @@ export default function AuditLog() {
   const load = useCallback(async () => {
     setLoading(true)
 
-    const dateFrom = dateRange === 'all'
-      ? null
-      : new Date(Date.now() - Number(dateRange) * 86400000).toISOString()
-
+    // The old 500-row cap plus a default of "all time" was a silent-truncation
+    // bug: a busy period simply lost its oldest rows with only a footnote to
+    // say so. Bounded to one calendar month the cap has no reason to exist, so
+    // it is replaced by paging with a safety stop an order of magnitude higher.
     const [logsRes, agentsRes] = await Promise.all([
-      (() => {
-        let q = supabase
+      fetchAllRows(() =>
+        supabase
           .from('audit_log')
           .select('id, action, details, created_at, user_id, users!inner(name, employee_id, role)')
           .eq('users.role', drillRole)
-          .order('created_at', { ascending: false })
-          .limit(500)
-        if (dateFrom) q = q.gte('created_at', dateFrom)
-        return q
-      })(),
+          .gte('created_at', range.from)
+          .lt('created_at', range.to)
+          .order('created_at', { ascending: false }),
+        { maxPages: MAX_PAGES },
+      ).then(data => ({ data })).catch(error => ({ data: [], error })),
       supabase
         .from('users')
         .select('id, name, employee_id')
@@ -120,9 +122,10 @@ export default function AuditLog() {
     ])
 
     setLogs(logsRes.data ?? [])
+    setTruncated(Boolean(logsRes.data?.truncated))
     setAgents(agentsRes.data ?? [])
     setLoading(false)
-  }, [dateRange, drillRole])
+  }, [range.from, range.to, drillRole])
 
   useEffect(() => { load() }, [load])
 
@@ -149,8 +152,7 @@ export default function AuditLog() {
     pwChanges:  displayed.filter(l => l.action === 'PASSWORD_CHANGE').length,
   }), [displayed])
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = displayed.map(l => ({
       'Timestamp':   new Date(l.created_at).toLocaleString(),
       'Agent':       l.users?.name ?? '—',
@@ -158,13 +160,17 @@ export default function AuditLog() {
       'Action':      l.action,
       'Details':     l.details ? JSON.stringify(l.details) : '',
     }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Audit Log')
-    ws['!cols'] = [
-      { wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 },
-    ]
-    XLSX.writeFile(wb, `audit_log_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: `audit_log_${month}`,
+      sheets: [
+        { name: 'Audit Log', rows, cols: [{ wch: 22 }, { wch: 20 }, { wch: 14 }, { wch: 22 }, { wch: 40 }] },
+        summarySheet(label, {
+          'Events listed': displayed.length,
+          'Agent filter':  selectedAgent === 'all' ? 'All' : (agents.find(a => a.id === selectedAgent)?.name ?? selectedAgent),
+          'Action filter': ACTION_CATEGORIES.find(c => c.value === actionCat)?.label ?? actionCat,
+        }),
+      ],
+    })
   }
 
   return (
@@ -178,7 +184,7 @@ export default function AuditLog() {
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Audit Log</h1>
-            <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Append-only activity record</p>
+            <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Append-only activity record · {label}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 self-start">
@@ -187,6 +193,7 @@ export default function AuditLog() {
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
+          <MonthPicker value={month} onChange={setMonth} options={options} />
           <button onClick={exportExcel}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
@@ -225,11 +232,6 @@ export default function AuditLog() {
             className="flex-1 min-w-32 bg-transparent text-sm outline-none"
             style={{ color: 'var(--color-brand-text)' }} />
 
-          <select value={dateRange} onChange={e => setDateRange(e.target.value)}
-            className="px-2 py-1 rounded-lg text-xs"
-            style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }}>
-            {DATE_RANGES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </select>
 
           <select value={selectedAgent} onChange={e => setSelectedAgent(e.target.value)}
             className="px-2 py-1 rounded-lg text-xs"
@@ -328,10 +330,10 @@ export default function AuditLog() {
           </div>
         )}
 
-        {!loading && logs.length === 500 && (
+        {!loading && truncated && (
           <p className="px-4 py-3 text-xs text-center"
             style={{ borderTop: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}>
-            Showing latest 500 events — use date filter to narrow results
+            Showing the first {(MAX_PAGES * 1000).toLocaleString()} events for {label} — narrow with the agent or action filter
           </p>
         )}
       </div>

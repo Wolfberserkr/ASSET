@@ -13,9 +13,30 @@
 --   get_failed_login_summary(p_since)  — failed sign-ins grouped by
 --       employee, scoped to the caller's own department's users.
 --
--- Both gate on is_management_role + the department wall. Idempotent.
--- Run once in the Supabase SQL Editor (after add_pit_roles.sql).
+-- Both gate on is_management_role + the department wall.
+--
+-- ############################################################
+-- ##  SUPERSEDED by add_month_scoped_reports.sql             ##
+-- ##  DO NOT RE-RUN THIS FILE. It is NO LONGER idempotent.   ##
+-- ##                                                          ##
+-- ##  Both functions now take a second parameter:            ##
+-- ##    (p_since TIMESTAMPTZ, p_until TIMESTAMPTZ)           ##
+-- ##  so a digest can be bounded to one calendar month       ##
+-- ##  instead of always running open-ended to now().         ##
+-- ##                                                          ##
+-- ##  Executing the single-arg CREATEs below would add       ##
+-- ##  SECOND overloads rather than replacing anything, and   ##
+-- ##  PostgREST would then fail with PGRST203 for BOTH call  ##
+-- ##  shapes, breaking the Audit Digest page.                ##
+-- ##                                                          ##
+-- ##  Do NOT add a DROP FUNCTION guard: DROP ...             ##
+-- ##  (TIMESTAMPTZ) matches nothing, the CREATEs below       ##
+-- ##  re-create the overloads, and you are back to PGRST203. ##
+-- ##  The blocks are commented out instead.                  ##
+-- ############################################################
 -- ============================================================
+
+/*  SUPERSEDED — see the banner above.
 
 -- ─── Audit rollup ───────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.get_audit_digest(p_since TIMESTAMPTZ)
@@ -113,3 +134,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_failed_login_summary(TIMESTAMPTZ) TO authenticated;
+
+*/

@@ -16,9 +16,34 @@
 -- never cross the department wall.
 --
 -- Aggregation happens entirely server-side; the page pulls ~6 small
--- rows, not raw sessions. Idempotent — safe to re-run. Run once in
--- the Supabase SQL Editor (after add_pit_roles.sql).
+-- rows, not raw sessions.
+--
+-- ############################################################
+-- ##  SUPERSEDED by add_month_scoped_reports.sql             ##
+-- ##  DO NOT RE-RUN THIS FILE. It is NO LONGER idempotent.   ##
+-- ##                                                          ##
+-- ##  Both functions now take a second parameter:            ##
+-- ##    (p_months INTEGER, p_end_month DATE)                 ##
+-- ##  so heads can anchor the trailing window on any month.  ##
+-- ##                                                          ##
+-- ##  Executing the single-arg CREATEs below would add       ##
+-- ##  SECOND overloads rather than replacing anything, and   ##
+-- ##  PostgREST would then fail with PGRST203 for BOTH call  ##
+-- ##  shapes, breaking the Scorecard page.                   ##
+-- ##                                                          ##
+-- ##  Do NOT add a DROP FUNCTION guard: DROP ... (INTEGER)   ##
+-- ##  matches nothing, the CREATEs below re-create the       ##
+-- ##  overloads, and you are back to PGRST203. The blocks    ##
+-- ##  are commented out instead.                             ##
+-- ##                                                          ##
+-- ##  The live versions also add the upper bound these CTEs  ##
+-- ##  never had, and carry SET TimeZone = 'UTC' — without    ##
+-- ##  which an anchored window silently renders ALL ZEROS on ##
+-- ##  a non-UTC database.                                     ##
+-- ############################################################
 -- ============================================================
+
+/*  SUPERSEDED — see the banner above.
 
 -- ─── Core KPIs, one row per month ───────────────────────────
 CREATE OR REPLACE FUNCTION public.get_department_scorecard(p_months INTEGER DEFAULT 6)
@@ -167,3 +192,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_department_scorecard_games(INTEGER) TO authenticated;
+
+*/

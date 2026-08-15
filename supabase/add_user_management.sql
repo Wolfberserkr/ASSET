@@ -18,8 +18,26 @@
 -- This file is the AUTHORITATIVE definition of every
 -- management-gated policy/RPC: it re-creates each one so the
 -- `shift_manager` role is included regardless of the order the
--- earlier migrations were applied in. Idempotent — safe to re-run.
+-- earlier migrations were applied in.
 -- Run once in the Supabase SQL Editor (after add_pit_roles.sql).
+--
+-- ############################################################
+-- ##  PARTIALLY SUPERSEDED by add_month_scoped_reports.sql   ##
+-- ##                                                          ##
+-- ##  This file is still safe to re-run — but ONLY because   ##
+-- ##  two function definitions inside it have been commented ##
+-- ##  out. get_all_agents and get_question_stats now take a  ##
+-- ##  p_month parameter and live in                          ##
+-- ##  add_month_scoped_reports.sql. Re-creating their old    ##
+-- ##  zero-arg signatures here would add duplicate overloads ##
+-- ##  and break PostgREST (PGRST203) for BOTH call shapes.   ##
+-- ##                                                          ##
+-- ##  Everything else in this file — the role constraint,    ##
+-- ##  the RLS policies, check_cooldown,                      ##
+-- ##  get_recertification_status, set_user_active — remains  ##
+-- ##  authoritative and idempotent. Do NOT un-comment the    ##
+-- ##  two blocks marked SUPERSEDED below.                    ##
+-- ############################################################
 -- ============================================================
 
 
@@ -208,6 +226,15 @@ $$;
 -- ─── 4. MANAGEMENT-GATED RPCs (re-created with shift_manager) ─
 
 -- get_all_agents: lists the caller's own department's drill-takers.
+--
+-- !!! SUPERSEDED by add_month_scoped_reports.sql — the live version
+-- !!! is get_all_agents(p_month DATE DEFAULT NULL). Re-running the
+-- !!! zero-arg CREATE below would add a SECOND overload (not replace
+-- !!! it) and PostgREST would fail with PGRST203 for BOTH call shapes,
+-- !!! taking down Team Dashboard, Completion and Remediation. A DROP
+-- !!! guard does NOT help — DROP ... get_all_agents() matches nothing
+-- !!! and this CREATE would just re-add it. Commented out instead.
+/*
 CREATE OR REPLACE FUNCTION public.get_all_agents()
 RETURNS TABLE (
   id              UUID,
@@ -251,6 +278,7 @@ BEGIN
   ORDER BY u.name;
 END;
 $$;
+*/
 
 -- check_cooldown: self, or same-department management only.
 CREATE OR REPLACE FUNCTION public.check_cooldown(p_user_id UUID)
@@ -341,6 +369,15 @@ END;
 $$;
 
 -- get_question_stats: department-scoped per-question accuracy.
+--
+-- !!! SUPERSEDED by add_month_scoped_reports.sql — the live version
+-- !!! is get_question_stats(p_month DATE DEFAULT NULL), which also
+-- !!! returns lifetime_shown / lifetime_correct alongside the
+-- !!! month-scoped counts. Re-running the zero-arg CREATE below would
+-- !!! add a SECOND overload (not replace it) and PostgREST would fail
+-- !!! with PGRST203 for BOTH call shapes, breaking Question Stats.
+-- !!! A DROP guard does NOT help. Commented out instead.
+/*
 CREATE OR REPLACE FUNCTION public.get_question_stats()
 RETURNS TABLE (
   id            UUID,
@@ -387,6 +424,7 @@ BEGIN
   ORDER BY 8 DESC;
 END;
 $$;
+*/
 
 
 -- ─── 5. set_user_active — (de)activate a user account ───────

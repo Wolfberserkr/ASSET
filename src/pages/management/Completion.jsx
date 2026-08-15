@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { fetchAllRows } from '../../lib/fetchAllRows'
+import { daysLeftInMonthKey, monthLabel, monthRange, prevMonthKey } from '../../lib/monthRange'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 import {
   CheckSquare, Download, AlertTriangle, Flag, X, FileCheck,
   MessageSquare, ChevronDown, ChevronUp, Save, Trash2,
@@ -11,20 +16,9 @@ const HISTORY_MONTHS = 12
 
 function periodKey(year, month) { return `${year}-${String(month).padStart(2, '0')}` }
 function monthName(year, month) {
-  return new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' })
+  return monthLabel(periodKey(year, month))
 }
 
-function daysLeftInMonth() {
-  const now = new Date()
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  return lastDay - now.getDate()
-}
-
-function monthLabel(offset = 0) {
-  const d = new Date()
-  d.setMonth(d.getMonth() + offset)
-  return d.toLocaleString('default', { month: 'long', year: 'numeric' })
-}
 
 // Urgency: On Track | At Risk | Below Target | Flagged (month over)
 function getStatus(count, daysLeft) {
@@ -53,13 +47,18 @@ function lastMonthDismissKey() {
 }
 
 export default function Completion() {
+  const { month, setMonth, options, range, isCurrent, label } = useMonthSelection()
+  const prevLabel = monthLabel(prevMonthKey(month))
   const [agents,        setAgents]        = useState([])
   const [lastMonthMap,  setLastMonthMap]  = useState({})
   const [loading,       setLoading]       = useState(true)
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem(lastMonthDismissKey()) === 'true'
   )
-  const daysLeft = daysLeftInMonth()
+  // 0 for any closed month, which is what makes getStatus() resolve a past
+  // month to Flagged / On Track and never to "At Risk". getStatus itself is
+  // unchanged.
+  const daysLeft = daysLeftInMonthKey(month)
 
   // ── Recert exception notes ───────────────────────────────────
   // notesByAgent: { [user_id]: [{ id, period_year, period_month, reason, noted_at, updated_at }, ...] }
@@ -70,13 +69,16 @@ export default function Completion() {
   const [historyOpen,  setHistoryOpen]  = useState(false)
   const [missingTable, setMissingTable] = useState(false)  // true when migration not yet run
 
-  const now           = new Date()
-  const currentYear   = now.getFullYear()
-  const currentMonth  = now.getMonth() + 1   // 1-12
+  // Recert notes are keyed by the SELECTED period, not today's — writing a
+  // note against a closed month is the entire point of an exception note.
+  const currentYear   = range.year
+  const currentMonth  = range.month   // 1-12
 
   const fetchNotes = useCallback(async () => {
     // Pull last 12 months of notes across all agents (small dataset)
-    const horizon = new Date(currentYear, currentMonth - 1 - HISTORY_MONTHS, 1)
+    // Counted back from the SELECTED month so browsing to an old month still
+    // loads that month's note history.
+    const horizon = new Date(Date.UTC(currentYear, currentMonth - 1 - HISTORY_MONTHS, 1))
     const { data, error } = await supabase
       .from('recert_exceptions')
       .select('id, user_id, period_year, period_month, reason, noted_at, updated_at')
@@ -111,29 +113,27 @@ export default function Completion() {
   }, [])
 
   useEffect(() => {
-    const now = new Date()
-    const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
-    const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(),     1).toISOString()
-
+    setLoading(true)
+    // Both columns now come from the same RPC, called twice. The previous
+    // hand-rolled previous-month query built its range from LOCAL midnight
+    // while get_all_agents counted in UTC, so the two columns could disagree
+    // about any session completed in the four hours after midnight UTC on the
+    // 1st. Calling the same function for both also puts the department wall
+    // server-side for the previous-month figure.
     Promise.all([
-      supabase.rpc('get_all_agents'),
-      supabase
-        .from('sessions')
-        .select('user_id')
-        .eq('status', 'completed')
-        .gte('completed_at', firstOfLastMonth)
-        .lt('completed_at', firstOfThisMonth),
-    ]).then(([agentsRes, lastRes]) => {
+      supabase.rpc('get_all_agents', { p_month: range.monthDate }),
+      supabase.rpc('get_all_agents', { p_month: monthRange(prevMonthKey(month)).monthDate }),
+    ]).then(([agentsRes, prevRes]) => {
       setAgents(agentsRes.data ?? [])
 
       const map = {}
-      for (const s of lastRes.data ?? []) {
-        map[s.user_id] = (map[s.user_id] ?? 0) + 1
+      for (const a of prevRes.data ?? []) {
+        map[a.id] = Number(a.sessions_this_month ?? 0)
       }
       setLastMonthMap(map)
       setLoading(false)
     })
-  }, [])
+  }, [range.monthDate, month])
 
   const findCurrentNote = useCallback(
     (userId) => (notesByAgent[userId] ?? []).find(
@@ -229,42 +229,41 @@ export default function Completion() {
   const onTrackCount     = enriched.filter(a => a.status === 'on-track').length
   const missedLastCount  = enriched.filter(a => a.missedLast).length
 
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
+  const exportExcel = () => {
     const rows = enriched.map(a => ({
       'Employee ID':         a.employee_id,
       'Name':                a.name,
-      'Sessions (Month)':    a.count,
+      [`Sessions (${label})`]: a.count,
       'Required':            REQUIRED,
       'Status':              STATUS_META[a.status].label,
-      'Last Month Sessions': a.lastCount,
-      'Missed Last Month':   a.missedLast ? 'Yes' : 'No',
+      [`Sessions (${prevLabel})`]: a.lastCount,
+      [`Missed ${prevLabel}`]: a.missedLast ? 'Yes' : 'No',
       'Recert Note':         a.currentNote?.reason ?? '',
     }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Completion Tracker')
-    ws['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 40 }]
-    XLSX.writeFile(wb, `completion_tracker_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    exportXlsx({
+      filename: `completion_tracker_${month}`,
+      sheets: [
+        { name: 'Completion Tracker', rows, cols: [{ wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 20 }, { wch: 18 }, { wch: 40 }] },
+        summarySheet(label, { 'Required per month': REQUIRED, 'Previous month': prevLabel }),
+      ],
+    })
   }
 
   const [complianceLoading, setComplianceLoading] = useState(false)
 
   const exportComplianceRecords = useCallback(async () => {
     setComplianceLoading(true)
-    const XLSX = await import('xlsx')
-    const now = new Date()
-    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const label = now.toLocaleString('default', { month: 'long', year: 'numeric' })
-
-    const { data: sessions } = await supabase
+    // This query had NO upper bound. Pointed at a historical month it would
+    // have swept in every session from that month through to today. It is also
+    // paged now: ten agents at up to ~180 sessions each can exceed the
+    // 1000-row response cap.
+    const sessions = await fetchAllRows(() => supabase
       .from('sessions')
       .select('user_id, score, total_time_seconds, completed_at, started_at, users(name, employee_id)')
       .eq('status', 'completed')
-      .gte('completed_at', firstOfMonth)
-      .order('completed_at', { ascending: true })
-
-    const wb = XLSX.utils.book_new()
+      .gte('completed_at', range.from)
+      .lt('completed_at', range.to)
+      .order('completed_at', { ascending: true })).catch(() => [])
 
     // Sheet 1 — Summary
     const summaryRows = enriched.map(a => ({
@@ -274,14 +273,10 @@ export default function Completion() {
       'Required':         REQUIRED,
       'Status':           STATUS_META[a.status].label,
       'Compliant':        a.status === 'on-track' ? 'Yes' : 'No',
-      'Prev Month':       a.lastCount,
+      [`Prev (${prevLabel})`]: a.lastCount,
       'Missed Prev':      a.missedLast ? 'Yes' : 'No',
       'Recert Note':      a.currentNote?.reason ?? '',
     }))
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
-    wsSummary['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }]
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary')
-
     // Sheet 2 — Session Detail
     const detailRows = (sessions ?? []).map(s => ({
       'Employee ID':   s.users?.employee_id ?? '—',
@@ -291,14 +286,21 @@ export default function Completion() {
       'Score':         s.score ?? '',
       'Duration (min)': s.total_time_seconds ? Math.round(s.total_time_seconds / 60) : '',
     }))
-    const wsDetail = XLSX.utils.json_to_sheet(detailRows)
-    wsDetail['!cols'] = [{ wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 16 }]
-    XLSX.utils.book_append_sheet(wb, wsDetail, 'Session Detail')
-
-    const filename = `compliance_records_${label.replace(' ', '_')}_${now.toISOString().slice(0, 10)}.xlsx`
-    XLSX.writeFile(wb, filename)
+    await exportXlsx({
+      filename: `compliance_records_${month}`,
+      sheets: [
+        { name: 'Summary', rows: summaryRows, cols: [{ wch: 14 }, { wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 40 }] },
+        { name: 'Session Detail', rows: detailRows, cols: [{ wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 16 }] },
+        summarySheet(label, {
+          'Required per month': REQUIRED,
+          'Compliant': enriched.filter(a => a.status === 'on-track').length,
+          'Of': enriched.length,
+          'Previous month': prevLabel,
+        }),
+      ],
+    })
     setComplianceLoading(false)
-  }, [enriched])
+  }, [enriched, label, month, prevLabel, range.from, range.to])
 
   const urgentCount = flaggedCount + atRiskCount + belowTargetCount
 
@@ -314,14 +316,15 @@ export default function Completion() {
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Completion Tracker</h1>
             <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>
-              {monthLabel()} — {REQUIRED} sessions required &nbsp;·&nbsp;
-              <span style={{ color: daysLeft <= 3 ? '#fb923c' : 'var(--color-brand-muted)' }}>
-                {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+              {label} — {REQUIRED} sessions required &nbsp;·&nbsp;
+              <span style={{ color: isCurrent && daysLeft <= 3 ? '#fb923c' : 'var(--color-brand-muted)' }}>
+                {isCurrent ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left` : 'month closed'}
               </span>
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 self-start">
+          <MonthPicker value={month} onChange={setMonth} options={options} />
           <button onClick={exportComplianceRecords} disabled={complianceLoading}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-muted)' }}
@@ -363,12 +366,14 @@ export default function Completion() {
       )}
 
       {/* Last month flag banner */}
-      {missedLastCount > 0 && !bannerDismissed && (
+      {/* Current month only: a "did not meet last month's target" alert is an
+          act-now prompt, and the table already reports a closed month's status. */}
+      {isCurrent && missedLastCount > 0 && !bannerDismissed && (
         <div className="flex items-start gap-2 p-3 rounded-lg mb-5 text-sm"
           style={{ background: '#1a0a0a', border: '1px solid #fca5a5', color: '#fca5a5' }}>
           <Flag size={16} className="shrink-0 mt-0.5" />
           <span className="flex-1">
-            {missedLastCount} agent{missedLastCount > 1 ? 's' : ''} did not meet the {REQUIRED}-session target in {monthLabel(-1)}.
+            {missedLastCount} agent{missedLastCount > 1 ? 's' : ''} did not meet the {REQUIRED}-session target in {prevLabel}.
           </span>
           <button onClick={dismissBanner} className="shrink-0 p-0.5 rounded hover:opacity-70 transition-opacity"
             aria-label="Dismiss" style={{ color: '#fca5a5' }}>
@@ -427,7 +432,7 @@ export default function Completion() {
                             <p className="text-xs font-mono" style={{ color: 'var(--color-brand-muted)' }}>{a.employee_id}</p>
                           </div>
                           {a.missedLast && (
-                            <span title={`Missed ${monthLabel(-1)} target (${a.lastCount}/${REQUIRED})`}
+                            <span title={`Missed ${prevLabel} target (${a.lastCount}/${REQUIRED})`}
                               className="px-1.5 py-0.5 rounded text-xs font-medium"
                               style={{ background: '#2a0a0a', color: '#fca5a5' }}>
                               prev

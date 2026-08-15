@@ -1,19 +1,26 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
-import { exportXlsx } from '../../lib/exportXlsx'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { isCurrentMonth, monthKeyOf, monthLabel } from '../../lib/monthRange'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 import {
   BarChart3, Download, AlertTriangle, ArrowUp, ArrowDown, Minus,
 } from 'lucide-react'
 
 const MONTHS = 6
 
-function monthShort(d) {
-  return new Date(d + 'T00:00:00').toLocaleString('en-US', { month: 'short', year: '2-digit' })
-}
-function monthLong(d) {
-  return new Date(d + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
-}
+// The RPCs return `month` as a 'YYYY-MM-DD' DATE. Route it through the shared
+// helpers so the UTC month contract is applied in one place.
+//
+// (The previous local helpers appended 'T00:00:00' to force a local parse —
+// which was the correct fix for `new Date('2026-03-01')` being UTC-parsed and
+// rendering as February west of UTC. It is replaced here because monthLabel
+// centralises that concern, not because the idiom was wrong. Don't "clean up"
+// the same pattern elsewhere.)
+const monthShort = (d) => monthLabel(monthKeyOf(d), { style: 'short' })
+const monthLong  = (d) => monthLabel(monthKeyOf(d))
 
 // KPI definitions — how each metric reads off a scorecard row.
 const KPIS = [
@@ -70,6 +77,8 @@ function Sparkline({ values, color = 'var(--color-brand-cyan)' }) {
 }
 
 export default function Scorecard() {
+  // The picker selects the END month of the trailing MONTHS-long window.
+  const { month, setMonth, options, range, isCurrent, label } = useMonthSelection()
   const [rows,     setRows]     = useState([])   // ascending months
   const [games,    setGames]    = useState([])   // per-game per-month accuracy
   const [loading,  setLoading]  = useState(true)
@@ -78,15 +87,15 @@ export default function Scorecard() {
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     const [scRes, gRes] = await Promise.all([
-      supabase.rpc('get_department_scorecard', { p_months: MONTHS }),
-      supabase.rpc('get_department_scorecard_games', { p_months: MONTHS }),
+      supabase.rpc('get_department_scorecard',       { p_months: MONTHS, p_end_month: range.monthDate }),
+      supabase.rpc('get_department_scorecard_games', { p_months: MONTHS, p_end_month: range.monthDate }),
     ])
     if (scRes.error) { setError(scRes.error.message); setLoading(false); return }
     setRows(scRes.data ?? [])
     if (gRes.error) console.error('scorecard games:', gRes.error)
     setGames(gRes.data ?? [])
     setLoading(false)
-  }, [])
+  }, [range.monthDate])
 
   useEffect(() => { load() }, [load])
 
@@ -119,10 +128,14 @@ export default function Scorecard() {
       return row
     })
     exportXlsx({
-      filename: 'stellaris_scorecard',
+      filename: `stellaris_scorecard_${month}`,
       sheets: [
         { name: 'Scorecard', rows: scoreRows, cols: [{ wch: 18 }, { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 14 }] },
         { name: 'Per-Game Accuracy', rows: gameRows },
+        summarySheet(`${MONTHS} months ending ${label}`, {
+          'Months': MONTHS,
+          'Note': `Recert rate is measured against the current active roster (${latest?.roster ?? 0}), not the roster as it stood in each month.`,
+        }),
       ],
     })
   }
@@ -142,15 +155,18 @@ export default function Scorecard() {
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Department Scorecard</h1>
             <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>
-              Month over month · last {MONTHS} months
+              Month over month · {MONTHS} months ending {label}
             </p>
           </div>
         </div>
-        <button onClick={exportExcel} disabled={!rows.length}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)', opacity: rows.length ? 1 : 0.5 }}>
-          <Download size={16} /> Export Excel
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <MonthPicker value={month} onChange={setMonth} options={options} />
+          <button onClick={exportExcel} disabled={!rows.length}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)', opacity: rows.length ? 1 : 0.5 }}>
+            <Download size={16} /> Export Excel
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -171,7 +187,8 @@ export default function Scorecard() {
         <>
           {/* MTD note */}
           <p className="text-xs mb-4" style={{ color: 'var(--color-brand-muted)' }}>
-            Deltas compare {latest && monthLong(latest.month)} <strong>(month to date)</strong> with {prev && monthLong(prev.month)}.
+            Deltas compare {latest && monthLong(latest.month)}
+            {isCurrent && <> <strong>(month to date)</strong></>} with {prev && monthLong(prev.month)}.
           </p>
 
           {/* KPI cards */}
@@ -201,6 +218,10 @@ export default function Scorecard() {
             style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
             <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--color-brand-border)' }}>
               <p className="text-sm font-semibold" style={{ color: 'var(--color-brand-text)' }}>Monthly detail</p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-brand-muted)' }}>
+                Recert rate is measured against the current active roster ({Number(latest?.roster ?? 0)}),
+                not the roster as it stood in each month.
+              </p>
             </div>
             <div className="table-responsive">
               <table className="w-full text-sm min-w-[560px]">
@@ -218,7 +239,10 @@ export default function Scorecard() {
                     return (
                       <tr key={r.month} style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--color-brand-border)' : 'none' }}>
                         <td className="px-4 py-2.5 font-medium" style={{ color: 'var(--color-brand-text)' }}>
-                          {monthShort(r.month)}{isLatest && <span className="text-[10px] ml-1" style={{ color: 'var(--color-brand-cyan)' }}>MTD</span>}
+                          {monthShort(r.month)}
+                          {isLatest && isCurrentMonth(monthKeyOf(r.month)) && (
+                            <span className="text-[10px] ml-1" style={{ color: 'var(--color-brand-cyan)' }}>MTD</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 font-mono" style={{ color: 'var(--color-brand-text)' }}>{r.avg_score != null ? Number(r.avg_score).toFixed(0) : '—'}</td>
                         <td className="px-4 py-2.5 font-mono" style={{ color: 'var(--color-brand-text)' }}>{Number(r.total_sessions ?? 0)}</td>

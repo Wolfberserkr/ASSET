@@ -2,34 +2,22 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
+import { fetchInChunks } from '../../lib/fetchInChunks'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import { prevMonthKey, monthLabel } from '../../lib/monthRange'
+import MonthPicker from '../../components/MonthPicker'
 import { BarChart2, Download, AlertTriangle, Users, HelpCircle } from 'lucide-react'
 
-const DATE_RANGES = [
-  { label: 'Last 30 days',  value: '30' },
-  { label: 'Last 90 days',  value: '90' },
-  { label: 'Last 6 months', value: '180' },
-  { label: 'All time',      value: 'all' },
-]
+// The month picker REPLACES the old rolling 30/90/180/all selector rather
+// than sitting beside it: two independent windows in one header can produce
+// an empty intersection with no honest way to explain it, and the rolling
+// views are recoverable by stepping through months.
 
 const barColor = pct =>
   pct < 60 ? 'var(--color-brand-danger)'
   : pct < 75 ? 'var(--color-brand-warning)'
   : 'var(--color-brand-success)'
-
-// Fetch rows where `column IN ids`, split into chunks so we never blow past
-// PostgREST's .in() list / URL-length limits (which silently truncate results).
-// `buildQuery(chunk)` must return a supabase query for one chunk of ids.
-const IN_CHUNK_SIZE = 200
-async function fetchInChunks(ids, buildQuery) {
-  const out = []
-  for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
-    const chunk = ids.slice(i, i + IN_CHUNK_SIZE)
-    const { data, error } = await buildQuery(chunk)
-    if (error) throw error
-    if (data) out.push(...data)
-  }
-  return out
-}
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }) {
@@ -49,6 +37,7 @@ function Section({ title, icon: Icon, children }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function WeakAreas() {
   const { drillRole } = useAuth()
+  const { month, setMonth, options, range, label } = useMonthSelection()
   const [gameStats,    setGameStats]    = useState([])
   const [worstQs,      setWorstQs]      = useState([])
   const [agentRows,    setAgentRows]    = useState([])
@@ -58,7 +47,6 @@ export default function WeakAreas() {
   const [loadError,    setLoadError]    = useState(null)
 
   // Filters
-  const [dateRange,     setDateRange]     = useState('90')
   const [selectedAgent, setSelectedAgent] = useState('all')
   const [selectedGame,  setSelectedGame]  = useState('all')
 
@@ -66,10 +54,6 @@ export default function WeakAreas() {
     setLoading(true)
     setLoadError(null)
     try {
-
-    const dateFrom = dateRange === 'all'
-      ? null
-      : new Date(Date.now() - Number(dateRange) * 86400000).toISOString()
 
     // 1. Games + agents (static-ish, always fetch)
     const [gamesRes, agentsRes] = await Promise.all([
@@ -83,9 +67,9 @@ export default function WeakAreas() {
     const agentList = agentsRes.data ?? []
     setAgents(agentList)
 
-    // 2. Completed sessions matching date + agent filter
+    // 2. Completed sessions in the selected month, plus the agent filter
     let sQ = supabase.from('sessions').select('id, user_id').eq('status', 'completed')
-    if (dateFrom)                    sQ = sQ.gte('completed_at', dateFrom)
+      .gte('completed_at', range.from).lt('completed_at', range.to)
     if (selectedAgent !== 'all')     sQ = sQ.eq('user_id', selectedAgent)
     const { data: sessions, error: sErr } = await sQ
     if (sErr) throw sErr
@@ -185,29 +169,20 @@ export default function WeakAreas() {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, selectedAgent, selectedGame, drillRole])
+  }, [range.from, range.to, selectedAgent, selectedGame, drillRole])
 
   useEffect(() => { loadData() }, [loadData])
 
   // ── Export ────────────────────────────────────────────────────────────────
-  const exportExcel = async () => {
-    const XLSX = await import('xlsx')
-    const wb = XLSX.utils.book_new()
-
+  const exportExcel = () => {
     const gameRows = gameStats.map(g => ({
       Game: g.name, Correct: g.correct, Total: g.total, 'Accuracy %': g.pct ?? '—',
     }))
-    const ws1 = XLSX.utils.json_to_sheet(gameRows)
-    ws1['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }]
-    XLSX.utils.book_append_sheet(wb, ws1, 'By Game')
 
     const qRows = worstQs.map(q => ({
       Question: q.text, Game: q.gameName, Category: q.category,
       Correct: q.correct, Total: q.total, 'Accuracy %': q.pct,
     }))
-    const ws2 = XLSX.utils.json_to_sheet(qRows)
-    ws2['!cols'] = [{ wch: 60 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }]
-    XLSX.utils.book_append_sheet(wb, ws2, 'Worst Questions')
 
     const agentRows2 = agentRows.map(ag => {
       const row = { 'Name': ag.name, 'Employee ID': ag.employee_id, 'Overall %': ag.overall ?? '—' }
@@ -217,10 +192,23 @@ export default function WeakAreas() {
       }
       return row
     })
-    const ws3 = XLSX.utils.json_to_sheet(agentRows2)
-    XLSX.utils.book_append_sheet(wb, ws3, 'By Agent')
 
-    XLSX.writeFile(wb, `weak_areas_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    const totalAnswers = gameStats.reduce((s, g) => s + g.total, 0)
+    exportXlsx({
+      filename: `weak_areas_${month}`,
+      sheets: [
+        { name: 'By Game', rows: gameRows, cols: [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }] },
+        { name: 'Worst Questions', rows: qRows, cols: [{ wch: 60 }, { wch: 20 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 12 }] },
+        { name: 'By Agent', rows: agentRows2 },
+        // The workbook previously recorded none of its three active filters,
+        // which made two exports indistinguishable once saved.
+        summarySheet(label, {
+          'Agent filter': selectedAgent === 'all' ? 'All' : (agents.find(a => a.id === selectedAgent)?.name ?? selectedAgent),
+          'Game filter':  selectedGame  === 'all' ? 'All' : (gameNames[selectedGame] ?? selectedGame),
+          'Total answers': totalAnswers,
+        }),
+      ],
+    })
   }
 
   const overallPct = gameStats.length
@@ -254,12 +242,8 @@ export default function WeakAreas() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {/* Date range */}
-        <select value={dateRange} onChange={e => setDateRange(e.target.value)}
-          className="px-3 py-2 rounded-lg text-sm"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }}>
-          {DATE_RANGES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-        </select>
+        {/* Reporting month (replaces the old rolling date-range selector) */}
+        <MonthPicker value={month} onChange={setMonth} options={options} />
 
         {/* Agent */}
         <select value={selectedAgent} onChange={e => setSelectedAgent(e.target.value)}
@@ -293,7 +277,14 @@ export default function WeakAreas() {
       ) : gameStats.length === 0 ? (
         <div className="rounded-xl p-10 text-center"
           style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)' }}>
-          <p style={{ color: 'var(--color-brand-muted)' }}>No data for the selected filters.</p>
+          <p style={{ color: 'var(--color-brand-muted)' }}>No data for {label}.</p>
+          {/* On the 1st of a month this is the normal state, so offer the way
+              out rather than leaving a dead end. */}
+          <button onClick={() => setMonth(prevMonthKey(month))}
+            className="mt-3 px-3 py-1.5 rounded-lg text-sm"
+            style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
+            ← Go to {monthLabel(prevMonthKey(month))}
+          </button>
         </div>
       ) : (
         <div className="space-y-5">
