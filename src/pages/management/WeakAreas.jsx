@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
+import { fetchInChunks } from '../../lib/fetchInChunks'
 import { BarChart2, Download, AlertTriangle, Users, HelpCircle } from 'lucide-react'
 
 const DATE_RANGES = [
@@ -15,21 +16,6 @@ const barColor = pct =>
   pct < 60 ? 'var(--color-brand-danger)'
   : pct < 75 ? 'var(--color-brand-warning)'
   : 'var(--color-brand-success)'
-
-// Fetch rows where `column IN ids`, split into chunks so we never blow past
-// PostgREST's .in() list / URL-length limits (which silently truncate results).
-// `buildQuery(chunk)` must return a supabase query for one chunk of ids.
-const IN_CHUNK_SIZE = 200
-async function fetchInChunks(ids, buildQuery) {
-  const out = []
-  for (let i = 0; i < ids.length; i += IN_CHUNK_SIZE) {
-    const chunk = ids.slice(i, i + IN_CHUNK_SIZE)
-    const { data, error } = await buildQuery(chunk)
-    if (error) throw error
-    if (data) out.push(...data)
-  }
-  return out
-}
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, icon: Icon, children }) {

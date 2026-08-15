@@ -34,3 +34,21 @@ export async function exportXlsx({ filename, sheets, sheet, rows, cols }) {
   const today = new Date().toISOString().slice(0, 10)
   XLSX.writeFile(wb, `${filename}_${today}.xlsx`)
 }
+
+// A period-stamp sheet, so a workbook always records what it covers rather
+// than relying on whoever opens it remembering.
+//
+// Note the two dates do different jobs: the trailing date exportXlsx appends
+// to every filename is "generated on", while `period` is the reporting window.
+// A month-scoped export carries both — completion_tracker_2026-03_2026-08-15.xlsx
+// is March's data, pulled in August.
+//
+//   sheets: [ ...,
+//     summarySheet('March 2026', { 'Agent filter': 'All', Note: '…' }) ]
+export function summarySheet(period, extra = {}) {
+  return {
+    name: 'Summary',
+    rows: [{ Period: period, Generated: new Date().toLocaleString(), ...extra }],
+    cols: [{ wch: 26 }, { wch: 22 }],
+  }
+}
