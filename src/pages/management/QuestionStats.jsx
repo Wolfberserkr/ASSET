@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../../lib/supabase'
 import { fetchAllRows } from '../../lib/fetchAllRows'
-import { exportXlsx } from '../../lib/exportXlsx'
+import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
+import { useMonthSelection } from '../../hooks/useMonthSelection'
+import MonthPicker from '../../components/MonthPicker'
 import Layout from '../../components/Layout'
 import { ClipboardList, Download, Search, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react'
 
@@ -43,6 +45,7 @@ function SortHeader({ label, col, sort, onSort }) {
 }
 
 export default function QuestionStats() {
+  const { month, setMonth, options, range, isCurrent, label, shortLabel } = useMonthSelection()
   const [questions, setQuestions] = useState([])
   const [games,     setGames]     = useState([])
   const [loading,   setLoading]   = useState(true)
@@ -63,12 +66,18 @@ export default function QuestionStats() {
   }
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([
       // get_question_stats computes times_shown / times_correct from
       // session_answers scoped to the caller's department (surveillance
       // for Henk/Angelo, pit for Raquel) — the shared question pool with
       // per-department counts, not the global questions.* counters.
-      fetchAllRows(() => supabase.rpc('get_question_stats'))
+      //
+      // It returns two windows: times_* for the selected month, and
+      // lifetime_* for all time. Exposure and accuracy read the month
+      // columns; "never shown" and the effectiveness flags read lifetime
+      // (see the notes on shownQs / shownLifetime below).
+      fetchAllRows(() => supabase.rpc('get_question_stats', { p_month: range.monthDate }))
         .then(rows => rows.map(r => ({ ...r, games: r.game_name ? { name: r.game_name } : null })))
         .catch(() => []),
       supabase.from('games').select('id, name').eq('is_active', true),
@@ -77,7 +86,7 @@ export default function QuestionStats() {
       setGames(gRes.data ?? [])
       setLoading(false)
     })
-  }, [])
+  }, [range.monthDate])
 
   // Pool health per game (active questions only)
   const poolHealth = useMemo(() => {
@@ -99,7 +108,7 @@ export default function QuestionStats() {
       if (filterDiff !== 'all' && String(q.difficulty) !== filterDiff)        return false
       if (filterStatus === 'active'   && !q.is_active)  return false
       if (filterStatus === 'inactive' && q.is_active)   return false
-      if (filterStatus === 'unshown'  && q.times_shown > 0) return false
+      if (filterStatus === 'unshown'  && q.lifetime_shown > 0) return false
       const s = search.toLowerCase()
       if (s && !q.question_text.toLowerCase().includes(s) &&
                !(q.games?.name ?? '').toLowerCase().includes(s) &&
@@ -125,41 +134,74 @@ export default function QuestionStats() {
     return list
   }, [questions, filterGame, filterDiff, filterStatus, search, sort])
 
-  // Summary stats (over all active questions)
-  const activeQs   = questions.filter(q => q.is_active)
-  const shownQs    = activeQs.filter(q => q.times_shown > 0)
+  // Summary stats (over all active questions).
+  //
+  // Two source sets, deliberately — they answer questions about different
+  // time windows and collapsing them into one breaks both:
+  //
+  //   shownQs       — attempted in the SELECTED MONTH. Feeds avgAcc, which
+  //                   should mean "how did we do in March". Filtering on the
+  //                   month column also guarantees times_shown > 0, so the
+  //                   division below can never be 0/0 -> NaN.
+  //   shownLifetime — attempted EVER. Feeds the effectiveness flags, which
+  //                   gate on EASY_FLOOR (10 attempts). A month yields roughly
+  //                   4 attempts per question across this pool, so month-scoped
+  //                   flags would essentially all disappear — effectiveness is
+  //                   inherently a lifetime property.
+  const activeQs      = questions.filter(q => q.is_active)
+  const shownQs       = activeQs.filter(q => q.times_shown > 0)
+  const shownLifetime = activeQs.filter(q => q.lifetime_shown > 0)
+
   const avgAcc     = shownQs.length
     ? Math.round(shownQs.reduce((s, q) => s + (q.times_correct / q.times_shown), 0) / shownQs.length * 100)
     : null
-  const flaggedQs  = shownQs.filter(q => {
-    const pct = Math.round((q.times_correct / q.times_shown) * 100)
-    return (pct >= TOO_EASY || pct <= TOO_HARD) && q.times_shown >= EASY_FLOOR
+  const flaggedQs  = shownLifetime.filter(q => {
+    const pct = Math.round((q.lifetime_correct / q.lifetime_shown) * 100)
+    return (pct >= TOO_EASY || pct <= TOO_HARD) && q.lifetime_shown >= EASY_FLOOR
   })
-  const neverShown = activeQs.filter(q => q.times_shown === 0).length
+  // "Never shown" means never, not "not this month" — otherwise most of the
+  // pool would be flagged as a coverage gap on any historical month.
+  const neverShown = activeQs.filter(q => q.lifetime_shown === 0).length
 
   const exportExcel = () => {
     const rows = displayed.map(q => {
-      const pct = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : ''
-      const flag = q.times_shown >= EASY_FLOOR ? effectivenessFlag(pct, q.times_shown) : null
+      const pct     = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : ''
+      const lifePct = q.lifetime_shown ? Math.round((q.lifetime_correct / q.lifetime_shown) * 100) : ''
+      const flag    = q.lifetime_shown >= EASY_FLOOR ? effectivenessFlag(lifePct, q.lifetime_shown) : null
       return {
-        'Game':          q.games?.name ?? 'Procedure',
-        'Category':      q.category,
-        'Difficulty':    DIFF_LABEL[q.difficulty] ?? q.difficulty,
-        'Question':      q.question_text,
-        'Times Shown':   q.times_shown,
-        'Times Correct': q.times_correct,
-        'Accuracy %':    pct,
-        'Flag':          flag?.label ?? '',
-        'Active':        q.is_active ? 'Yes' : 'No',
+        'Game':             q.games?.name ?? 'Procedure',
+        'Category':         q.category,
+        'Difficulty':       DIFF_LABEL[q.difficulty] ?? q.difficulty,
+        'Question':         q.question_text,
+        'Times Shown':      q.times_shown,
+        'Times Correct':    q.times_correct,
+        'Accuracy %':       pct,
+        'Lifetime Shown':   q.lifetime_shown,
+        'Lifetime Correct': q.lifetime_correct,
+        'Lifetime Acc %':   lifePct,
+        'Flag (lifetime)':  flag?.label ?? '',
+        'Active':           q.is_active ? 'Yes' : 'No',
       }
     })
     exportXlsx({
-      filename: 'question_stats',
-      sheet: 'Question Stats',
-      rows,
-      cols: [
-        { wch: 18 }, { wch: 20 }, { wch: 12 }, { wch: 60 },
-        { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 8 },
+      filename: `question_stats_${month}`,
+      sheets: [
+        {
+          name: 'Question Stats',
+          rows,
+          cols: [
+            { wch: 18 }, { wch: 20 }, { wch: 12 }, { wch: 60 },
+            { wch: 12 }, { wch: 14 }, { wch: 12 },
+            { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 8 },
+          ],
+        },
+        summarySheet(label, {
+          'Questions listed': displayed.length,
+          'Game filter':      filterGame === 'all' ? 'All' : (games.find(g => g.id === filterGame)?.name ?? filterGame),
+          'Difficulty filter': filterDiff === 'all' ? 'All' : (DIFF_LABEL[filterDiff] ?? filterDiff),
+          'Status filter':    filterStatus,
+          'Note': 'Times Shown/Correct/Accuracy cover the reporting month. Lifetime columns and the effectiveness flag cover all time.',
+        }),
       ],
     })
   }
@@ -175,18 +217,26 @@ export default function QuestionStats() {
           </div>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--color-brand-text)' }}>Question Stats</h1>
-            <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>Accuracy, exposure, and effectiveness per question</p>
+            <p className="text-sm" style={{ color: 'var(--color-brand-muted)' }}>
+              Exposure and accuracy for {label} · pool status and effectiveness flags are lifetime
+            </p>
           </div>
         </div>
-        <button onClick={exportExcel}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium self-start"
-          style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
-          <Download size={16} /> Export Excel
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <MonthPicker value={month} onChange={setMonth} options={options} />
+          <button onClick={exportExcel}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'var(--color-brand-card)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-cyan)' }}>
+            <Download size={16} /> Export Excel
+          </button>
+        </div>
       </div>
 
-      {/* Pool health warnings */}
-      {poolHealth.map(g => (
+      {/* Pool health warnings — current month only. These count questions that
+          are active TODAY and are a fix-this-now signal; bolted onto a
+          historical month they would be meaningless, and `is_active` cannot be
+          reconstructed for a past month anyway. */}
+      {isCurrent && poolHealth.map(g => (
         <div key={g.name} className="flex items-center gap-2 p-3 rounded-lg mb-3 text-sm"
           style={{ background: '#1c1a0f', border: '1px solid var(--color-brand-warning)', color: 'var(--color-brand-warning)' }}>
           <AlertTriangle size={15} className="shrink-0" />
@@ -198,8 +248,8 @@ export default function QuestionStats() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Active Questions', value: activeQs.length,  color: 'var(--color-brand-text)' },
-          { label: 'Avg Accuracy',     value: avgAcc != null ? `${avgAcc}%` : '—', color: avgAcc != null ? accColor(avgAcc) : 'var(--color-brand-muted)' },
-          { label: 'Flagged',          value: flaggedQs.length, color: flaggedQs.length ? 'var(--color-brand-warning)' : 'var(--color-brand-muted)' },
+          { label: `Avg Accuracy (${shortLabel})`, value: avgAcc != null ? `${avgAcc}%` : '—', color: avgAcc != null ? accColor(avgAcc) : 'var(--color-brand-muted)' },
+          { label: 'Flagged (lifetime)', value: flaggedQs.length, color: flaggedQs.length ? 'var(--color-brand-warning)' : 'var(--color-brand-muted)' },
           { label: 'Never Shown',      value: neverShown,       color: neverShown ? '#fb923c' : 'var(--color-brand-muted)' },
         ].map(c => (
           <div key={c.label} className="rounded-xl p-4"
@@ -281,8 +331,12 @@ export default function QuestionStats() {
               </thead>
               <tbody>
                 {displayed.map((q, i) => {
-                  const pct  = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : null
-                  const flag = pct !== null ? effectivenessFlag(pct, q.times_shown) : null
+                  // Accuracy shown in the row is month-scoped; the flag is a
+                  // lifetime judgement. They are different windows, so the flag
+                  // is labelled to stop "33%" next to "Too Easy" reading as a bug.
+                  const pct     = q.times_shown ? Math.round((q.times_correct / q.times_shown) * 100) : null
+                  const lifePct = q.lifetime_shown ? Math.round((q.lifetime_correct / q.lifetime_shown) * 100) : null
+                  const flag    = lifePct !== null ? effectivenessFlag(lifePct, q.lifetime_shown) : null
                   return (
                     <tr key={q.id}
                       style={{
@@ -301,8 +355,11 @@ export default function QuestionStats() {
                       </td>
                       <td className="px-4 py-3 font-mono" style={{ color: 'var(--color-brand-text)' }}>
                         {q.times_shown === 0
-                          ? <span style={{ color: '#fb923c' }}>0</span>
+                          ? <span style={{ color: q.lifetime_shown ? 'var(--color-brand-muted)' : '#fb923c' }}>0</span>
                           : q.times_shown}
+                        <span className="block text-[10px] font-normal" style={{ color: 'var(--color-brand-muted)' }}>
+                          {Number(q.lifetime_shown ?? 0)} lifetime
+                        </span>
                       </td>
                       <td className="px-4 py-3 font-mono" style={{ color: 'var(--color-brand-text)' }}>
                         {q.times_correct}
@@ -313,8 +370,9 @@ export default function QuestionStats() {
                       <td className="px-4 py-3">
                         {flag && (
                           <span className="px-2 py-0.5 rounded text-xs font-medium"
+                            title={`${flag.label} over ${q.lifetime_shown} lifetime attempts (${lifePct}%). The accuracy column is for the selected month.`}
                             style={{ background: flag.bg, color: flag.color }}>
-                            {flag.label}
+                            {flag.label} <span className="opacity-60">(lifetime)</span>
                           </span>
                         )}
                       </td>

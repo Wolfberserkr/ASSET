@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import Layout from '../../components/Layout'
 import { exportXlsx } from '../../lib/exportXlsx'
+import { monthKeyOf, monthLabel, monthOptions, monthRange } from '../../lib/monthRange'
 import {
   FileClock, Download, AlertTriangle, ShieldAlert, Users, Activity,
 } from 'lucide-react'
@@ -45,26 +46,70 @@ const NOTABLE = new Set([
 
 const labelFor = (a) => ACTION_LABELS[a] ?? a
 
+// This is the one page where rolling windows and calendar months coexist.
+// Everywhere else the month picker replaces the rolling selector, but here the
+// rolling window IS the product — "the 7-day security digest" is the reason the
+// page exists — so both live in one <select> split by <optgroup>.
+//
+// A period is encoded as 'd:<days>' or 'm:<YYYY-MM>'.
+function periodWindow(period) {
+  if (period.startsWith('m:')) {
+    const { from, to } = monthRange(period.slice(2))
+    return { since: from, until: to }
+  }
+  const days = Number(period.slice(2))
+  return { since: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(), until: null }
+}
+
+function periodLabelOf(period) {
+  if (period.startsWith('m:')) return monthLabel(period.slice(2))
+  const days = Number(period.slice(2))
+  return `Last ${PERIODS.find(p => p.days === days)?.label ?? `${days} days`}`
+}
+
+// Filename fragment: '7d' or '2026-03'.
+const periodSlug = (period) =>
+  period.startsWith('m:') ? period.slice(2) : `${period.slice(2)}d`
+
 export default function AuditDigest() {
-  const [days,     setDays]     = useState(7)
+  const [period,   setPeriod]   = useState('d:7')
   const [digest,   setDigest]   = useState(null)
   const [failed,   setFailed]   = useState([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(null)
+  const [months,   setMonths]   = useState(() => monthOptions())
+
+  // This page owns its own period state rather than using useMonthSelection —
+  // picking a rolling window here must not hijack the shared ?m= that the
+  // other management pages navigate by.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      supabase.from('sessions').select('started_at').order('started_at', { ascending: true }).limit(1),
+      supabase.from('audit_log').select('created_at').order('created_at', { ascending: true }).limit(1),
+    ]).then(([sRes, aRes]) => {
+      if (cancelled) return
+      const candidates = []
+      if (sRes.data?.[0]?.started_at) candidates.push(monthKeyOf(sRes.data[0].started_at))
+      if (aRes.data?.[0]?.created_at) candidates.push(monthKeyOf(aRes.data[0].created_at))
+      setMonths(monthOptions({ earliest: candidates.sort()[0] ?? null }))
+    }).catch(() => { /* keep the default window */ })
+    return () => { cancelled = true }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+    const { since, until } = periodWindow(period)
     const [dRes, fRes] = await Promise.all([
-      supabase.rpc('get_audit_digest', { p_since: since }),
-      supabase.rpc('get_failed_login_summary', { p_since: since }),
+      supabase.rpc('get_audit_digest', { p_since: since, p_until: until }),
+      supabase.rpc('get_failed_login_summary', { p_since: since, p_until: until }),
     ])
     if (dRes.error) { setError(dRes.error.message); setLoading(false); return }
     setDigest(dRes.data ?? { by_action: [], by_user: [], total: 0 })
     if (fRes.error) console.error('failed logins:', fRes.error)
     setFailed(fRes.data ?? [])
     setLoading(false)
-  }, [days])
+  }, [period])
 
   useEffect(() => { load() }, [load])
 
@@ -74,9 +119,9 @@ export default function AuditDigest() {
   const totalFailed = failed.reduce((s, f) => s + Number(f.failed ?? 0), 0)
 
   const exportExcel = () => {
-    const periodLabel = PERIODS.find(p => p.days === days)?.label ?? `${days}d`
+    const periodLabel = periodLabelOf(period)
     exportXlsx({
-      filename: `stellaris_audit_digest_${days}d`,
+      filename: `stellaris_audit_digest_${periodSlug(period)}`,
       sheets: [
         { name: 'By Action', rows: byAction.map(a => ({ 'Action': labelFor(a.action), 'Raw Action': a.action, 'Count': Number(a.count) })), cols: [{ wch: 26 }, { wch: 24 }, { wch: 8 }] },
         { name: 'By User', rows: byUser.map(u => ({ 'Name': u.name, 'Employee ID': u.employee_id, 'Events': Number(u.count) })), cols: [{ wch: 24 }, { wch: 14 }, { wch: 8 }] },
@@ -102,10 +147,16 @@ export default function AuditDigest() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-start">
-          <select value={days} onChange={e => setDays(Number(e.target.value))}
+          <select value={period} onChange={e => setPeriod(e.target.value)}
+            aria-label="Digest period"
             className="px-3 py-2 rounded-lg text-sm outline-none"
             style={{ background: 'var(--color-brand-surface)', border: '1px solid var(--color-brand-border)', color: 'var(--color-brand-text)' }}>
-            {PERIODS.map(p => <option key={p.days} value={p.days}>Last {p.label}</option>)}
+            <optgroup label="Rolling">
+              {PERIODS.map(p => <option key={p.days} value={`d:${p.days}`}>Last {p.label}</option>)}
+            </optgroup>
+            <optgroup label="Calendar month">
+              {months.map(m => <option key={m.key} value={`m:${m.key}`}>{m.label}</option>)}
+            </optgroup>
           </select>
           <button onClick={exportExcel} disabled={loading || !digest}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
