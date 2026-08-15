@@ -11,7 +11,31 @@
 -- average resets at the start of each month.
 --
 -- Run once in the Supabase SQL Editor.
+--
+-- ############################################################
+-- ##  SUPERSEDED by add_month_scoped_reports.sql             ##
+-- ##  DO NOT RE-RUN THIS FILE.                               ##
+-- ##                                                          ##
+-- ##  get_all_agents is now get_all_agents(p_month DATE).    ##
+-- ##  Executing the zero-arg CREATE below would add a SECOND ##
+-- ##  overload rather than replacing anything, and PostgREST ##
+-- ##  would then fail with PGRST203 for BOTH call shapes —   ##
+-- ##  taking down Team Dashboard, Completion Tracker and     ##
+-- ##  Remediation at once.                                   ##
+-- ##                                                          ##
+-- ##  Do NOT "fix" this with a DROP FUNCTION guard at the    ##
+-- ##  top: DROP ... get_all_agents() matches nothing (the    ##
+-- ##  zero-arg overload is gone), the CREATE below then      ##
+-- ##  re-creates it, and you are back to PGRST203. The only  ##
+-- ##  DROP that would match is (DATE) — which deletes the    ##
+-- ##  live function. The block is commented out instead.     ##
+-- ##                                                          ##
+-- ##  Kept for history. The live definition lives in         ##
+-- ##  add_month_scoped_reports.sql.                          ##
+-- ############################################################
 -- ============================================================
+
+/*  SUPERSEDED — see the banner above.
 
 CREATE OR REPLACE FUNCTION public.get_all_agents()
 RETURNS TABLE (
@@ -56,3 +80,5 @@ BEGIN
   ORDER BY u.name;
 END;
 $$;
+
+*/
