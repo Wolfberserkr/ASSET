@@ -428,6 +428,14 @@ next to "Blackjack Strategy". Modelled on the Blackjack Review trainer.
 - **Zero database writes**, like the rest of Practice — no session, score, cooldown or adaptive
   difficulty. The bankroll is play money that resets with the page. Only a `PRACTICE_STARTED` audit
   event (scope `blackjack_table`) when launched.
+- **The rules and the three toggles persist** to `localStorage` via `src/lib/blackjackPrefs.js` (key
+  `bj_table_prefs`), so an agent's table setup survives a reload. These are per-device preferences
+  carrying no user data — the same category as `notif_dismissed` in `Layout.jsx` — so they are not
+  scoped per user or cleared on logout. **The bankroll and session stats deliberately do not
+  persist:** play money that survived a reload would start to read like a score. Every stored field
+  is re-validated on read against `DECK_OPTIONS` / `DEPTH_OPTIONS` and coerced to booleans, each
+  falling back independently, so a hand-edited entry can't hand the game a 900-deck shoe or a NaN
+  deal depth, and one bad field can't discard an otherwise valid set.
 - Verified with a 60,000-round basic-strategy simulation: −0.705% player edge on 6-deck H17 (blackjack
   math puts perfect play near −0.5%), and the Hi-Lo count returns to zero on every exhausted shoe.
 

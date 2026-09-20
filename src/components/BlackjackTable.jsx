@@ -10,12 +10,13 @@ import {
 } from 'lucide-react'
 import PlayingCard, { CardBack, useFeltScale, FeltLabel } from './PlayingCard'
 import {
-  CHIPS, DECK_OPTIONS, DEPTH_OPTIONS, DEFAULT_RULES, STARTING_BANKROLL,
+  CHIPS, DECK_OPTIONS, DEPTH_OPTIONS, STARTING_BANKROLL,
   INSURANCE_PAYS, ACTION_NAMES, OUTCOME_LABELS,
   newShoe, cardsLeft, inTray, pastCutCard, hiLo, trueCount, edgeLabel,
   handValue, handLabelOf, describeHand, isBlackjack, isBust, isPair, dealerShouldHit,
   strategyFor, strategyReason, settleHand,
 } from '../lib/blackjackGame'
+import { loadTablePrefs, saveTablePrefs } from '../lib/blackjackPrefs'
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
@@ -164,7 +165,10 @@ function TotalBadge({ cards, dim }) {
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function BlackjackTable() {
-  const [rules,    setRules]    = useState(DEFAULT_RULES)
+  // Read once on mount — later writes go through the persist effect below.
+  const [prefs] = useState(loadTablePrefs)
+
+  const [rules,    setRules]    = useState(prefs.rules)
   const [bankroll, setBankroll] = useState(STARTING_BANKROLL)
   const [bet,      setBet]      = useState(25)
   const [phase,    setPhase]    = useState('betting') // betting|insurance|playing|dealer|settled
@@ -176,9 +180,9 @@ export default function BlackjackTable() {
   const [roundNum, setRoundNum] = useState(0)
   const [insuranceBet, setInsuranceBet] = useState(0)
 
-  const [showHint, setShowHint] = useState(true)
-  const [coach,    setCoach]    = useState(false)
-  const [countQuiz, setCountQuiz] = useState(false)
+  const [showHint, setShowHint] = useState(prefs.showHint)
+  const [coach,    setCoach]    = useState(prefs.coach)
+  const [countQuiz, setCountQuiz] = useState(prefs.countQuiz)
   const [revealCount, setRevealCount] = useState(false) // peek while the quiz hides it
 
   const [coachFlag, setCoachFlag] = useState(null)
@@ -191,7 +195,8 @@ export default function BlackjackTable() {
 
   // The shoe is mutated in place through a ref so the dealer's draw loop always
   // reads the current position; `shoeInfo` mirrors it for rendering.
-  const shoeRef    = useRef(newShoe(DEFAULT_RULES))
+  const shoeRef    = useRef(null)
+  if (shoeRef.current === null) shoeRef.current = newShoe(prefs.rules)
   const runningRef = useRef(0)
   const holeRef    = useRef(null)   // hole card's count value, deferred until reveal
   const busyRef    = useRef(false)  // blocks input while the dealer acts
@@ -247,6 +252,10 @@ export default function BlackjackTable() {
     setHoleHidden(false)
     syncShoe()
   }, [syncShoe])
+
+  useEffect(() => {
+    saveTablePrefs({ rules, showHint, coach, countQuiz })
+  }, [rules, showHint, coach, countQuiz])
 
   const tc = trueCount(shoeInfo.running, shoeInfo.left)
   const countHidden = countQuiz && !revealCount
@@ -572,6 +581,7 @@ export default function BlackjackTable() {
 
   // ── Derived display ────────────────────────────────────────────
   const dealt = hands.length > 0 || dealer.length > 0
+  const betOpen = phase === 'betting' || phase === 'settled'
   const maxCards = Math.max(2, ...hands.map(h => h.cards.length), dealer.length)
   const [feltRef, baseScale] = useFeltScale(maxCards, 1.35)
   const cardScale = hands.length > 1 ? baseScale * 0.62 : baseScale
@@ -943,9 +953,8 @@ export default function BlackjackTable() {
       )}
 
       {/* ── Betting / next round ── */}
-      {(phase === 'betting' || phase === 'settled') && (
-        <div className="rounded-2xl px-4 py-4 mb-4" style={panel}>
-          {phase === 'betting' && !quiz && (
+      <div className="rounded-2xl px-4 py-4 mb-4" style={panel}>
+        {phase === 'betting' && !quiz && (
             <>
               <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
                 {CHIPS.map(c => (
@@ -982,7 +991,7 @@ export default function BlackjackTable() {
             </>
           )}
 
-          {phase === 'settled' && (
+        {phase === 'settled' && (
             <button
               onClick={nextRound}
               className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98]"
@@ -993,15 +1002,17 @@ export default function BlackjackTable() {
             </button>
           )}
 
-          {/* Toggles */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4"
-            style={{ borderTop: '1px solid var(--color-brand-border)' }}>
-            <Toggle label="Strategy hint" sub="Highlights the play" on={showHint} onChange={setShowHint} />
-            <Toggle label="Coach mode" sub="Flags your mistakes" on={coach} onChange={setCoach} />
-            <Toggle label="Count quiz" sub="Hides the count" on={countQuiz} onChange={setCountQuiz} />
-          </div>
+        {/* Toggles stay reachable in every phase — the divider only appears
+            when the betting or settled section is above them. */}
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-3 gap-3 ${betOpen ? 'mt-4 pt-4' : ''}`}
+          style={betOpen ? { borderTop: '1px solid var(--color-brand-border)' } : undefined}
+        >
+          <Toggle label="Strategy hint" sub="Highlights the play" on={showHint} onChange={setShowHint} />
+          <Toggle label="Coach mode" sub="Flags your mistakes" on={coach} onChange={setCoach} />
+          <Toggle label="Count quiz" sub="Hides the count" on={countQuiz} onChange={setCountQuiz} />
         </div>
-      )}
+      </div>
 
       {/* ── Table rules ── */}
       <div className="rounded-2xl px-4 py-4 mb-4" style={panel}>
