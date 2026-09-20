@@ -10,10 +10,11 @@ import useAdvanceOnClick from '../../hooks/useAdvanceOnClick'
 import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
 import BlackjackTrainer from '../../components/BlackjackTrainer'
+import BlackjackTable from '../../components/BlackjackTable'
 import PokerWinnerTrainer from '../../components/PokerWinnerTrainer'
 import {
   CheckCircle, XCircle, ChevronRight, DollarSign,
-  ArrowLeft, GraduationCap, AlertTriangle, Spade, Club,
+  ArrowLeft, GraduationCap, AlertTriangle, Spade, Club, Layers,
 } from 'lucide-react'
 
 // Poker games with a winner / hand-recognition trainer in Practice
@@ -435,6 +436,14 @@ export default function Practice() {
     setPhase('strategy')
   }
 
+  const startTableSim = () => {
+    logAudit('PRACTICE_STARTED', {
+      scope: 'blackjack_table',
+      scope_name: 'Blackjack Table Sim',
+    })
+    setPhase('table')
+  }
+
   const startWinnerTrainer = (gameName) => {
     const { key, short } = WINNER_GAMES[gameName]
     logAudit('PRACTICE_STARTED', {
@@ -475,6 +484,17 @@ export default function Practice() {
             subtitle="Basic strategy trainer"
             detail="Hit · Stand · Double · Split"
             onClick={startStrategyTrainer}
+            disabled={loading}
+          />
+        )
+        cards.push(
+          <TrainerCard
+            key={`${game.id}-table`}
+            icon={Layers}
+            title="Blackjack Table"
+            subtitle="Playable shoe game"
+            detail="Hi-Lo count · Coach · Mistake log"
+            onClick={startTableSim}
             disabled={loading}
           />
         )
@@ -618,6 +638,33 @@ export default function Practice() {
           </div>
         </div>
         <BlackjackTrainer />
+      </Layout>
+    )
+  }
+
+  // ── Playable blackjack table ───────────────────────────────────
+  if (phase === 'table') {
+    return (
+      <Layout contentKey={viewKey}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={backToSelector}
+              className="flex items-center gap-1.5 text-sm"
+              style={{ color: 'var(--color-brand-muted)' }}
+            >
+              <ArrowLeft size={15} />
+              Change game
+            </button>
+            <span style={{ color: 'var(--color-brand-border)' }}>|</span>
+            <span className="text-sm font-medium flex items-center gap-1.5"
+              style={{ color: 'var(--color-brand-text)' }}>
+              <Layers size={13} style={{ color: 'var(--color-brand-gold)' }} />
+              Blackjack Table
+            </span>
+          </div>
+        </div>
+        <BlackjackTable />
       </Layout>
     )
   }
