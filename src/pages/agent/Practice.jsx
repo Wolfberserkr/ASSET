@@ -11,10 +11,11 @@ import Layout from '../../components/Layout'
 import PayoutTable from '../../components/tables/PayoutTable'
 import BlackjackTrainer from '../../components/BlackjackTrainer'
 import BlackjackTable from '../../components/BlackjackTable'
+import RouletteTable from '../../components/RouletteTable'
 import PokerWinnerTrainer from '../../components/PokerWinnerTrainer'
 import {
   CheckCircle, XCircle, ChevronRight, DollarSign,
-  ArrowLeft, GraduationCap, AlertTriangle, Spade, Club, Layers,
+  ArrowLeft, GraduationCap, AlertTriangle, Spade, Club, Layers, Disc3,
 } from 'lucide-react'
 
 // Poker games with a winner / hand-recognition trainer in Practice
@@ -444,6 +445,14 @@ export default function Practice() {
     setPhase('table')
   }
 
+  const startRouletteSim = () => {
+    logAudit('PRACTICE_STARTED', {
+      scope: 'roulette_table',
+      scope_name: 'Roulette Table Sim',
+    })
+    setPhase('wheel')
+  }
+
   const startWinnerTrainer = (gameName) => {
     const { key, short } = WINNER_GAMES[gameName]
     logAudit('PRACTICE_STARTED', {
@@ -495,6 +504,19 @@ export default function Practice() {
             subtitle="Playable shoe game"
             detail="Hi-Lo count · Coach · Mistake log"
             onClick={startTableSim}
+            disabled={loading}
+          />
+        )
+      }
+      if (game.name === 'Roulette') {
+        cards.push(
+          <TrainerCard
+            key={`${game.id}-wheel`}
+            icon={Disc3}
+            title="Roulette Table"
+            subtitle="Playable wheel"
+            detail="Live spin · Verify the payout"
+            onClick={startRouletteSim}
             disabled={loading}
           />
         )
@@ -665,6 +687,33 @@ export default function Practice() {
           </div>
         </div>
         <BlackjackTable />
+      </Layout>
+    )
+  }
+
+  // ── Playable roulette table ────────────────────────────────────
+  if (phase === 'wheel') {
+    return (
+      <Layout contentKey={viewKey}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={backToSelector}
+              className="flex items-center gap-1.5 text-sm"
+              style={{ color: 'var(--color-brand-muted)' }}
+            >
+              <ArrowLeft size={15} />
+              Change game
+            </button>
+            <span style={{ color: 'var(--color-brand-border)' }}>|</span>
+            <span className="text-sm font-medium flex items-center gap-1.5"
+              style={{ color: 'var(--color-brand-text)' }}>
+              <Disc3 size={13} style={{ color: 'var(--color-brand-gold)' }} />
+              Roulette Table
+            </span>
+          </div>
+        </div>
+        <RouletteTable />
       </Layout>
     )
   }

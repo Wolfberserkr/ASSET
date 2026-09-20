@@ -439,6 +439,38 @@ next to "Blackjack Strategy". Modelled on the Blackjack Review trainer.
 - Verified with a 60,000-round basic-strategy simulation: −0.705% player edge on 6-deck H17 (blackjack
   math puts perfect play near −0.5%), and the Hi-Lo count returns to zero on every exhausted shoe.
 
+### Roulette Table (playable wheel)
+A playable roulette table in Practice with an animated wheel. Entry point: a gold **"Roulette Table"**
+card in the Practice picker next to Roulette. The training point is the **verify step**, not the game:
+the ball lands, and before the table pays, the agent computes what the spread owes — the floor skill
+the static payout drills test one scenario at a time.
+- `src/lib/rouletteGame.js` — pure engine (Node-testable like `sessionDraw.js`): real wheel pocket
+  orders, bet spots with hit zones, settlement and spin. It **reuses the drill layout's geometry**
+  (`ZW` / `CW` / `CH` / `RED_NUMS` from `rouletteScenario.js`), so a chip placed here sits exactly
+  where `PayoutTable.jsx` would draw it.
+- `src/components/RouletteWheel.jsx` — animated SVG wheel, `requestAnimationFrame` driven, writing
+  transforms straight to the DOM rather than re-rendering each frame. **The engine picks the winning
+  pocket first and the animation is told where to land**, so what the agent watches always matches
+  what the table settles — the ball never decides the number. It honours
+  `prefers-reduced-motion` by skipping to the result.
+- `src/components/RouletteTable.jsx` — chip tray (1/5/25/100/500), full betting layout with a hit
+  zone per bet, undo/clear, results board with red/black/odd/even/low/high tallies, session stats and
+  a **Payout Misses** log that records the breakdown of any payout the agent gets wrong.
+- **Payouts are stated as winnings only**, stake listed separately — the same convention the payout
+  drills use for `correctPayout`, so the number an agent computes here is the number they verify on
+  the floor.
+- **Wheel choice:** American double-zero (the house game — it is the one with the Top Line bet) or
+  European single-zero. Switching rebuilds the layout: European drops 00 and the Top Line, and has
+  60 splits to the American's 62.
+- **Zero database writes**, like the rest of Practice. Wheel and toggles persist via
+  `src/lib/roulettePrefs.js` (key `roulette_table_prefs`, same validate-on-read approach as
+  `blackjackPrefs.js`); bankroll and stats do not. Only a `PRACTICE_STARTED` audit event
+  (scope `roulette_table`).
+- Verified against roulette math over 400k simulated spins per bet: American even-money −5.40%
+  (theory −5.263%), European −2.72% (theory −2.703%), Top Line −8.51% (theory −7.895%, the worst bet
+  on the layout). Bet-spot counts match a real felt (62/60 splits, 22 corners, 12 streets, 11 lines),
+  and in-browser the ball landed on the settled number 14/14 across both wheels.
+
 ### Poker Hand Recognition Trainers (CSP / UTH / LIR / TCP)
 Winner-call drills for the four poker games: a full hand is dealt face up and the agent calls the result. Entry points mirror the blackjack trainer: **Resources → (game) → "Hand Trainer" tab** and a gold **"(game) Hands" card in the Practice picker** next to each game.
 - `src/lib/pokerHands.js` — pure engine (Node-testable): 5-card, best-5-of-7 (UTH), and 3-card (TCP — straight beats flush, A-2-3 lowest straight, A-K-Q Mini Royal) evaluators; hand naming; house qualify rules (CSP Ace-King, TCP Queen-high, UTH pair "opens"); LIR paytable (pays Pair of Tens+); tie-break explanations; weighted scenario generation. Exact ties are constructed (dealer gets the player's ranks with permuted suits) since they're vanishingly rare in random deals; training mixes surface pushes/no-quals far more than real odds.
