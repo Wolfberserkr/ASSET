@@ -10,7 +10,7 @@ import {
   Shield, LayoutDashboard, KeyRound, LogOut,
   CheckSquare, BarChart2, FileText, ClipboardList, BookOpen,
   ChevronRight, PlayCircle, GraduationCap, Menu, X, Library, Bell, Lock,
-  HelpCircle, UserCog, BarChart3, FileClock, Target,
+  HelpCircle, UserCog, BarChart3, FileClock, Target, CalendarDays,
 } from 'lucide-react'
 
 const REQUIRED = 20
@@ -50,6 +50,10 @@ const mgmtNav = [
   { to: '/management/questions',        label: 'Question Editor',   icon: BookOpen,        group: 'Reports' },
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText,        group: 'Reports' },
 ]
+
+// Surveillance schedule — agent / supervisor / director only (never the pit roles).
+const scheduleLink = { to: '/schedule', label: 'Schedule', icon: CalendarDays, group: 'Main' }
+const SCHEDULE_ROLES = ['agent', 'supervisor', 'director']
 
 // Head-only links — appended for the two department heads (director /
 // casino_manager) via the canManageUsers flag. Scorecard/Digest sit under
@@ -125,7 +129,9 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
 // browser fully repaints the region the old (possibly taller) view covered.
 // Reusing the node has left stale pixels of the previous view painted below
 // the new page's end on some GPUs.
-export default function Layout({ children, bg, contentKey }) {
+// `wide`: pages whose content is a wide grid (the schedule builder) get a
+// wider column than the default max-w-5xl.
+export default function Layout({ children, bg, contentKey, wide = false }) {
   const { user, profile, logout, isManagement, canManageUsers, department, drillRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -214,13 +220,20 @@ export default function Layout({ children, bg, contentKey }) {
     ? <Countdown endAt={cooldown.endAt} done="00:00" />
     : null
 
-  const navLinks = isManagement
+  const baseLinks = isManagement
     ? (canManageUsers ? [...mgmtNav, ...headsNav] : mgmtNav)
     : agentNav.map(link =>
         link.to === '/drill'
           ? { ...link, disabled: drillDisabled, badge: drillBadge }
           : link,
       )
+  // Schedule goes at the end of the Main group
+  const navLinks = SCHEDULE_ROLES.includes(profile?.role)
+    ? (() => {
+        const at = baseLinks.findLastIndex(l => l.group === 'Main') + 1
+        return [...baseLinks.slice(0, at), scheduleLink, ...baseLinks.slice(at)]
+      })()
+    : baseLinks
   const pageKey = useRef(0)
   const prevPath = useRef(location.pathname)
 
@@ -513,7 +526,7 @@ export default function Layout({ children, bg, contentKey }) {
           </div>
         )}
 
-        <div key={`${pageKey.current}:${contentKey ?? ''}`} className="page-enter relative z-10 max-w-5xl mx-auto p-4 md:p-6">
+        <div key={`${pageKey.current}:${contentKey ?? ''}`} className={`page-enter relative z-10 ${wide ? 'max-w-[1240px]' : 'max-w-5xl'} mx-auto p-4 md:p-6`}>
           {children}
         </div>
       </main>

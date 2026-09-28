@@ -267,6 +267,23 @@ Why: `date_trunc('month', NOW())` runs in the database timezone (UTC on Supabase
 `add_user_management.sql` (partially — everything else in it is still authoritative and re-runnable), `add_department_question_stats.sql`, `fix_team_dashboard_avg_monthly.sql`, `add_department_scorecard.sql`, `add_audit_digest.sql`.
 A `DROP FUNCTION IF EXISTS` guard does **not** help — it matches nothing, and the file's own `CREATE` then re-adds the overload.
 
+### Surveillance Schedule (Surveillance only)
+Team shift schedule — built by Henk/Angelo, read by agents. Handoff spec: `reference/SCHEDULE_HANDOFF.md`.
+
+| Role | Access |
+|---|---|
+| `director`, `supervisor` | `/schedule/builder` (build, edit, cover short shifts, export Excel, **Publish**) + the view |
+| `agent` | `/schedule` — published months, read-only, own row highlighted, "My next shifts" |
+| pit roles, signed out | none — no nav item, route redirects |
+
+- **Database** (migrations in `supabase/migrations/2026092816*.sql`, applied to production 2026-09-28 — **do not re-apply**): `surveillance_schedule_workspace` (one row `id = 1`, `state jsonb`, `version` for optimistic locking; editors only) and `surveillance_schedules` (one row per published month, `month` 1–12; read for active agent/supervisor/director, write for editors, delete = unpublish for the director only). Triggers bump `version`, stamp who/when, and write `schedule_published` / `schedule_republished` / `schedule_unpublished` to `audit_log`. Helpers `is_schedule_editor()` / `is_surveillance_member()`. All access goes through `src/features/schedule/scheduleApi.js`.
+- **The engine is not ours to change.** `src/features/schedule/engine.js` is the tested simulated-annealing engine (ES-module copy of `reference/engine.classic.js`); `reference/team-schedule-builder.html` is the source of truth for builder behaviour, labels, rules and colours.
+- **Builder = the reference page's script, mounted** — not a React rewrite. `builderApp.js` exports `mount(rootEl, opts)` → `unmount()`; `builderTemplate.js` is the reference `<body>`; `builder.css` is the reference CSS scoped under `.schedule-builder` (light + dark tokens unchanged). `pages/schedule/ScheduleBuilder.jsx` loads the workspace, injects the template and mounts. The only departures from the reference: DOM lookups scoped to `rootEl`; document/window listeners removed on unmount; the cell menu is `position: fixed` (ASSET scrolls inside `<main>`, not the window) and closes when its cell moves; builds run in a Vite module worker (`engine.worker.js`, in-page fallback + Cancel kept); Excel is a normal download via `xlsx-js-style` (loaded on demand); Publish/Republish/Unpublish and a save-status line added.
+- **Saving:** every change writes a localStorage draft (`schedule-builder-draft-v1`, offline cache only) and a debounced (1.5 s) `saveWorkspace(state, version)`. A version mismatch shows "Someone else changed the schedule — reload…" and **stops saving** until the editor presses Reload — no silent overwrite. The draft is used only when the workspace is empty or unreachable.
+- **Published shape** (`toPublished` in `publishShape.js`): `{schemaVersion:1, year, month (0–11), days, ids, order, home, grid, oc, ds, dbl, holidays, sup:{id,row,oc}}` — cell codes only; no absence reasons, pending hires, undo history or builder settings.
+- **IDs only, never names** — rows show employee IDs (`B-24`); the section never reads `users.name`. The supervisor `B-20` always sits in his own row at the bottom. The view matches `users.employee_id` to `data.ids` to highlight the signed-in user's row and build "My next shifts" (next 7 working days across this month and next; call-in 8 h, double shift per `DS_FULL`).
+- The view reuses `builder.css` tokens + `view.css`; on ≤ 640 px "My next shifts" comes first and tables scroll sideways with a sticky ID column.
+
 ---
 
 ## Excel Exports
@@ -501,6 +518,11 @@ src/
     Login.jsx
     agent/       — Dashboard, DrillSession, Results, History, ChangePassword, Practice
     management/  — TeamDashboard, AgentDetail, Completion, WeakAreas, QuestionStats, AuditLog, QuestionEditor, UserManagement (heads only)
+    schedule/    — ScheduleView (all surveillance roles), ScheduleBuilder (director/supervisor)
+  features/
+    schedule/    — engine.js (do not modify), engine.worker.js, builderApp.js + builderTemplate.js + builder.css (ported reference builder),
+                   scheduleApi.js, publishShape.js, scheduleShared.js, view.css
+reference/       — team-schedule-builder.html + engine.classic.js (schedule source of truth), SCHEDULE_HANDOFF.md
 ```
 
 ## Important Patterns

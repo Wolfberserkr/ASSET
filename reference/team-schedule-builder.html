@@ -1,0 +1,1458 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Team Schedule Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#15212C; --muted:#5B6874; --line:#D5DCE3; --accent:#0B6E78; --accent-ink:#FFFFFF;
+  --am:#BDD7EE; --pm:#C6E0B4; --nt:#F4C7D0; --lt:#F8CBAD; --off:#E4E7EB; --cell-ink:#15212C; --vac:#D9D2E9; --sick:#FFE699; --trn:#A6E3E9; --hol:#F6D365; --hol-ink:#7A4B00; --hol-soft:#FBEFC8;
+  --am-d:#2E75B6; --pm-d:#4E8B2B; --nt-d:#B8436A; --ds-ink:#FFFFFF; --callin:#FFD54A; --callin-ink:#3A2C00; --dblc:#E08A1E; --dbl-ink:#2E1B00; --xoff:#DFD2F2; --xoff-ink:#2E2350;
+  --ok:#1E7A46; --ok-bg:#E1F2E8; --bad:#B42318; --bad-bg:#FCE8E6; --sun:#B42318; --sun-bg:#FBEDEB;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F161C; --panel:#17212A; --ink:#E6EDF3; --muted:#93A1AE; --line:#2A3743; --accent:#3FB6C0; --accent-ink:#06282C;
+  --am:#2C4A66; --pm:#33502A; --nt:#5B2E3A; --lt:#6A3C22; --off:#222D37; --cell-ink:#E6EDF3; --vac:#43385E; --sick:#5E4B12; --trn:#1D5157; --hol:#6B5210; --hol-ink:#FFD76A; --hol-soft:#3A3014;
+  --am-d:#14497A; --pm-d:#27591B; --nt-d:#7C2744; --ds-ink:#F2F7FF; --callin:#C9A227; --callin-ink:#1E1600; --dblc:#9A5A05; --dbl-ink:#FFF3E0; --xoff:#4A3E6B; --xoff-ink:#EDE7FA;
+  --ok:#6FD49A; --ok-bg:#15331F; --bad:#FF8A80; --bad-bg:#3A1917; --sun:#FF8A80; --sun-bg:#2B1A1C;}}
+:root[data-theme="dark"]{
+  --bg:#0F161C; --panel:#17212A; --ink:#E6EDF3; --muted:#93A1AE; --line:#2A3743; --accent:#3FB6C0; --accent-ink:#06282C;
+  --am:#2C4A66; --pm:#33502A; --nt:#5B2E3A; --lt:#6A3C22; --off:#222D37; --cell-ink:#E6EDF3; --vac:#43385E; --sick:#5E4B12; --trn:#1D5157; --hol:#6B5210; --hol-ink:#FFD76A; --hol-soft:#3A3014;
+  --am-d:#14497A; --pm-d:#27591B; --nt-d:#7C2744; --ds-ink:#F2F7FF; --callin:#C9A227; --callin-ink:#1E1600; --dblc:#9A5A05; --dbl-ink:#FFF3E0; --xoff:#4A3E6B; --xoff-ink:#EDE7FA;
+  --ok:#6FD49A; --ok-bg:#15331F; --bad:#FF8A80; --bad-bg:#3A1917; --sun:#FF8A80; --sun-bg:#2B1A1C;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px;display:grid;gap:20px}
+header h1{font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.panel>*{min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.field{display:grid;gap:4px}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input[type=number]{width:90px}
+input:focus-visible,select:focus-visible,button:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:disabled{opacity:.55;cursor:default}
+button.danger{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden;flex:1 1 160px;align-self:center}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.scroll{overflow-x:auto;position:relative;max-width:100%}
+table.agents{border-collapse:collapse;width:100%;min-width:620px}
+table.agents th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;padding:4px 6px}
+table.agents td{padding:4px 6px}
+table.agents input[type=text]{width:100%}
+table.agents input[type=number]{width:70px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:13px;padding:4px 10px;border-radius:999px;font-weight:500}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.issues{margin:10px 0 0;padding-left:18px;color:var(--bad);font-size:13px}
+table.grid{border-collapse:separate;border-spacing:2px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+table.grid th{font-weight:600;padding:2px 4px;text-align:center;color:var(--muted)}
+table.grid th.sun{color:var(--sun);background:var(--sun-bg);border-radius:4px}
+table.grid th.name{text-align:left;font-family:"IBM Plex Sans",sans-serif;color:var(--ink);font-size:13px;white-space:nowrap;padding-right:10px;position:sticky;left:0;background:var(--panel);z-index:1}
+table.grid th.name small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.cell{width:54px;height:30px;border-radius:4px;border:0;padding:0;font:inherit;color:var(--cell-ink);cursor:pointer;font-weight:400}
+.s0{background:var(--off);font-weight:600}.s1{background:var(--am)}.s2{background:var(--pm)}.s3{background:var(--nt)}.s4{background:var(--lt)}.s5{background:var(--vac);font-weight:600}.s6{background:var(--sick);font-weight:600}.s7{background:var(--trn);font-weight:600}.s8{background:var(--xoff);color:var(--xoff-ink);font-weight:600}
+.cell{position:relative}
+.dblb{position:absolute;top:-6px;right:-4px;font:700 8px/1 "IBM Plex Sans",sans-serif;font-style:normal;letter-spacing:.04em;background:var(--bad);color:#fff;border-radius:3px;padding:2px 3px}
+.dayh{all:unset;cursor:pointer;display:block;padding:2px 4px;border-radius:4px;text-align:center;line-height:1.3}
+.dayh:hover{background:var(--off)}
+.dayh:focus-visible{outline:2px solid var(--accent)}
+.dayh i{display:block;font:700 9px/1.2 "IBM Plex Sans",sans-serif;font-style:normal;letter-spacing:.06em}
+table.grid th.hol{background:var(--hol);color:var(--hol-ink);border-radius:4px}
+td.holc{background:var(--hol-soft);border-radius:4px}
+.dblb.hx{background:var(--hol-ink);color:var(--panel)}
+.s9{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);cursor:default}
+.hire{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:14px}
+.hire input[type=text]{min-width:200px}
+.linkbtn{padding:4px 10px;font-weight:500;font-size:13px}
+.rm-cell{white-space:nowrap}
+.rm-cell .tag,#pendList .tag{font-size:12px;color:var(--muted);margin-right:6px}
+#pendList{display:grid;gap:6px;margin-top:10px;font-size:13px}
+#pendList:empty{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ssup{background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--ink);font-weight:600}
+.cell.supcov{box-shadow:inset 0 0 0 2px var(--accent)}
+tr.supsep th{padding-top:14px;text-align:left;font:600 11px "IBM Plex Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px dashed var(--line)}
+.wrap>*{min-width:0}
+@media (max-width:640px){
+  .wrap{padding:16px 16px 48px;gap:14px}
+  header h1{font-size:22px}
+  .panel{padding:14px}
+  .controls{gap:10px}
+  .field{flex:1 1 140px}
+  input[type=number]{width:100%}
+  table.agents,table.abs{min-width:520px}
+}
+@media (pointer:coarse){ .cell{height:38px;width:58px} .dayh{padding:6px 4px} button{padding:10px 14px} }
+body[data-busy="1"] .cell,body[data-busy="1"] .dayh{pointer-events:none;opacity:.6}
+/* double shift: the dark version of its own shift colour */
+.cell.ds,.legend b.ds{font-weight:700;font-size:9.5px;letter-spacing:-.03em;color:var(--ds-ink);background-image:none}
+.cell.ds.s1,.legend b.ds.s1{background:var(--am-d)} .cell.ds.s2{background:var(--pm-d)} .cell.ds.s3{background:var(--nt-d)}
+/* called in on a day off: yellow · a Double day: amber */
+.cell.oc,.legend b.oc{background:var(--callin)!important;background-image:none!important;color:var(--callin-ink)!important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.cell.dblc{background:var(--dblc)!important;color:var(--dbl-ink)!important}
+.cell.oc{font-size:9.5px;letter-spacing:-.03em;white-space:nowrap;font-weight:600}
+.bad{border-color:var(--bad)!important;box-shadow:0 0 0 1px var(--bad)}
+.cell.hint{outline:2px solid var(--accent);outline-offset:1px}
+.fixes{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));width:min(520px,calc(100% - 32px));max-height:45vh;overflow:auto;z-index:5;display:grid;gap:10px;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.fixes:empty{display:none}
+.picker{position:absolute;z-index:10;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;display:grid;gap:2px;width:250px}
+.picker[hidden],.fixes[hidden]{display:none}
+.pk-cancel{display:none}
+.picker.sheet{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:75vh;overflow:auto;border-radius:16px 16px 0 0;
+  padding:8px 12px calc(12px + env(safe-area-inset-bottom,0px));gap:4px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+.picker.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 6px}
+.picker.sheet .pk-head{font-size:14px;padding:4px 8px 8px}
+.picker.sheet .pk-opt{min-height:48px;padding:10px 12px;font-size:15px}
+.picker.sheet .pk-opt b{min-width:64px;font-size:13px;padding:6px}
+.picker.sheet .pk-cancel{display:block;min-height:48px;margin-top:6px;width:100%;font-size:15px}
+.pk-head{font-size:12px;color:var(--muted);padding:4px 8px 6px;font-weight:600}
+.pk-opt{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:6px 8px;border-radius:6px;text-align:left;font-weight:400;font-size:13px;width:100%}
+.pk-opt:hover,.pk-opt:focus-visible{background:var(--off);outline:none}
+.pk-opt b{display:inline-block;min-width:48px;text-align:center;border-radius:4px;padding:3px 4px;font:600 11px "IBM Plex Mono",monospace;color:var(--cell-ink)}
+.pk-opt span{flex:1}
+.pk-opt em{font-style:normal;font-size:11px;color:var(--accent);font-weight:600}
+.pk-opt.cur{background:var(--off)}
+.fixes .fx-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fixes .fx-head button{padding:4px 10px;font-weight:500}
+.fixes h3{font-size:14px;margin:0;font-weight:600}
+.fix{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.fix p{margin:0;flex:1 1 220px}
+.fix .tag{font-size:12px;color:var(--muted)}
+.fix .tag.good{color:var(--ok)}
+.fixes .note{margin:0}
+.cell.fx{outline:1px dashed var(--muted);outline-offset:-3px}
+.chip.info{background:var(--off);color:var(--ink)}
+table.abs{border-collapse:collapse;width:100%;min-width:520px;margin-top:12px}
+table.abs th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;padding:4px 6px}
+table.abs td{padding:6px;border-top:1px solid var(--line)}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+.cell.warn{box-shadow:inset 0 0 0 2px var(--bad)}
+td.tot{text-align:center;padding:0 6px;font-variant-numeric:tabular-nums;color:var(--ink)}
+tr.cov td{text-align:center;color:var(--muted)}
+tr.cov td.badc{color:var(--bad);font-weight:600}
+tr.cov th{font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{display:inline-block;min-width:30px;padding:0 3px;height:18px;border-radius:3px;font:600 10px/18px "IBM Plex Mono",monospace;text-align:center;color:var(--cell-ink)}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.msg{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
+@media (max-width:640px){
+  .fixes{left:0;right:0;bottom:0;width:auto;max-height:60vh;border-radius:16px 16px 0 0;border-width:1px 0 0;
+    padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 28px rgba(0,0,0,.22)}
+  .fixes::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+  .fixes .fx-head{position:sticky;top:-10px;background:var(--panel);padding:6px 0;z-index:1}
+  .fixes .fx-head button{min-height:40px;padding:8px 14px}
+  .fix{flex-direction:column;align-items:stretch}
+  .fix p{flex:none}
+  .fix button{min-height:44px;width:100%}
+  body.has-fixes .wrap{padding-bottom:62vh}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Team Schedule Builder</h1>
+    <p>Builds both half-month schedules for the team, by agent ID: 2 on every shift, extras on 18:00–03:00, days off kept together (never more than 2 in a row), a Sunday off each month, at least 11 hours between shifts, and never more than 5 days in a row (carried across schedules and months). Agents move up one row every schedule, which moves each of them to the next shift. Add vacation, sick leave or cross-training and the builder works around it. Click a date to mark it as a holiday (every shift worked counts as a Double day). Click any cell to pick a shift, OFF, X OFF (extra day off), SICK or VAC. If that leaves a shift short, the page suggests who can cover that day — without touching any other date.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Month</h2>
+    <div class="controls">
+      <div class="field"><label for="mon">Month</label><select id="mon"></select></div>
+      <div class="field"><label for="yr">Year</label><input id="yr" type="number" min="2024" max="2100"></div>
+      <div class="field"><label for="off1">Days off, 1–15</label><input id="off1" type="number" min="0" max="15"></div>
+      <div class="field"><label for="off2" id="off2l">Days off, 16–end</label><input id="off2" type="number" min="0" max="16"></div>
+      <button class="primary" id="build">Build schedule</button>
+      <button id="export">Download Excel</button>
+      <button id="copyx" title="Copy the schedule with its colours, then paste into Excel">Copy for Excel</button>
+      <button id="undo" disabled>Undo</button>
+      <button id="reset">Reset</button>
+      <div class="progress" hidden id="prog"><i></i></div>
+      <button id="cancelBuild" hidden>Cancel build</button>
+    </div>
+    <p class="note" id="offnote"></p>
+  </section>
+
+  <section class="panel">
+    <div class="row"><h2>Agents</h2><button id="next">Set up next month from this one</button></div>
+    <div class="scroll">
+      <table class="agents">
+        <thead><tr><th>Agent ID</th><th>Row in the 1–15 schedule</th><th>Last shift of previous month</th><th>Days worked in a row at month end</th><th><span class="sr">Team changes</span></th></tr></thead>
+        <tbody id="agentRows"></tbody>
+      </table>
+    </div>
+    <div class="hire">
+      <div class="field"><label for="hireName">New agent</label><input id="hireName" type="text" placeholder="Agent ID, e.g. B-27"></div>
+      <div class="field"><label for="hireFrom">Starts</label><select id="hireFrom"></select></div>
+      <button id="hireAdd">Add agent</button>
+      <p class="note" style="margin:0;flex:1 1 260px">Changes take effect from the start of a schedule (the 1st or 16th). A new agent fills an open row if someone has left, otherwise joins as an extra on 18:00–03:00 and covers gaps. When someone leaves, their row is removed and the team shrinks.</p>
+    </div>
+    <div id="pendList"></div>
+    <p class="note">Rows are fixed lines — Morning, Night, Afternoon, repeating from row 1. Every schedule each agent moves up one row (row 1 wraps to the last row), which moves everyone forward one shift: Morning → Afternoon → Night → Morning. The last two columns carry rest time and the legal 5-days-in-a-row limit across the month change — fill them in from last month's schedule, or use the button to fill them automatically.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Vacation, sick leave &amp; cross-training</h2>
+    <div class="controls">
+      <div class="field"><label for="abA">Agent</label><select id="abA"></select></div>
+      <div class="field"><label for="abT">Type</label><select id="abT"><option value="5">Vacation</option><option value="6">Sick leave</option><option value="7">Cross-training (09:00–18:00)</option></select></div>
+      <div class="field"><label for="abF">From</label><input id="abF" type="date"></div>
+      <div class="field"><label for="abTo">Back to work (blank = not known yet)</label><input id="abTo" type="date"></div>
+      <button id="abAdd">Add</button>
+    </div>
+    <div class="scroll"><table class="abs"><thead><tr><th>Agent</th><th>Type</th><th>From</th><th>Back to work</th><th></th></tr></thead><tbody id="abList"></tbody></table></div>
+    <p class="note">Enter the first day away and the day they are back at work (leave it blank if not known yet — they stay out until you fill it in). Adding, removing or changing an entry updates only those days on the schedule; the back-to-work day is always a shift. Vacation, sick leave and cross-training all count as work days, so the 5-days-in-a-row law applies: the agent's normal days off stay in place inside the absence (for example 5 VAC, 2 OFF, 5 VAC). Cross-training stays on the dates entered and counts for rest time, but not toward shift coverage. If there aren't enough agents, the builder cuts days off, spread as evenly as it can, before it leaves a shift short. Dates can run into the next month.</p>
+    <div class="controls" style="margin-top:12px">
+      <div class="field"><label for="lock">Keep the current schedule unchanged up to and including day</label><input id="lock" type="number" min="0" max="31" value="0"></div>
+      <p class="note" style="margin:0;flex:1 1 260px">For a sick call mid-schedule: add the sick days, set this to yesterday's date, then press Build schedule. Only the days after it change. 0 rebuilds the whole month.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="row"><h2 id="checksTitle">Rule checks</h2><span class="msg" id="msg"></span></div>
+    <div class="checks" id="checks"></div>
+    <ul class="issues" id="issues"></ul>
+
+  </section>
+
+  <section class="panel"><h2 id="h1title">1–15</h2><div class="scroll"><table class="grid" id="g1"></table></div></section>
+  <section class="panel"><h2 id="h2title">16–end</h2><div class="scroll"><table class="grid" id="g2"></table></div></section>
+
+  <section class="panel">
+    <h2>Legend</h2>
+    <div class="legend">
+      <span><b class="s1">05:00</b>Morning 05:00–14:00</span>
+      <span><b class="s2">13:00</b>Afternoon 13:00–22:00</span>
+      <span><b class="s3">21:00</b>Night 21:00–05:00</span>
+      <span><b class="s4">18:00</b>Late swing 18:00–03:00, only when all three shifts have 2</span>
+      <span><b class="s1 ds">05:00 DS</b>Double shift — the dark shade of its own shift colour; straight through two shifts (05:00–22:00, 13:00–05:00, 21:00–14:00), max 4 days in a row and the next day off</span>
+      <span><b class="oc">05:00-off</b>Called in on a day off — always yellow; an 8-hour shift (05:00–13:00, 13:00–21:00, 21:00–05:00)</span>
+      <span><b class="dblc" style="background:var(--dblc);color:var(--dbl-ink)">21:00-off</b>Double day — amber; called in on a day off and exempt from the 5-day rule, with the days after counting fresh</span>
+      <span><b class="s0">OFF</b>Day off</span>
+      <span><b class="s5">VAC</b>Vacation</span>
+      <span><b class="s6">SICK</b>Sick leave</span>
+      <span><b class="s7">TRN</b>Cross-training 09:00–18:00, off the floor</span>
+      <span><b class="ssup" style="display:inline-block">19-04</b>Supervisor (B-20): 07:00–16:00 Jan–Jun, 19:00–04:00 Jul–Dec, off every Sunday and Monday. Outlined in teal when covering an agent shift — the last resort</span>
+      <span><b class="s8">X OFF</b>Extra day off requested — kept on rebuild</span>
+      <span><b style="background:var(--hol);color:var(--hol-ink)">HOL</b>Holiday (click a date to mark it) — every shift worked that day counts as a Double day</span>
+    </div>
+  </section>
+</div>
+
+<aside class="fixes" id="fixes" aria-live="polite"></aside>
+<div class="picker" id="picker" role="menu" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>
+// Surveillance schedule engine — simulated annealing over a month grid.
+// Codes: 0=OFF, 1=Morning 05-14, 2=Afternoon 13-22, 3=Night 21-05, 4=Late 18-03,
+//        5=Vacation, 6=Sick, 7=Cross-training 09-18. All three count as work days for the
+//        5-in-a-row law; days off (0) are still placed inside an absence period as normal.
+//        8=Requested extra day off (rest day, pinned, not counted against the days-off target)
+//        9=Not employed (before start / after leaving) — ignored by every rule
+(function (root) {
+  const SH = { 1: [5, 14], 2: [13, 22], 3: [21, 29], 4: [18, 27], 7: [9, 18] };
+  const MIN_REST = 11;
+  const WORK = v => v >= 1 && v <= 7;
+  const RESTDAY = v => v === 0 || v === 8;
+  function restOK(a, b) { // shift a on day d, shift b on day d+1
+    if (!SH[a] || !SH[b]) return true;
+    return 24 + SH[b][0] - SH[a][1] >= MIN_REST;
+  }
+  const rot = h => (h % 3) + 1; // Morning -> Afternoon -> Night -> Morning
+  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+  // A shift worked on a day off is an 8-hour call-in: 05:00-13:00, 13:00-21:00, 21:00-05:00.
+  const OC_END = { 1: 13, 2: 21, 3: 29, 4: 27 };
+  // A double shift runs two shifts back to back: 05:00-22:00, 13:00-05:00, 21:00-14:00 (next day).
+  const DS_END = { 1: 22, 2: 29, 3: 38 };
+  function buildMonth(opts) {
+    const { year, month } = opts; // month 0-based
+    const N = opts.agents || 9;
+    const D = daysInMonth(year, month);
+    const p1Len = 15, p2Len = D - 15;
+    const offTarget = [opts.offP1 ?? Math.round(p1Len * 2 / 7), opts.offP2 ?? Math.round(p2Len * 2 / 7)];
+    const period = d => (d < 15 ? 0 : 1);
+    const prevHome = opts.prevHome || null;
+    const prevLast = opts.prevLast || new Array(N).fill(0);
+    const prevStreak = opts.prevStreak || new Array(N).fill(0);
+    const maxRun = opts.maxRun ?? 5;
+    const extra = new Set(opts.extras || []);
+    // carry-in from last month's final day: when each agent's last shift ended (hours from the start of that day),
+    // who must be off on the 1st (after a double shift), and cover already provided on the 1st (a night double shift runs to 14:00)
+    const prevEnd = opts.prevEnd || null;
+    const prevMustOff = opts.prevMustOff || [];
+    const preCover = opts.preCover || {};
+    const supCover = opts.supCover || []; // supervisor covering an agent shift, per day (1..3 or 0)
+    // look-ahead to the 1st of next month: who is away (5 VAC, 6 SICK, 7 TRN 09:00) and who is due back on a shift
+    const nextAbs = opts.nextAbs || [];
+    const nextMust = opts.nextMust || [];
+    const oc = new Set(opts.oc || []); // 'i:d' cells worked as a call-in on a day off (8 h)
+    const ds = new Set(opts.ds || []); // 'i:d' cells worked as a double shift (covers the next shift too)
+    const maxDS = opts.maxDS ?? 4;     // a double shift only up to 4 days in a row, and the next day must be off
+    const maxOff = opts.maxOff ?? 2; // max scheduled days off (OFF) in a row
+    const prevOff = opts.prevOff || prevLast.map(v => v === 0 ? 1 : 0);
+    const dbl = new Set(opts.dbl || []); // 'i:d' cells worked as a Double day (called in on a day off)
+    const fixed = opts.fixed || [];   // fixed[i][d] = locked code (e.g. days already worked) or null
+    const absence = opts.absence || []; // absence[i][d] = 5/6/7 or null: cell may only be that code or OFF
+    const isF = (i, d) => fixed[i] != null && fixed[i][d] != null;
+    const must = new Set(opts.mustWork || []); // 'i:d' return-to-work days: must be on a shift
+    const absOf = (i, d) => (absence[i] != null && absence[i][d] != null) ? absence[i][d] : 0;
+    const okVal = (i, d, v) => { if (isF(i, d)) return v === fixed[i][d]; const ab = absOf(i, d);
+      if (ab === 7) return v === 7;              // training is on fixed dates
+      if (ab) return v === 0 || v === ab;       // vacation / sick: normal days off stay in place
+      if (must.has(i + ':' + d)) return v >= 1 && v <= 4;
+      return v <= 4; };
+    const home = [[], []];
+    for (let i = 0; i < N; i++) {
+      const base = opts.startHome ? opts.startHome[i] : prevHome ? rot(prevHome[i]) : (Math.floor(i / 3) % 3) + 1;
+      home[0][i] = base; home[1][i] = base === 4 ? 4 : rot(base); // 4 = extra agent (18:00 / cover)
+    }
+    const prevH = i => prevHome ? prevHome[i] : 0;
+    const sundays = []; for (let d = 0; d < D; d++) if (new Date(year, month, d + 1).getDay() === 0) sundays.push(d);
+    // per-agent days-off target: full target (absences are separate) but never more than the free days
+    const tgt = [];
+    for (let i = 0; i < N; i++) {
+      tgt.push([0, 1].map(p => {
+        const s = p ? 15 : 0, e = p ? D : 15; let free = 0;
+        for (let d = s; d < e; d++) if (!isF(i, d) || fixed[i][d] === 0) free++; // absence days can hold days off too
+        return Math.min(offTarget[p], free);
+      }));
+    }
+    // days off that fall inside a vacation/sick stretch should follow the normal rhythm (not be piled up there)
+    const absExp = [];
+    for (let i = 0; i < N; i++) absExp.push([0, 1].map(p => {
+      const s0 = p ? 15 : 0, e0 = p ? D : 15; let n = 0;
+      for (let d = s0; d < e0; d++) { const ab = absOf(i, d); if ((ab === 5 || ab === 6) && !isF(i, d)) n++; }
+      return n ? Math.round(tgt[i][p] * n / (e0 - s0)) : -1;
+    }));
+    const w = Object.assign({ endMix: 1500, offRun: 5000, absOff: 2000, cover: 2500, offOver: 3000, offCut: 300, offCut2: 100, rest: 5000, sunday: 3000, streak: 5000,
+      single: 150, offHome: 250, lateRot: 20, eSpread: 8, eFair: 6 }, opts.weights || {});
+    const homeOf = (i, d) => home[period(d)][i];
+
+    function cost(g, detail) {
+      let c = 0; const v = detail ? [] : null; const cuts = detail ? [] : null;
+      const cov = Array.from({ length: D }, () => [0, 0, 0, 0, 0]);
+      for (let i = 0; i < N; i++) for (let d = 0; d < D; d++) {
+        const x = g[i][d]; if (x < 1 || x > 4) continue;
+        cov[d][x]++;
+        if (ds.has(i + ':' + d) && x <= 3) { if (x < 3) cov[d][x + 1]++; else if (d + 1 < D) cov[d + 1][1]++; }
+      }
+      if (preCover[1]) cov[0][1] += preCover[1];
+      for (let d = 0; d < D; d++) { const sc = supCover[d]; if (sc >= 1 && sc <= 3) cov[d][sc]++; }
+      for (let d = 0; d < D; d++) {
+        const cnt = cov[d];
+        let short = false;
+        for (let s = 1; s <= 3; s++) if (cnt[s] !== 2) {
+          c += w.cover * Math.abs(cnt[s] - 2); if (cnt[s] < 2) short = true;
+          v && v.push(`Day ${d + 1}: shift ${s} has ${cnt[s]}`);
+        }
+        if (cnt[4] > 0 && short) { c += w.cover * cnt[4]; v && v.push(`Day ${d + 1}: 18-03 used while a main shift is short`); }
+        if (cnt[4] > 1) c += w.eSpread * (cnt[4] - 1) * (cnt[4] - 1);
+      }
+      const eCnt = [];
+      for (let i = 0; i < N; i++) {
+        const row = g[i];
+        let o = [0, 0], e = 0;
+        for (let d = 0; d < D; d++) { if (row[d] === 0) o[period(d)]++; if (row[d] === 4) e++; }
+        eCnt.push(e);
+        for (let p = 0; p < 2; p++) {
+          const t = tgt[i][p];
+          if (o[p] > t) { c += w.offOver * (o[p] - t); v && v.push(`Agent ${i + 1}: ${o[p]} days off in P${p + 1} (target ${t})`); }
+          else if (o[p] < t) { const k = t - o[p]; c += w.offCut * k + w.offCut2 * k * k; cuts && cuts.push({ agent: i, period: p, cut: k }); }
+        }
+        for (let p = 0; p < 2; p++) if (absExp[i][p] >= 0) {
+          const s0 = p ? 15 : 0, e0 = p ? D : 15; let n = 0;
+          for (let d = s0; d < e0; d++) { const ab = absOf(i, d); if ((ab === 5 || ab === 6) && row[d] === 0) n++; }
+          c += w.absOff * Math.abs(n - absExp[i][p]);
+        }
+        const endOf = d => { const x = row[d]; if (!SH[x]) return null;
+          if (ds.has(i + ':' + d) && DS_END[x]) return DS_END[x];
+          return oc.has(i + ':' + d) ? (OC_END[x] ?? SH[x][1]) : SH[x][1]; };
+        // a double shift is only for someone on 4 days or fewer in a row, and the day after must be off
+        for (let d = 0; d < D; d++) if (ds.has(i + ':' + d)) {
+          let k = 0; for (let x = d; x >= 0 && WORK(row[x]) && !dbl.has(i + ':' + x) && !oc.has(i + ':' + x); x--) k++;
+          if (k > maxDS) { c += w.streak; v && v.push(`Agent ${i + 1}: double shift on day ${d + 1} after ${k} days in a row (max ${maxDS})`); }
+          if (d + 1 < D && !RESTDAY(row[d + 1]) && row[d + 1] !== 9) { c += w.streak; v && v.push(`Agent ${i + 1}: no day off after the double shift on day ${d + 1}`); }
+        }
+        const restPair = d => { const e = endOf(d), n = row[d + 1]; if (e == null || !SH[n]) return true; return 24 + SH[n][0] - e >= MIN_REST; };
+        { const n = row[0];
+          const bad = prevEnd && prevEnd[i] != null ? (SH[n] && 24 + SH[n][0] - prevEnd[i] < MIN_REST) : !restOK(prevLast[i], n);
+          if (bad) { c += w.rest; v && v.push(`Agent ${i + 1}: short rest into day 1`); }
+          if (prevMustOff[i] && WORK(n)) { c += w.rest; v && v.push(`Agent ${i + 1}: must be off on day 1 after a double shift`); } }
+        for (let d = 0; d + 1 < D; d++) if (!restPair(d)) { c += w.rest; v && v.push(`Agent ${i + 1}: short rest day ${d + 1}->${d + 2}`); }
+        if (!row.includes(9) && !sundays.some(d => RESTDAY(row[d]))) { c += w.sunday; v && v.push(`Agent ${i + 1}: no Sunday off`); }
+        let run = prevStreak[i];
+        for (let d = 0; d < D; d++) {
+          if (dbl.has(i + ':' + d) || oc.has(i + ':' + d)) { run = 0; continue; } // came in on a day off: exempt, and the days after it start a fresh count
+          if (WORK(row[d])) { run++; if (run > maxRun) { c += w.streak; v && v.push(`Agent ${i + 1}: ${run} days in a row at day ${d + 1}`); } }
+          else run = 0;
+        }
+        let orun = prevOff[i] || 0; // max 2 scheduled days off in a row
+        for (let d = 0; d < D; d++) {
+          if (row[d] === 0) { orun++; if (orun > maxOff) { c += w.offRun; v && v.push(`Agent ${i + 1}: ${orun} days off in a row at day ${d + 1}`); } }
+          else orun = 0;
+        }
+        for (let d = 0; d < D; d++) if (row[d] === 0 && !isF(i, d)) {
+          const l = d > 0 ? RESTDAY(row[d - 1]) : RESTDAY(prevLast[i]) && prevStreak[i] === 0;
+          const r = d + 1 < D ? RESTDAY(row[d + 1]) : false;
+          if (!l && !r) c += d === D - 1 ? w.single / 2 : w.single;
+        }
+        for (let d = 0; d < D; d++) {
+          const s = row[d]; if (s < 1 || s > 3 || isF(i, d) || extra.has(i)) continue;
+          if (s !== homeOf(i, d)) {
+            const pd = d < 15 ? d : d - 15;
+            const prevHomeP = d < 15 ? prevH(i) : home[0][i];
+            c += (pd < 2 && s === prevHomeP) ? w.lateRot : w.offHome;
+          }
+        }
+      }
+      // leave the next month a workable start: the 1st needs 2 agents free for each shift.
+      // Morning needs someone who finished OFF or on mornings, afternoon also allows an afternoon finish,
+      // nights allow anyone. A ⊆ B ⊆ C, so |A|>=2, |B|>=4, |C|>=6.
+      let A = 0, B = 0, C = 0;
+      for (let i = 0; i < N; i++) {
+        const last = g[i][D - 1];
+        if (last === 9) continue;
+        let k = 0; for (let d = D - 1; d >= 0 && WORK(g[i][d]) && !dbl.has(i + ':' + d) && !oc.has(i + ':' + d); d--) k++;
+        if (nextMust[i] && k >= maxRun) {       // due back on the 1st but would pass 5 days in a row
+          c += w.streak; v && v.push(`Agent ${i + 1}: back to work on the 1st of next month after ${k} days in a row`); }
+        const endLast = !SH[last] ? null : ds.has(i + ':' + (D - 1)) && DS_END[last] ? DS_END[last] : oc.has(i + ':' + (D - 1)) ? (OC_END[last] ?? SH[last][1]) : SH[last][1];
+        if (nextAbs[i] === 7 && endLast != null && endLast > 22) { // cross-training starts 09:00 on the 1st: needs 11 h rest
+          c += w.rest; v && v.push(`Agent ${i + 1}: under 11 h rest before training on the 1st of next month`); }
+        if (nextAbs[i]) continue;               // away on the 1st: can't open next month
+        if (k >= maxRun) continue;              // must be off on the 1st
+        if (last === 0 || last === 1) { A++; B++; C++; }
+        else if (last === 2) { B++; C++; }
+        else C++;
+      }
+      c += w.endMix * (Math.max(0, 2 - A) + Math.max(0, 4 - B) + Math.max(0, 6 - C));
+      const core = eCnt.filter((_, i) => !extra.has(i)); const mean = core.reduce((a, b) => a + b, 0) / Math.max(1, core.length);
+      eCnt.forEach((e, i) => { if (!extra.has(i)) c += w.eFair * (e - mean) * (e - mean); });
+      return detail ? { cost: c, violations: v, cuts } : c;
+    }
+
+    function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+    const R = rng(opts.seed ?? Date.now());
+    const ri = n => Math.floor(R() * n);
+
+    // The 1st of the month is the tightest day: who worked what last month decides who may open.
+    // Pin a legal 2/2/2 arrangement for day 0 so the annealer starts from a coverable day.
+    (function pinFirstDay() {
+      if (opts.pinFirstDay === false) return;
+      const allow = [], locked = [];
+      const restIn = (i, s2) => prevEnd && prevEnd[i] != null ? 24 + SH[s2][0] - prevEnd[i] >= MIN_REST : restOK(prevLast[i], s2);
+      for (let i = 0; i < N; i++) {
+        const a = [];
+        if (isF(i, 0)) { const fv = fixed[i][0]; locked[i] = true; if (fv >= 1 && fv <= 3) a.push(fv); allow.push(a); continue; }
+        if (absOf(i, 0) || prevMustOff[i]) { locked[i] = true; allow.push(a); continue; } // away or must rest: not available
+        if (prevStreak[i] < maxRun) for (let s2 = 1; s2 <= 3; s2++) if (restIn(i, s2)) a.push(s2);
+        allow.push(a);
+      }
+      const mustWorkDay = i => (prevOff[i] || 0) >= maxOff; // two days off already — cannot be off again
+      const need = [0, 2 - (preCover[1] || 0) - (supCover[0] === 1 ? 1 : 0), 2 - (supCover[0] === 2 ? 1 : 0), 2 - (supCover[0] === 3 ? 1 : 0)];
+      const pick = new Array(N).fill(0);
+      const order = [...Array(N).keys()].sort((x, y) => allow[x].length - allow[y].length);
+      const solve = k => {
+        if (k === order.length) return need[1] <= 0 && need[2] <= 0 && need[3] <= 0;
+        const i = order[k];
+        if (locked[i]) {                               // fixed or away: take what is set, don't choose
+          const s2 = allow[i][0];
+          if (s2) { need[s2]--; const ok = solve(k + 1); if (!ok) need[s2]++; return ok; }
+          return solve(k + 1);
+        }
+        for (const s2 of allow[i]) if (need[s2] > 0) { need[s2]--; pick[i] = s2; if (solve(k + 1)) return true; need[s2]++; pick[i] = 0; }
+        if (!mustWorkDay(i)) { pick[i] = 0; if (solve(k + 1)) return true; }
+        return false;
+      };
+      if (!solve(0)) return;                       // no legal opening day — let the annealer do its best
+      for (let i = 0; i < N; i++) { if (locked[i]) continue; if (!fixed[i]) fixed[i] = new Array(D).fill(null); fixed[i][0] = pick[i]; }
+    })();
+
+    function initial() {
+      const g = [];
+      for (let i = 0; i < N; i++) {
+        const row = [];
+        for (let d = 0; d < D; d++) row.push(isF(i, d) ? fixed[i][d] : absOf(i, d) || homeOf(i, d));
+        for (let p = 0; p < 2; p++) {
+          const s = p ? 15 : 0, len = p ? p2Len : p1Len;
+          let k = 0; for (let d = s; d < s + len; d++) if (row[d] === 0) k++;
+          let guard = 0;
+          while (k < tgt[i][p] && guard++ < 1000) { const d = s + ri(len); if (!isF(i, d) && absOf(i, d) !== 7 && row[d] !== 0) { row[d] = 0; k++; } }
+        }
+        g.push(row);
+      }
+      return g;
+    }
+    function* anneal(iter) {
+      let g = initial(), cur = cost(g), best = g.map(r => r.slice()), bestC = cur;
+      const T0 = 200, T1 = 0.2;
+      for (let it = 0; it < iter; it++) {
+        if (it % 20000 === 0) yield it / iter;
+        const T = T0 * Math.pow(T1 / T0, it / iter);
+        const m = R(); let undo, touched = [];
+        const moveOK = () => touched.every(([a, d]) => okVal(a, d, g[a][d]));
+        if (m < 0.25) { // swap a block of days between two agents
+          const a = ri(N), b = ri(N); if (a === b) continue;
+          const k = 1 + ri(5), d0 = ri(D - k + 1);
+          for (let d = d0; d < d0 + k; d++) touched.push([a, d], [b, d]);
+          const sw = () => { for (let d = d0; d < d0 + k; d++) { const t = g[a][d]; g[a][d] = g[b][d]; g[b][d] = t; } };
+          sw(); undo = sw;
+        } else if (m < 0.45) { // rectangle: swap two days for two agents at once
+          const a = ri(N), b = ri(N); if (a === b) continue;
+          const p = R() < p1Len / D ? 0 : 1, s = p ? 15 : 0, len = p ? p2Len : p1Len;
+          const d1 = s + ri(len), d2 = s + ri(len); if (d1 === d2) continue;
+          touched = [[a, d1], [a, d2], [b, d1], [b, d2]];
+          const sw = () => { let t = g[a][d1]; g[a][d1] = g[a][d2]; g[a][d2] = t; t = g[b][d1]; g[b][d1] = g[b][d2]; g[b][d2] = t; };
+          sw(); undo = sw;
+        } else if (m < 0.6) { // swap agents on a day
+          const d = ri(D), a = ri(N), b = ri(N); if (a === b || g[a][d] === g[b][d]) continue; touched = [[a, d], [b, d]];
+          [g[a][d], g[b][d]] = [g[b][d], g[a][d]]; undo = () => { [g[a][d], g[b][d]] = [g[b][d], g[a][d]]; };
+        } else if (m < 0.8) { // swap two days same agent same period
+          const a = ri(N), p = R() < p1Len / D ? 0 : 1, s = p ? 15 : 0, len = p ? p2Len : p1Len;
+          const d1 = s + ri(len), d2 = s + ri(len); if (d1 === d2 || g[a][d1] === g[a][d2]) continue; touched = [[a, d1], [a, d2]];
+          [g[a][d1], g[a][d2]] = [g[a][d2], g[a][d1]]; undo = () => { [g[a][d1], g[a][d2]] = [g[a][d2], g[a][d1]]; };
+        } else { // set cell
+          const a = ri(N), d = ri(D); if (isF(a, d)) continue; const old = g[a][d];
+          const ab = absOf(a, d);
+          if (ab === 7) continue;
+          const cands = ab ? [0, ab] : [0, 4, homeOf(a, d), homeOf(a, d), 1 + ri(3)];
+          const nv = cands[ri(cands.length)]; if (nv === old) continue;
+          g[a][d] = nv; touched = [[a, d]]; undo = () => { g[a][d] = old; };
+        }
+        if (!moveOK()) { undo(); continue; }
+        const nc = cost(g);
+        if (nc <= cur || R() < Math.exp((cur - nc) / T)) { cur = nc; if (cur < bestC) { bestC = cur; best = g.map(r => r.slice()); } }
+        else undo();
+      }
+      return { g: best, c: bestC };
+    }
+    // greedy repair: the annealer sometimes leaves one shift short when a day has only one legal filling
+    function repair(g) {
+      // Greedy chain repair: fill a short shift by moving one agent, and if that empties another
+      // shift, move a second (and third) agent to cover it. Only accepted when the total cost drops.
+      let cur = cost(g);
+      const cands = (d, s2) => { const out = []; for (let i = 0; i < N; i++) if (okVal(i, d, s2) && g[i][d] !== s2) out.push(i); return out; };
+      for (let pass = 0; pass < 4; pass++) {
+        let moved = false;
+        for (let d = 0; d < D; d++) for (let s1 = 1; s1 <= 3; s1++) {
+          let cnt = 0; for (let i = 0; i < N; i++) if (g[i][d] === s1) cnt++;
+          if (cnt >= 2) continue;
+          for (const i of cands(d, s1)) {
+            const oi = g[i][d]; g[i][d] = s1;
+            if (cost(g) < cur) { cur = cost(g); moved = true; break; }
+            if (oi >= 1 && oi <= 3) {
+              let ok = false;
+              for (const j of cands(d, oi)) {
+                if (j === i) continue;
+                const oj = g[j][d]; g[j][d] = oi;
+                if (cost(g) < cur) { cur = cost(g); moved = true; ok = true; break; }
+                if (oj >= 1 && oj <= 3) {
+                  for (const k of cands(d, oj)) {
+                    if (k === i || k === j) continue;
+                    const okd = g[k][d]; if (okd !== 0 && okd !== 4) continue;
+                    g[k][d] = oj;
+                    if (cost(g) < cur) { cur = cost(g); moved = true; ok = true; break; }
+                    g[k][d] = okd;
+                  }
+                  if (ok) break;
+                }
+                g[j][d] = oj;
+              }
+              if (ok) break;
+            }
+            g[i][d] = oi;
+          }
+        }
+        if (!moved) break;
+      }
+      return g;
+    }
+    const restarts = opts.restarts ?? 6, iters = opts.iters ?? 400000;
+    function finish(best) {
+      const det = cost(best.g, true);
+      return { year, month, days: D, grid: best.g, home, offTarget, targets: tgt, cuts: det.cuts,
+        input: { prevLast: prevLast.slice(), prevStreak: prevStreak.slice() }, cost: det.cost, violations: det.violations,
+        carry: { prevHome: home[1].slice(), prevLast: best.g.map(r => r[D - 1]),
+          prevStreak: best.g.map(r => { let k = 0; for (let d = D - 1; d >= 0 && WORK(r[d]); d--) k++; return k; }),
+          prevOff: best.g.map(r => { let k = 0; for (let d = D - 1; d >= 0 && r[d] === 0; d--) k++; return k; }) } };
+    }
+    function* all() {
+      let best = null;
+      for (let r = 0; r < restarts; r++) {
+        const gen = anneal(iters); let x;
+        while (!(x = gen.next()).done) yield (r + x.value) / restarts;
+        const g2 = repair(x.value.g), c2 = cost(g2);
+        if (!best || c2 < best.c) best = { g: g2, c: c2 };
+      }
+      return finish(best);
+    }
+    if (opts.score) { const det = cost(opts.score, true); return { cost: det.cost, violations: det.violations, cuts: det.cuts }; }
+    if (opts.async) {
+      return new Promise((res, rej) => {
+        const gen = all();
+        const step = () => { if (opts.cancel && opts.cancel()) { rej(new Error('cancelled')); return; }
+          const t = Date.now(); let x;
+          do { x = gen.next(); } while (!x.done && Date.now() - t < 40);
+          if (x.done) res(x.value); else { opts.onProgress && opts.onProgress(x.value); setTimeout(step, 0); } };
+        step();
+      });
+    }
+    const gen = all(); let x; while (!(x = gen.next()).done); return x.value;
+  }
+  const api = { buildMonth, restOK, SH, OC_END, WORK, RESTDAY };
+  if (typeof module !== 'undefined') module.exports = api; else root.SchedEngine = api;
+})(window);
+
+</script>
+<script>
+(function(){
+const E = window.SchedEngine;
+const ENGINE_SRC = "// Surveillance schedule engine \u2014 simulated annealing over a month grid.\n// Codes: 0=OFF, 1=Morning 05-14, 2=Afternoon 13-22, 3=Night 21-05, 4=Late 18-03,\n//        5=Vacation, 6=Sick, 7=Cross-training 09-18. All three count as work days for the\n//        5-in-a-row law; days off (0) are still placed inside an absence period as normal.\n//        8=Requested extra day off (rest day, pinned, not counted against the days-off target)\n//        9=Not employed (before start / after leaving) \u2014 ignored by every rule\n(function (root) {\n  const SH = { 1: [5, 14], 2: [13, 22], 3: [21, 29], 4: [18, 27], 7: [9, 18] };\n  const MIN_REST = 11;\n  const WORK = v => v >= 1 && v <= 7;\n  const RESTDAY = v => v === 0 || v === 8;\n  function restOK(a, b) { // shift a on day d, shift b on day d+1\n    if (!SH[a] || !SH[b]) return true;\n    return 24 + SH[b][0] - SH[a][1] >= MIN_REST;\n  }\n  const rot = h => (h % 3) + 1; // Morning -> Afternoon -> Night -> Morning\n  function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }\n\n  // A shift worked on a day off is an 8-hour call-in: 05:00-13:00, 13:00-21:00, 21:00-05:00.\n  const OC_END = { 1: 13, 2: 21, 3: 29, 4: 27 };\n  // A double shift runs two shifts back to back: 05:00-22:00, 13:00-05:00, 21:00-14:00 (next day).\n  const DS_END = { 1: 22, 2: 29, 3: 38 };\n  function buildMonth(opts) {\n    const { year, month } = opts; // month 0-based\n    const N = opts.agents || 9;\n    const D = daysInMonth(year, month);\n    const p1Len = 15, p2Len = D - 15;\n    const offTarget = [opts.offP1 ?? Math.round(p1Len * 2 / 7), opts.offP2 ?? Math.round(p2Len * 2 / 7)];\n    const period = d => (d < 15 ? 0 : 1);\n    const prevHome = opts.prevHome || null;\n    const prevLast = opts.prevLast || new Array(N).fill(0);\n    const prevStreak = opts.prevStreak || new Array(N).fill(0);\n    const maxRun = opts.maxRun ?? 5;\n    const extra = new Set(opts.extras || []);\n    // carry-in from last month's final day: when each agent's last shift ended (hours from the start of that day),\n    // who must be off on the 1st (after a double shift), and cover already provided on the 1st (a night double shift runs to 14:00)\n    const prevEnd = opts.prevEnd || null;\n    const prevMustOff = opts.prevMustOff || [];\n    const preCover = opts.preCover || {};\n    const supCover = opts.supCover || []; // supervisor covering an agent shift, per day (1..3 or 0)\n    // look-ahead to the 1st of next month: who is away (5 VAC, 6 SICK, 7 TRN 09:00) and who is due back on a shift\n    const nextAbs = opts.nextAbs || [];\n    const nextMust = opts.nextMust || [];\n    const oc = new Set(opts.oc || []); // 'i:d' cells worked as a call-in on a day off (8 h)\n    const ds = new Set(opts.ds || []); // 'i:d' cells worked as a double shift (covers the next shift too)\n    const maxDS = opts.maxDS ?? 4;     // a double shift only up to 4 days in a row, and the next day must be off\n    const maxOff = opts.maxOff ?? 2; // max scheduled days off (OFF) in a row\n    const prevOff = opts.prevOff || prevLast.map(v => v === 0 ? 1 : 0);\n    const dbl = new Set(opts.dbl || []); // 'i:d' cells worked as a Double day (called in on a day off)\n    const fixed = opts.fixed || [];   // fixed[i][d] = locked code (e.g. days already worked) or null\n    const absence = opts.absence || []; // absence[i][d] = 5/6/7 or null: cell may only be that code or OFF\n    const isF = (i, d) => fixed[i] != null && fixed[i][d] != null;\n    const must = new Set(opts.mustWork || []); // 'i:d' return-to-work days: must be on a shift\n    const absOf = (i, d) => (absence[i] != null && absence[i][d] != null) ? absence[i][d] : 0;\n    const okVal = (i, d, v) => { if (isF(i, d)) return v === fixed[i][d]; const ab = absOf(i, d);\n      if (ab === 7) return v === 7;              // training is on fixed dates\n      if (ab) return v === 0 || v === ab;       // vacation / sick: normal days off stay in place\n      if (must.has(i + ':' + d)) return v >= 1 && v <= 4;\n      return v <= 4; };\n    const home = [[], []];\n    for (let i = 0; i < N; i++) {\n      const base = opts.startHome ? opts.startHome[i] : prevHome ? rot(prevHome[i]) : (Math.floor(i / 3) % 3) + 1;\n      home[0][i] = base; home[1][i] = base === 4 ? 4 : rot(base); // 4 = extra agent (18:00 / cover)\n    }\n    const prevH = i => prevHome ? prevHome[i] : 0;\n    const sundays = []; for (let d = 0; d < D; d++) if (new Date(year, month, d + 1).getDay() === 0) sundays.push(d);\n    // per-agent days-off target: full target (absences are separate) but never more than the free days\n    const tgt = [];\n    for (let i = 0; i < N; i++) {\n      tgt.push([0, 1].map(p => {\n        const s = p ? 15 : 0, e = p ? D : 15; let free = 0;\n        for (let d = s; d < e; d++) if (!isF(i, d) || fixed[i][d] === 0) free++; // absence days can hold days off too\n        return Math.min(offTarget[p], free);\n      }));\n    }\n    // days off that fall inside a vacation/sick stretch should follow the normal rhythm (not be piled up there)\n    const absExp = [];\n    for (let i = 0; i < N; i++) absExp.push([0, 1].map(p => {\n      const s0 = p ? 15 : 0, e0 = p ? D : 15; let n = 0;\n      for (let d = s0; d < e0; d++) { const ab = absOf(i, d); if ((ab === 5 || ab === 6) && !isF(i, d)) n++; }\n      return n ? Math.round(tgt[i][p] * n / (e0 - s0)) : -1;\n    }));\n    const w = Object.assign({ endMix: 1500, offRun: 5000, absOff: 2000, cover: 2500, offOver: 3000, offCut: 300, offCut2: 100, rest: 5000, sunday: 3000, streak: 5000,\n      single: 150, offHome: 250, lateRot: 20, eSpread: 8, eFair: 6 }, opts.weights || {});\n    const homeOf = (i, d) => home[period(d)][i];\n\n    function cost(g, detail) {\n      let c = 0; const v = detail ? [] : null; const cuts = detail ? [] : null;\n      const cov = Array.from({ length: D }, () => [0, 0, 0, 0, 0]);\n      for (let i = 0; i < N; i++) for (let d = 0; d < D; d++) {\n        const x = g[i][d]; if (x < 1 || x > 4) continue;\n        cov[d][x]++;\n        if (ds.has(i + ':' + d) && x <= 3) { if (x < 3) cov[d][x + 1]++; else if (d + 1 < D) cov[d + 1][1]++; }\n      }\n      if (preCover[1]) cov[0][1] += preCover[1];\n      for (let d = 0; d < D; d++) { const sc = supCover[d]; if (sc >= 1 && sc <= 3) cov[d][sc]++; }\n      for (let d = 0; d < D; d++) {\n        const cnt = cov[d];\n        let short = false;\n        for (let s = 1; s <= 3; s++) if (cnt[s] !== 2) {\n          c += w.cover * Math.abs(cnt[s] - 2); if (cnt[s] < 2) short = true;\n          v && v.push(`Day ${d + 1}: shift ${s} has ${cnt[s]}`);\n        }\n        if (cnt[4] > 0 && short) { c += w.cover * cnt[4]; v && v.push(`Day ${d + 1}: 18-03 used while a main shift is short`); }\n        if (cnt[4] > 1) c += w.eSpread * (cnt[4] - 1) * (cnt[4] - 1);\n      }\n      const eCnt = [];\n      for (let i = 0; i < N; i++) {\n        const row = g[i];\n        let o = [0, 0], e = 0;\n        for (let d = 0; d < D; d++) { if (row[d] === 0) o[period(d)]++; if (row[d] === 4) e++; }\n        eCnt.push(e);\n        for (let p = 0; p < 2; p++) {\n          const t = tgt[i][p];\n          if (o[p] > t) { c += w.offOver * (o[p] - t); v && v.push(`Agent ${i + 1}: ${o[p]} days off in P${p + 1} (target ${t})`); }\n          else if (o[p] < t) { const k = t - o[p]; c += w.offCut * k + w.offCut2 * k * k; cuts && cuts.push({ agent: i, period: p, cut: k }); }\n        }\n        for (let p = 0; p < 2; p++) if (absExp[i][p] >= 0) {\n          const s0 = p ? 15 : 0, e0 = p ? D : 15; let n = 0;\n          for (let d = s0; d < e0; d++) { const ab = absOf(i, d); if ((ab === 5 || ab === 6) && row[d] === 0) n++; }\n          c += w.absOff * Math.abs(n - absExp[i][p]);\n        }\n        const endOf = d => { const x = row[d]; if (!SH[x]) return null;\n          if (ds.has(i + ':' + d) && DS_END[x]) return DS_END[x];\n          return oc.has(i + ':' + d) ? (OC_END[x] ?? SH[x][1]) : SH[x][1]; };\n        // a double shift is only for someone on 4 days or fewer in a row, and the day after must be off\n        for (let d = 0; d < D; d++) if (ds.has(i + ':' + d)) {\n          let k = 0; for (let x = d; x >= 0 && WORK(row[x]) && !dbl.has(i + ':' + x) && !oc.has(i + ':' + x); x--) k++;\n          if (k > maxDS) { c += w.streak; v && v.push(`Agent ${i + 1}: double shift on day ${d + 1} after ${k} days in a row (max ${maxDS})`); }\n          if (d + 1 < D && !RESTDAY(row[d + 1]) && row[d + 1] !== 9) { c += w.streak; v && v.push(`Agent ${i + 1}: no day off after the double shift on day ${d + 1}`); }\n        }\n        const restPair = d => { const e = endOf(d), n = row[d + 1]; if (e == null || !SH[n]) return true; return 24 + SH[n][0] - e >= MIN_REST; };\n        { const n = row[0];\n          const bad = prevEnd && prevEnd[i] != null ? (SH[n] && 24 + SH[n][0] - prevEnd[i] < MIN_REST) : !restOK(prevLast[i], n);\n          if (bad) { c += w.rest; v && v.push(`Agent ${i + 1}: short rest into day 1`); }\n          if (prevMustOff[i] && WORK(n)) { c += w.rest; v && v.push(`Agent ${i + 1}: must be off on day 1 after a double shift`); } }\n        for (let d = 0; d + 1 < D; d++) if (!restPair(d)) { c += w.rest; v && v.push(`Agent ${i + 1}: short rest day ${d + 1}->${d + 2}`); }\n        if (!row.includes(9) && !sundays.some(d => RESTDAY(row[d]))) { c += w.sunday; v && v.push(`Agent ${i + 1}: no Sunday off`); }\n        let run = prevStreak[i];\n        for (let d = 0; d < D; d++) {\n          if (dbl.has(i + ':' + d) || oc.has(i + ':' + d)) { run = 0; continue; } // came in on a day off: exempt, and the days after it start a fresh count\n          if (WORK(row[d])) { run++; if (run > maxRun) { c += w.streak; v && v.push(`Agent ${i + 1}: ${run} days in a row at day ${d + 1}`); } }\n          else run = 0;\n        }\n        let orun = prevOff[i] || 0; // max 2 scheduled days off in a row\n        for (let d = 0; d < D; d++) {\n          if (row[d] === 0) { orun++; if (orun > maxOff) { c += w.offRun; v && v.push(`Agent ${i + 1}: ${orun} days off in a row at day ${d + 1}`); } }\n          else orun = 0;\n        }\n        for (let d = 0; d < D; d++) if (row[d] === 0 && !isF(i, d)) {\n          const l = d > 0 ? RESTDAY(row[d - 1]) : RESTDAY(prevLast[i]) && prevStreak[i] === 0;\n          const r = d + 1 < D ? RESTDAY(row[d + 1]) : false;\n          if (!l && !r) c += d === D - 1 ? w.single / 2 : w.single;\n        }\n        for (let d = 0; d < D; d++) {\n          const s = row[d]; if (s < 1 || s > 3 || isF(i, d) || extra.has(i)) continue;\n          if (s !== homeOf(i, d)) {\n            const pd = d < 15 ? d : d - 15;\n            const prevHomeP = d < 15 ? prevH(i) : home[0][i];\n            c += (pd < 2 && s === prevHomeP) ? w.lateRot : w.offHome;\n          }\n        }\n      }\n      // leave the next month a workable start: the 1st needs 2 agents free for each shift.\n      // Morning needs someone who finished OFF or on mornings, afternoon also allows an afternoon finish,\n      // nights allow anyone. A \u2286 B \u2286 C, so |A|>=2, |B|>=4, |C|>=6.\n      let A = 0, B = 0, C = 0;\n      for (let i = 0; i < N; i++) {\n        const last = g[i][D - 1];\n        if (last === 9) continue;\n        let k = 0; for (let d = D - 1; d >= 0 && WORK(g[i][d]) && !dbl.has(i + ':' + d) && !oc.has(i + ':' + d); d--) k++;\n        if (nextMust[i] && k >= maxRun) {       // due back on the 1st but would pass 5 days in a row\n          c += w.streak; v && v.push(`Agent ${i + 1}: back to work on the 1st of next month after ${k} days in a row`); }\n        const endLast = !SH[last] ? null : ds.has(i + ':' + (D - 1)) && DS_END[last] ? DS_END[last] : oc.has(i + ':' + (D - 1)) ? (OC_END[last] ?? SH[last][1]) : SH[last][1];\n        if (nextAbs[i] === 7 && endLast != null && endLast > 22) { // cross-training starts 09:00 on the 1st: needs 11 h rest\n          c += w.rest; v && v.push(`Agent ${i + 1}: under 11 h rest before training on the 1st of next month`); }\n        if (nextAbs[i]) continue;               // away on the 1st: can't open next month\n        if (k >= maxRun) continue;              // must be off on the 1st\n        if (last === 0 || last === 1) { A++; B++; C++; }\n        else if (last === 2) { B++; C++; }\n        else C++;\n      }\n      c += w.endMix * (Math.max(0, 2 - A) + Math.max(0, 4 - B) + Math.max(0, 6 - C));\n      const core = eCnt.filter((_, i) => !extra.has(i)); const mean = core.reduce((a, b) => a + b, 0) / Math.max(1, core.length);\n      eCnt.forEach((e, i) => { if (!extra.has(i)) c += w.eFair * (e - mean) * (e - mean); });\n      return detail ? { cost: c, violations: v, cuts } : c;\n    }\n\n    function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }\n    const R = rng(opts.seed ?? Date.now());\n    const ri = n => Math.floor(R() * n);\n\n    // The 1st of the month is the tightest day: who worked what last month decides who may open.\n    // Pin a legal 2/2/2 arrangement for day 0 so the annealer starts from a coverable day.\n    (function pinFirstDay() {\n      if (opts.pinFirstDay === false) return;\n      const allow = [], locked = [];\n      const restIn = (i, s2) => prevEnd && prevEnd[i] != null ? 24 + SH[s2][0] - prevEnd[i] >= MIN_REST : restOK(prevLast[i], s2);\n      for (let i = 0; i < N; i++) {\n        const a = [];\n        if (isF(i, 0)) { const fv = fixed[i][0]; locked[i] = true; if (fv >= 1 && fv <= 3) a.push(fv); allow.push(a); continue; }\n        if (absOf(i, 0) || prevMustOff[i]) { locked[i] = true; allow.push(a); continue; } // away or must rest: not available\n        if (prevStreak[i] < maxRun) for (let s2 = 1; s2 <= 3; s2++) if (restIn(i, s2)) a.push(s2);\n        allow.push(a);\n      }\n      const mustWorkDay = i => (prevOff[i] || 0) >= maxOff; // two days off already \u2014 cannot be off again\n      const need = [0, 2 - (preCover[1] || 0) - (supCover[0] === 1 ? 1 : 0), 2 - (supCover[0] === 2 ? 1 : 0), 2 - (supCover[0] === 3 ? 1 : 0)];\n      const pick = new Array(N).fill(0);\n      const order = [...Array(N).keys()].sort((x, y) => allow[x].length - allow[y].length);\n      const solve = k => {\n        if (k === order.length) return need[1] <= 0 && need[2] <= 0 && need[3] <= 0;\n        const i = order[k];\n        if (locked[i]) {                               // fixed or away: take what is set, don't choose\n          const s2 = allow[i][0];\n          if (s2) { need[s2]--; const ok = solve(k + 1); if (!ok) need[s2]++; return ok; }\n          return solve(k + 1);\n        }\n        for (const s2 of allow[i]) if (need[s2] > 0) { need[s2]--; pick[i] = s2; if (solve(k + 1)) return true; need[s2]++; pick[i] = 0; }\n        if (!mustWorkDay(i)) { pick[i] = 0; if (solve(k + 1)) return true; }\n        return false;\n      };\n      if (!solve(0)) return;                       // no legal opening day \u2014 let the annealer do its best\n      for (let i = 0; i < N; i++) { if (locked[i]) continue; if (!fixed[i]) fixed[i] = new Array(D).fill(null); fixed[i][0] = pick[i]; }\n    })();\n\n    function initial() {\n      const g = [];\n      for (let i = 0; i < N; i++) {\n        const row = [];\n        for (let d = 0; d < D; d++) row.push(isF(i, d) ? fixed[i][d] : absOf(i, d) || homeOf(i, d));\n        for (let p = 0; p < 2; p++) {\n          const s = p ? 15 : 0, len = p ? p2Len : p1Len;\n          let k = 0; for (let d = s; d < s + len; d++) if (row[d] === 0) k++;\n          let guard = 0;\n          while (k < tgt[i][p] && guard++ < 1000) { const d = s + ri(len); if (!isF(i, d) && absOf(i, d) !== 7 && row[d] !== 0) { row[d] = 0; k++; } }\n        }\n        g.push(row);\n      }\n      return g;\n    }\n    function* anneal(iter) {\n      let g = initial(), cur = cost(g), best = g.map(r => r.slice()), bestC = cur;\n      const T0 = 200, T1 = 0.2;\n      for (let it = 0; it < iter; it++) {\n        if (it % 20000 === 0) yield it / iter;\n        const T = T0 * Math.pow(T1 / T0, it / iter);\n        const m = R(); let undo, touched = [];\n        const moveOK = () => touched.every(([a, d]) => okVal(a, d, g[a][d]));\n        if (m < 0.25) { // swap a block of days between two agents\n          const a = ri(N), b = ri(N); if (a === b) continue;\n          const k = 1 + ri(5), d0 = ri(D - k + 1);\n          for (let d = d0; d < d0 + k; d++) touched.push([a, d], [b, d]);\n          const sw = () => { for (let d = d0; d < d0 + k; d++) { const t = g[a][d]; g[a][d] = g[b][d]; g[b][d] = t; } };\n          sw(); undo = sw;\n        } else if (m < 0.45) { // rectangle: swap two days for two agents at once\n          const a = ri(N), b = ri(N); if (a === b) continue;\n          const p = R() < p1Len / D ? 0 : 1, s = p ? 15 : 0, len = p ? p2Len : p1Len;\n          const d1 = s + ri(len), d2 = s + ri(len); if (d1 === d2) continue;\n          touched = [[a, d1], [a, d2], [b, d1], [b, d2]];\n          const sw = () => { let t = g[a][d1]; g[a][d1] = g[a][d2]; g[a][d2] = t; t = g[b][d1]; g[b][d1] = g[b][d2]; g[b][d2] = t; };\n          sw(); undo = sw;\n        } else if (m < 0.6) { // swap agents on a day\n          const d = ri(D), a = ri(N), b = ri(N); if (a === b || g[a][d] === g[b][d]) continue; touched = [[a, d], [b, d]];\n          [g[a][d], g[b][d]] = [g[b][d], g[a][d]]; undo = () => { [g[a][d], g[b][d]] = [g[b][d], g[a][d]]; };\n        } else if (m < 0.8) { // swap two days same agent same period\n          const a = ri(N), p = R() < p1Len / D ? 0 : 1, s = p ? 15 : 0, len = p ? p2Len : p1Len;\n          const d1 = s + ri(len), d2 = s + ri(len); if (d1 === d2 || g[a][d1] === g[a][d2]) continue; touched = [[a, d1], [a, d2]];\n          [g[a][d1], g[a][d2]] = [g[a][d2], g[a][d1]]; undo = () => { [g[a][d1], g[a][d2]] = [g[a][d2], g[a][d1]]; };\n        } else { // set cell\n          const a = ri(N), d = ri(D); if (isF(a, d)) continue; const old = g[a][d];\n          const ab = absOf(a, d);\n          if (ab === 7) continue;\n          const cands = ab ? [0, ab] : [0, 4, homeOf(a, d), homeOf(a, d), 1 + ri(3)];\n          const nv = cands[ri(cands.length)]; if (nv === old) continue;\n          g[a][d] = nv; touched = [[a, d]]; undo = () => { g[a][d] = old; };\n        }\n        if (!moveOK()) { undo(); continue; }\n        const nc = cost(g);\n        if (nc <= cur || R() < Math.exp((cur - nc) / T)) { cur = nc; if (cur < bestC) { bestC = cur; best = g.map(r => r.slice()); } }\n        else undo();\n      }\n      return { g: best, c: bestC };\n    }\n    // greedy repair: the annealer sometimes leaves one shift short when a day has only one legal filling\n    function repair(g) {\n      // Greedy chain repair: fill a short shift by moving one agent, and if that empties another\n      // shift, move a second (and third) agent to cover it. Only accepted when the total cost drops.\n      let cur = cost(g);\n      const cands = (d, s2) => { const out = []; for (let i = 0; i < N; i++) if (okVal(i, d, s2) && g[i][d] !== s2) out.push(i); return out; };\n      for (let pass = 0; pass < 4; pass++) {\n        let moved = false;\n        for (let d = 0; d < D; d++) for (let s1 = 1; s1 <= 3; s1++) {\n          let cnt = 0; for (let i = 0; i < N; i++) if (g[i][d] === s1) cnt++;\n          if (cnt >= 2) continue;\n          for (const i of cands(d, s1)) {\n            const oi = g[i][d]; g[i][d] = s1;\n            if (cost(g) < cur) { cur = cost(g); moved = true; break; }\n            if (oi >= 1 && oi <= 3) {\n              let ok = false;\n              for (const j of cands(d, oi)) {\n                if (j === i) continue;\n                const oj = g[j][d]; g[j][d] = oi;\n                if (cost(g) < cur) { cur = cost(g); moved = true; ok = true; break; }\n                if (oj >= 1 && oj <= 3) {\n                  for (const k of cands(d, oj)) {\n                    if (k === i || k === j) continue;\n                    const okd = g[k][d]; if (okd !== 0 && okd !== 4) continue;\n                    g[k][d] = oj;\n                    if (cost(g) < cur) { cur = cost(g); moved = true; ok = true; break; }\n                    g[k][d] = okd;\n                  }\n                  if (ok) break;\n                }\n                g[j][d] = oj;\n              }\n              if (ok) break;\n            }\n            g[i][d] = oi;\n          }\n        }\n        if (!moved) break;\n      }\n      return g;\n    }\n    const restarts = opts.restarts ?? 6, iters = opts.iters ?? 400000;\n    function finish(best) {\n      const det = cost(best.g, true);\n      return { year, month, days: D, grid: best.g, home, offTarget, targets: tgt, cuts: det.cuts,\n        input: { prevLast: prevLast.slice(), prevStreak: prevStreak.slice() }, cost: det.cost, violations: det.violations,\n        carry: { prevHome: home[1].slice(), prevLast: best.g.map(r => r[D - 1]),\n          prevStreak: best.g.map(r => { let k = 0; for (let d = D - 1; d >= 0 && WORK(r[d]); d--) k++; return k; }),\n          prevOff: best.g.map(r => { let k = 0; for (let d = D - 1; d >= 0 && r[d] === 0; d--) k++; return k; }) } };\n    }\n    function* all() {\n      let best = null;\n      for (let r = 0; r < restarts; r++) {\n        const gen = anneal(iters); let x;\n        while (!(x = gen.next()).done) yield (r + x.value) / restarts;\n        const g2 = repair(x.value.g), c2 = cost(g2);\n        if (!best || c2 < best.c) best = { g: g2, c: c2 };\n      }\n      return finish(best);\n    }\n    if (opts.score) { const det = cost(opts.score, true); return { cost: det.cost, violations: det.violations, cuts: det.cuts }; }\n    if (opts.async) {\n      return new Promise((res, rej) => {\n        const gen = all();\n        const step = () => { if (opts.cancel && opts.cancel()) { rej(new Error('cancelled')); return; }\n          const t = Date.now(); let x;\n          do { x = gen.next(); } while (!x.done && Date.now() - t < 40);\n          if (x.done) res(x.value); else { opts.onProgress && opts.onProgress(x.value); setTimeout(step, 0); } };\n        step();\n      });\n    }\n    const gen = all(); let x; while (!(x = gen.next()).done); return x.value;\n  }\n  const api = { buildMonth, restOK, SH, OC_END, WORK, RESTDAY };\n  if (typeof module !== 'undefined') module.exports = api; else root.SchedEngine = api;\n})(this);\n";
+// Heavy builds run in a background worker so the page never freezes; if the browser blocks workers,
+// the same engine runs on the page in small slices instead. Either way the build can be cancelled.
+let WORKER_OK = true; window.__buildMode=()=>WORKER_OK?'background':'in-page';
+function runBuild(opts, onProgress){
+  let cancelled=false, worker=null, url=null, cancelWorker=null;
+  const stop=()=>{ if(worker){ worker.terminate(); worker=null; } if(url){ URL.revokeObjectURL(url); url=null; } };
+  const inPage=()=>E.buildMonth(Object.assign({},opts,{async:true,onProgress,cancel:()=>cancelled}));
+  const promise=new Promise((res,rej)=>{
+    if(typeof Worker==='undefined') WORKER_OK=false;
+    if(!WORKER_OK){ inPage().then(res,rej); return; }
+    let heard=false;
+    try{
+      const src=ENGINE_SRC+"\n;self.onmessage=function(e){var o=e.data;o.async=true;o.onProgress=function(p){self.postMessage({p:p});};"+
+        "self.SchedEngine.buildMonth(o).then(function(r){self.postMessage({done:r});},function(err){self.postMessage({err:String(err&&err.message||err)});});};";
+      url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
+      worker=new Worker(url);
+    }catch(e){ WORKER_OK=false; stop(); inPage().then(res,rej); return; }
+    worker.onmessage=e=>{ heard=true; const m=e.data;
+      if(m.p!=null){ onProgress&&onProgress(m.p); return; }
+      stop(); if(m.done) res(m.done); else rej(new Error(m.err||'failed')); };
+    worker.onerror=ev=>{ ev.preventDefault&&ev.preventDefault(); stop();
+      if(cancelled){ rej(new Error('cancelled')); return; }
+      if(!heard){ WORKER_OK=false; inPage().then(res,rej); } else rej(new Error('failed')); };
+    worker.postMessage(opts);
+    cancelWorker=()=>{ if(worker){ stop(); rej(new Error('cancelled')); } };
+  });
+  return { promise, cancel(){ cancelled=true; cancelWorker&&cancelWorker(); } };
+}
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const LBL=['OFF','05:00','13:00','21:00','18:00','VAC','SICK','TRN','X OFF','—']; // cells show the start time only
+const FULL={1:'05:00–14:00 (Morning)',2:'13:00–22:00 (Afternoon)',3:'21:00–05:00 (Night)',4:'18:00–03:00 (Late swing)'};
+const OC_FULL={1:'05:00–13:00',2:'13:00–21:00',3:'21:00–05:00',4:'18:00–03:00'}; // called in on a day off: 8 hours
+const isOC=(i,d)=>!!(S.result.oc&&S.result.oc.includes(i+':'+d));
+const isDS=(i,d)=>!!(S.result.ds&&S.result.ds.includes(i+':'+d));
+const DS_FULL={1:'05:00–22:00',2:'13:00–05:00',3:'21:00–14:00 next day'};
+const DS_END={1:22,2:29,3:38};
+const nextShift=v=>v===3?1:v+1;
+// how many agents are on each shift that day, counting double shifts and the supervisor
+function cover(d,s){ const r=S.result, g=r.grid; let c=0;
+  for(let i=0;i<g.length;i++){ const v=g[i][d];
+    if(v===s) c++;
+    if(isDS(i,d)&&v>=1&&v<=3&&nextShift(v)===s&&v<3) c++;
+    if(d>0&&s===1&&g[i][d-1]===3&&isDS(i,d-1)) c++; }
+  if(s<4) c+=supOn(d,s);
+  if(d===0&&s===1&&r.preCover&&r.preCover[1]) c+=r.preCover[1]; // a night double shift from last month runs to 14:00
+  return c; }
+const cellLab=(v,oc,dsx)=>LBL[v]+(oc&&v>=1&&v<=4?'-off':'')+(dsx&&v>=1&&v<=3?' DS':'');
+const optsFor=rest=>[[1,LBL[1],(rest?'Comes in on a day off · ':'Morning · ')+(rest?OC_FULL[1]:'05:00–14:00')],
+  [2,LBL[2],(rest?'Comes in on a day off · ':'Afternoon · ')+(rest?OC_FULL[2]:'13:00–22:00')],
+  [3,LBL[3],(rest?'Comes in on a day off · ':'Night · ')+(rest?OC_FULL[3]:'21:00–05:00')],
+  [4,LBL[4],'Late swing · 18:00–03:00'],[0,'OFF','Day off'],[8,'X OFF','Extra day off requested'],
+  [6,'SICK','Sick day (called in sick)'],[5,'VAC','Last-minute vacation day']];
+const TYPE={5:'Vacation',6:'Sick leave',7:'Cross-training'};
+const WORK=v=>v>=1&&v<=7, RESTD=v=>v===0||v===8;
+const SNAME={1:'Morning',2:'Afternoon',3:'Night',4:'Extra · 18:00 / cover'};
+let N=9; const MAXRUN=5;
+let BUSY=false; // true while a schedule is being built
+const STD_NAMES=['B-24','B-18','B-21','B-12','B-14','B-17','B-26','B-19','B-16']; // IDs only, no names
+const SUP_ID='B-20'; // supervisor
+const supHours=m=>m<6?{h:[7,16],lab:'07:00',full:'07:00–16:00'}:{h:[19,28],lab:'19:00',full:'19:00–04:00'}; // Jan–Jun days, Jul–Dec nights
+const supDefault=(y,m,prev)=>{ // off every Sunday & Monday; code 11 = last half-year's hours (bridging the Jan 1 / Jul 1 switch)
+  const out=Array.from({length:dim(y,m)},(_,d)=>{ const w=new Date(y,m,d+1).getDay(); return w===0||w===1?0:10; });
+  if(prev&&prev.last===10&&prev.lab!==supHours(m).lab&&24+supHours(m).h[0]-prev.h[1]<11)
+    for(let d=0;d<out.length&&out[d]===10;d++) out[d]=11; // keep the old hours until his first day off
+  return out; };
+const supAlt=m=>supHours(m<6?6:0); // the other half of the year
+const PATTERN=[1,3,2]; // rows repeat Morning, Night, Afternoon
+const RS=()=>S.rowShift; const RN=()=>S.rowShift.length;
+const up=r=>r<0?r:(r+RN()-1)%RN(); // move up one row each schedule (extras stay extra)
+const homeOfRow=k=>k<0?4:RS()[k];
+const orderOf=rows=>[...rows.keys()].sort((a,b)=>(rows[a]<0?99:rows[a])-(rows[b]<0?99:rows[b]));
+const SEED={"grid": [[1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 4, 0, 2, 2, 2, 2, 4, 0, 0, 2], [3, 4, 3, 3, 0, 3, 3, 4, 3, 3, 0, 0, 3, 3, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1], [2, 2, 4, 4, 0, 2, 2, 2, 4, 0, 0, 2, 2, 2, 0, 3, 3, 3, 3, 3, 0, 0, 3, 3, 3, 3, 0, 0, 3, 3, 3], [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 4, 0, 0, 1, 2, 2, 2, 2, 0, 0, 2, 2, 2, 0, 0, 2, 2, 2, 2, 4], [3, 3, 3, 3, 3, 0, 0, 3, 3, 3, 3, 3, 0, 0, 3, 3, 4, 0, 1, 1, 1, 1, 4, 0, 0, 1, 1, 1, 1, 4, 0], [2, 0, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 0, 3, 3, 3, 3, 4, 0, 3, 3, 3, 3, 4, 0, 3], [4, 0, 0, 1, 1, 1, 1, 4, 0, 1, 1, 1, 1, 1, 0, 1, 2, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 2, 2, 2, 2], [4, 3, 0, 0, 3, 3, 3, 3, 0, 0, 3, 3, 3, 3, 3, 0, 1, 1, 1, 1, 4, 0, 1, 1, 1, 1, 4, 0, 0, 1, 1], [0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 0, 0, 2, 2, 4, 3, 3, 0, 0, 3, 3, 3, 3, 0, 0, 3, 3, 3, 3, 4]], "home": [[1, 3, 2, 1, 3, 2, 1, 3, 2], [2, 1, 3, 2, 1, 3, 2, 1, 3]], "offTarget": [4, 4], "rows": [[0, 1, 2, 3, 4, 5, 6, 7, 8], [8, 0, 1, 2, 3, 4, 5, 6, 7]]};
+const $=id=>document.getElementById(id);
+const dim=(y,m)=>new Date(y,m+1,0).getDate();
+const STD_OFF=4; const defOff=()=>STD_OFF; // standard: 4 days off in each schedule
+
+const fresh = () => ({
+  year:2026, month:9, names:STD_NAMES.slice(), ids:STD_NAMES.map((_,i)=>'a'+(i+1)), nextId:10, rowShift:[1,3,2,1,3,2,1,3,2], pending:[],
+  rows:SEED.rows[0].slice(), absences:[], holidays:[], lock:0, prevLast:Array(9).fill(0), prevStreak:Array(9).fill(0), prevOff:Array(9).fill(0),
+  off:[STD_OFF,STD_OFF], offStd:1, result:JSON.parse(JSON.stringify({grid:SEED.grid,home:SEED.home,rows:SEED.rows,year:2026,month:9,names:STD_NAMES,ids:STD_NAMES.map((_,i)=>'a'+(i+1)),sup:supDefault(2026,9)}))
+});
+let S = fresh();
+let LOAD_NOTE='';
+try{ const saved=JSON.parse(localStorage.getItem('rota-state-v6')||'null');
+  const ok=x=>x&&Array.isArray(x.names)&&x.names.length&&x.result&&Array.isArray(x.result.grid)&&x.result.grid.length
+    &&x.result.grid.every(r=>Array.isArray(r)&&r.length===dim(x.result.year,x.result.month))&&x.result.home&&x.result.rows;
+  if(saved&&ok(saved)) S=saved; else if(saved){ LOAD_NOTE='The saved schedule on this device was damaged, so the page started fresh.'; }
+}catch(e){ LOAD_NOTE='The saved schedule on this device could not be read, so the page started fresh.'; }
+if(!S.offStd){ if(S.result&&!S.result.offTarget&&!S.result.targets) S.result.offTarget=(S.off||[4,5]).slice(); S.off=[STD_OFF,STD_OFF]; S.offStd=1; }
+S.absences=S.absences||[]; S.holidays=S.holidays||[]; S.lock=S.lock||0;
+// roster migration (older saves had a fixed 9-agent team)
+if(!S.ids){ S.ids=S.names.map((_,i)=>'a'+(i+1)); S.nextId=S.names.length+1; }
+if(!S.rowShift) S.rowShift=[1,3,2,1,3,2,1,3,2];
+if(!S.pending) S.pending=[];
+if(!S.prevOff) S.prevOff=S.prevLast.map(v=>v===0?1:0);
+if(S.result&&!S.result.ids){ S.result.ids=S.ids.slice(); S.result.names=S.names.slice(); }
+S.absences.forEach(a=>{ if(a.id===undefined){ a.id=S.ids[a.agent]; } });
+// employee IDs follow ASSET: B-24. Older saves used ID-24 or a bare number.
+const toB=n=>typeof n==='string'&&/^\s*(ID\s*-?\s*)?\d+\s*$/i.test(n)?'B-'+n.replace(/\D/g,''):n;
+S.names=S.names.map(toB); if(S.result&&S.result.names) S.result.names=S.result.names.map(toB); (S.pending||[]).forEach(x=>{ if(x.name) x.name=toB(x.name); });
+if(S.result&&!S.result.sup) S.result.sup=supDefault(S.result.year,S.result.month);
+N=S.names.length;
+try{ S.absences.forEach(a=>{ if(a.ret===undefined){ const [y,m,d]=(a.to||a.from).split('-').map(Number); const t=new Date(y,m-1,d+1); a.ret=a.to?`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`:''; delete a.to; } }); }catch(e){}
+let SAVE_WARNED=false;
+const save=()=>{ try{ localStorage.setItem('rota-state-v6',JSON.stringify(S)); SAVE_WARNED=false; }
+  catch(e){ if(!SAVE_WARNED){ SAVE_WARNED=true; const m=document.getElementById('msg'); if(m) m.textContent='Changes could not be saved on this device (browser storage is full or blocked). Download the Excel file to keep a copy.'; } } };
+// ---- undo history (last 50 actions, this page session)
+const HIST=[];
+function snap(label){ HIST.push({label,state:JSON.stringify(S)}); if(HIST.length>50) HIST.shift(); undoUI(); }
+function undoUI(){ const b=$('undo'); const h=HIST[HIST.length-1];
+  b.disabled=!h; b.textContent=h?`Undo: ${h.label}`:'Undo'; b.title=h?`Undo ${h.label.toLowerCase()} (${HIST.length} step${HIST.length>1?'s':''} available)`:'Nothing to undo'; }
+
+// ---- controls
+MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;$('mon').appendChild(o);});
+function syncControls(){
+  $('mon').value=S.month; $('yr').value=S.year; $('off1').value=S.off[0]; $('off2').value=S.off[1];
+  const D=dim(S.year,S.month); $('off2l').textContent=`Days off, 16–${D}`;
+  $('offnote').textContent=`Standard is ${STD_OFF} days off in each schedule. Agents work ${15-S.off[0]} + ${D-15-S.off[1]} shifts; anyone not needed on a main shift goes to 18:00–03:00.`;
+}
+function onMonthChange(){
+  if(BUSY) return;
+  snap('Change month');
+  S.month=+$('mon').value; S.year=+$('yr').value||S.year;
+  const D=dim(S.year,S.month); S.off=[defOff(15),defOff(D-15)]; syncControls(); save();
+}
+$('mon').addEventListener('change',onMonthChange); $('yr').addEventListener('change',onMonthChange);
+$('off1').addEventListener('change',()=>{if(BUSY)return;snap('Change days off');S.off[0]=$('off1').value===''?STD_OFF:Math.max(0,+$('off1').value);syncControls();save();});
+$('off2').addEventListener('change',()=>{if(BUSY)return;snap('Change days off');S.off[1]=$('off2').value===''?STD_OFF:Math.max(0,+$('off2').value);syncControls();save();});
+
+function agentRows(){
+  const tb=$('agentRows'); tb.innerHTML='';
+  for(let i=0;i<N;i++){
+    const tr=document.createElement('tr');
+    const opt=(vals,sel)=>vals.map(([v,t])=>`<option value="${v}"${v==sel?' selected':''}>${t}</option>`).join('');
+    tr.innerHTML=`<td><input type="text" id="nm${i}" aria-label="ID of agent ${i+1}"></td>
+      <td><select id="sh${i}" aria-label="Row for agent ${i+1}">${opt(RS().map((sh,k)=>[k,`Row ${k+1} · ${SNAME[sh]}`]).concat([[-1,'Extra · 18:00 / cover']]),S.rows[i])}</select></td>
+      <td><select id="pl${i}" aria-label="Last shift for agent ${i+1}">${opt([[0,'Off / unknown'],[1,'05-14'],[2,'13-22'],[3,'21-05'],[4,'18-03']],S.prevLast[i])}</select></td>
+      <td><input type="number" min="0" max="5" id="ps${i}" value="${S.prevStreak[i]}" aria-label="Streak for agent ${i+1}"></td>
+      <td class="rm-cell">${pendTag(S.ids[i])||`<button class="linkbtn" data-leave="${i}">Remove…</button>`}</td>`;
+    tb.appendChild(tr);
+    const nm=tr.querySelector('#nm'+i); nm.value=S.names[i];
+    nm.addEventListener('focus',()=>{nm._snapped=false;});
+    nm.addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next name (Shift+Enter → previous)
+      const nx=$('nm'+(i+(e.shiftKey?-1:1))); if(nx){ nx.focus(); nx.select(); } else nm.blur(); });
+    nm.addEventListener('input',()=>{ const val=normId(nm.value);
+      nm.classList.toggle('bad',!ID_RE.test(val));
+      if(!ID_RE.test(val)){ $('msg').textContent='IDs must look like B-24 (letter "B-" then numbers only).'; return; }
+      if(S.names.some((n,k)=>k!==i&&n===val)){ nm.classList.add('bad'); $('msg').textContent=`${val} is already on the team.`; return; }
+      if(!nm._snapped){snap('Change ID');nm._snapped=true;} S.names[i]=val;renderGrids();absUI();save(); $('msg').textContent=''; });
+    nm.addEventListener('blur',()=>{ nm.value=S.names[i]; nm.classList.remove('bad'); });
+    tr.querySelector('#sh'+i).addEventListener('change',e=>{snap('Change row');S.rows[i]=+e.target.value;save();rowCheck();});
+    tr.querySelector('#pl'+i).addEventListener('change',e=>{snap('Change last shift');S.prevLast[i]=+e.target.value; if(S.prevOff) S.prevOff[i]=S.prevLast[i]===0?1:0;save();});
+    tr.querySelector('#ps'+i).addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next row (Shift+Enter → previous)
+      const nx=$('ps'+(i+(e.shiftKey?-1:1))); if(nx){ nx.focus(); nx.select(); } else e.target.blur(); });
+    tr.querySelector('#ps'+i).addEventListener('change',e=>{snap('Change days in a row');S.prevStreak[i]=+e.target.value||0;save();});
+  }
+}
+
+function rowCheck(){
+  const core=S.rows.filter(x=>x>=0); const dup=core.length!==new Set(core).size;
+  if(dup){ $('msg').textContent='Two agents are in the same row. Give each agent a different row.'; }
+  return !dup;
+}
+// ---- team changes (hire / leave), effective from the start of a schedule
+const fmtIso=k=>{ const [y,m,d]=k.split('-').map(Number); return `${d} ${MONTHS[m-1].slice(0,3)}`; };
+function starts(){ const r=S.result, y=r.year, m=r.month, ny=m===11?y+1:y, nmn=(m+1)%12;
+  return [{from:iso(y,m,16),mid:true,label:`16 ${MONTHS[m].slice(0,3)}`,last:`15 ${MONTHS[m].slice(0,3)}`},
+          {from:iso(ny,nmn,1),mid:false,label:`1 ${MONTHS[nmn].slice(0,3)}`,last:`${dim(y,m)} ${MONTHS[m].slice(0,3)}`}]; }
+function pendTag(id){ const k=S.pending.findIndex(p=>p.kind==='leave'&&p.id===id); if(k<0) return '';
+  return `<span class="tag">Last day ${S.pending[k].last}</span><button class="linkbtn" data-cancel="${k}">Undo leaving</button>`; }
+function renderPending(){
+  const hs=S.pending.map((p,k)=>p.kind==='hire'?`<div><span class="tag">Starts ${fmtIso(p.from)}</span><b>${esc(p.name)}</b> <button class="linkbtn" data-cancel="${k}">Cancel</button></div>`:'').join('');
+  $('pendList').innerHTML=hs;
+  $('hireFrom').innerHTML=starts().map((o,k)=>`<option value="${k}">${o.label}${o.mid?' (this month)':''}</option>`).join('');
+  $('hireFrom').value='1';
+}
+function applyPending(monthStart){ // apply hires/leaves due by this month's first day; returns how many
+  let n=0;
+  S.pending=S.pending.filter(p=>{ if(p.from>monthStart) return true; n++;
+    if(p.kind==='leave'){ const i=S.ids.indexOf(p.id); if(i<0) return false; const row=S.rows[i];
+      ['names','ids','rows','prevLast','prevStreak','prevOff'].forEach(k=>S[k].splice(i,1));
+      if(row>=0){ S.rowShift.splice(row,1); S.rows=S.rows.map(x=>x>row?x-1:x); S.rowShift=S.rowShift.map((_,k)=>PATTERN[k%3]); }
+      S.absences=S.absences.filter(a=>a.id!==p.id); }
+    else { S.names.push(p.name); S.ids.push(p.id); S.prevLast.push(0); S.prevStreak.push(0); S.prevOff.push(0); S.rows.push(-1); }
+    return false; });
+  // an open row goes to an extra agent (longest-serving extra first)
+  for(let i=0;i<S.rows.length&&RN()<9;i++) if(S.rows[i]<0){ S.rowShift.push(PATTERN[RN()%3]); S.rows[i]=RN()-1; }
+  S.rowShift=S.rowShift.map((_,k)=>PATTERN[k%3]); // keep Morning / Night / Afternoon repeating so moving up a row always moves a shift forward
+  N=S.names.length; return n;
+}
+document.addEventListener('click',e=>{
+  if(BUSY) return;
+  const lv=e.target.closest('[data-leave]');
+  if(lv){ const i=+lv.dataset.leave, cell=lv.parentElement;
+    cell.innerHTML=starts().map((o,k)=>`<button class="linkbtn" data-leaveopt="${i}:${k}">Last day ${o.last}</button>`).join(' ')+` <button class="linkbtn" data-leavecancel>Keep</button>`;
+    cell.querySelector('button').focus(); return; }
+  if(e.target.closest('[data-leavecancel]')){ agentRows(); return; }
+  const lo=e.target.closest('[data-leaveopt]');
+  if(lo){ const [i,k]=lo.dataset.leaveopt.split(':').map(Number), o=starts()[k], id=S.ids[i], nmx=S.names[i];
+    snap(`${nmx} leaves`);
+    const nxt=starts()[1].from; S.pending.push({kind:'leave',id,from:nxt,last:o.last});
+    let msg=`${nmx} leaves after ${o.last}. Their row is removed from ${starts()[1].label}.`;
+    if(o.mid){ const r=S.result, ri=(r.ids||[]).indexOf(id);
+      if(ri>=0){ for(let d=15;d<r.grid[ri].length;d++) r.grid[ri][d]=9;
+        if(r.dbl) r.dbl=r.dbl.filter(x=>{ const [a,d]=x.split(':').map(Number); return !(a===ri&&d>=15); });
+        msg+=' Their shifts from the 16th are cleared — see the suggested fixes to cover them.'; } }
+    save(); agentRows(); renderGrids(); $('msg').textContent=msg; return; }
+  const cc=e.target.closest('[data-cancel]');
+  if(cc){ const p=S.pending[+cc.dataset.cancel]; if(!p) return;
+    if(p.kind==='leave'){ const r=S.result, ri=(r.ids||[]).indexOf(p.id);
+      if(ri>=0&&r.grid[ri].slice(15).every(v=>v===9)){ $('msg').textContent='Their shifts from the 16th were already cleared — use Undo to bring them back.'; return; } }
+    snap('Cancel team change'); S.pending.splice(+cc.dataset.cancel,1); save(); agentRows(); renderPending(); $('msg').textContent='Team change cancelled.'; return; }
+});
+$('hireAdd').addEventListener('click',async()=>{
+  const name=normId($('hireName').value);
+  if(!ID_RE.test(name)){ $('msg').textContent='Type the new agent\'s ID, like B-27.'; $('hireName').focus(); return; }
+  if(S.names.includes(name)||S.pending.some(p=>p.name===name)){ $('msg').textContent=`${name} is already on the team.`; return; }
+  const o=starts()[+$('hireFrom').value]; const id='a'+(S.nextId++);
+  if(!o.mid){ snap(`Add ${name}`); S.pending.push({kind:'hire',id,name,from:o.from}); $('hireName').value=''; save(); renderPending();
+    $('msg').textContent=`${name} starts ${o.label}. They'll be added when you set up and build that month.`; return; }
+  // starts on the 16th of the schedule on screen: fill their second half without moving anyone else
+  const r=S.result, D=r.grid[0].length, btn=$('hireAdd'); $('msg').textContent=`Adding ${name} from ${o.label}…`;
+  snap(`Add ${name}`); setBusy(true);
+  const token=JSON.stringify([r.year,r.month,r.ids,r.grid]);
+  const n=r.grid.length, fixed=r.grid.map(row=>row.slice()); fixed.push(Array.from({length:D},(_,d)=>d<15?9:null));
+  const ids=r.ids.concat([id]);
+  const res=await runBuild({...nextInfo(r.year,r.month,ids),agents:n+1,extras:r.rows[1].map((x,i)=>x<0?i:-1).filter(x=>x>=0).concat([n]),fixed,absence:fixedFor(r.year,r.month,ids),
+    mustWork:mustWorkFor(r.year,r.month,ids),dbl:r.dbl||[],year:r.year,month:r.month,startHome:r.home[0].concat([4]),
+    prevLast:(r.prevLast||S.prevLast).concat([0]),prevStreak:(r.prevStreak||S.prevStreak).concat([0]),prevOff:(r.prevOff||S.prevOff||[]).concat([0]),
+    maxRun:MAXRUN,offP1:(r.offTarget||S.off)[0],offP2:(r.offTarget||S.off)[1],seed:(Math.random()*1e9)|0,restarts:3,iters:150000}).promise;
+  setBusy(false);
+  if(S.result!==r||JSON.stringify([r.year,r.month,r.ids,r.grid])!==token){ HIST.pop(); undoUI(); $('msg').textContent='The schedule changed while the new agent was being added — nothing was changed. Try again.'; return; }
+  r.grid.push(res.grid[n]); r.home[0].push(4); r.home[1].push(4); r.rows[0].push(-1); r.rows[1].push(-1);
+  r.ids.push(id); r.names=(r.names||[]).concat([name]); if(r.targets) r.targets.push(res.targets[n]); if(r.absence) r.absence.push(Array(D).fill(null));
+  if(r.prevLast) r.prevLast.push(0); if(r.prevStreak) r.prevStreak.push(0); if(r.prevOff) r.prevOff.push(0);
+  S.names.push(name); S.ids.push(id); S.rows.push(-1); S.prevLast.push(0); S.prevStreak.push(0); S.prevOff.push(0); N=S.names.length;
+  $('hireName').value=''; save(); agentRows(); absUI(); renderPending(); renderGrids();
+  $('msg').textContent=`${name} added from ${o.label} as an extra on 18:00–03:00 — nobody else's shifts changed.`;
+});
+// ---- absences
+const iso=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+// Absences run from `from` up to the day before `ret` (the return-to-work day). Blank `ret` = still out.
+const addDay=(k,n)=>{ const [y,m,d]=k.split('-').map(Number); const t=new Date(y,m-1,d+n); return iso(t.getFullYear(),t.getMonth(),t.getDate()); };
+function fixedFor(y,m,ids){ // ids = agent ids in grid order (default: current roster)
+  ids=ids||S.ids; const D=dim(y,m), f=Array.from({length:ids.length},()=>Array(D).fill(null));
+  S.absences.forEach(a=>{ const i=ids.indexOf(a.id); if(i<0) return; for(let d=0;d<D;d++){ const k=iso(y,m,d+1); if(k>=a.from&&(!a.ret||k<a.ret)) f[i][d]=a.type; } });
+  return f;
+}
+function nextInfo(y,m,ids){ // who is away / due back on the 1st of the following month
+  ids=ids||S.ids; const ny=m===11?y+1:y, nm=(m+1)%12, ab=fixedFor(ny,nm,ids), mw=new Set(mustWorkFor(ny,nm,ids));
+  return {nextAbs:ab.map(row=>row[0]||0), nextMust:ids.map((_,i)=>mw.has(i+':0')?1:0)};
+}
+function mustWorkFor(y,m,ids){ // return-to-work days in this month: agent must be on a shift
+  ids=ids||S.ids; const D=dim(y,m), out=[], ab=fixedFor(y,m,ids);
+  S.absences.forEach(a=>{ const i=ids.indexOf(a.id); if(i<0||!a.ret) return; for(let d=0;d<D;d++) if(iso(y,m,d+1)===a.ret&&!ab[i][d]) out.push(i+':'+d); });
+  return out;
+}
+// Apply absence changes to the current schedule on the affected days only (no rebuild).
+function applyAbsences(){
+  const r=S.result, g=r.grid, D=g[0].length, nw=fixedFor(r.year,r.month,r.ids), old=r.absence||[];
+  const pick=(i,d)=>{ const h=r.home[d<15?0:1][i], c=s=>g.filter((row,k)=>k!==i&&row[d]===s).length;
+    if(c(h)<2) return h; for(const s of [1,2,3]) if(c(s)<2) return s; return 4; };
+  let changed=0;
+  for(let i=0;i<g.length;i++) for(let d=0;d<D;d++){
+    const o=(old[i]&&old[i][d])||0, n=nw[i][d]||0, v=g[i][d]; if(v===9) continue;
+    if(n&&!o){ if(n===7||(v>=1&&v<=4)){ g[i][d]=n; changed++; } }
+    else if(n&&o&&n!==o){ if(v===o){ g[i][d]=n; changed++; } }
+    else if(!n&&o){ if(v===o){ g[i][d]=pick(i,d); changed++; } }
+  }
+  mustWorkFor(r.year,r.month,r.ids).forEach(k=>{ const [i,d]=k.split(':').map(Number); if(!(g[i][d]>=1&&g[i][d]<=4)){ g[i][d]=pick(i,d); changed++; } });
+  r.absence=nw; r.mustWork=mustWorkFor(r.year,r.month,r.ids);
+  if(S.result.dbl) S.result.dbl=S.result.dbl.filter(k=>{ const [i,d]=k.split(':').map(Number); return g[i][d]>=1&&g[i][d]<=4; });
+  return changed;
+}
+function absChanged(label){
+  const n=applyAbsences(); save(); absUI(); renderGrids();
+  $('msg').textContent=n?`${label} — ${n} day${n>1?'s':''} updated on the schedule. Check the suggested fixes for any short shift.`:`${label}.`;
+}
+function absUI(){
+  $('abA').innerHTML=S.names.map((n,i)=>`<option value="${esc(S.ids[i])}">${esc(n||'Agent '+(i+1))}</option>`).join('');
+  const L=$('abList');
+  if(!S.absences.length){ L.innerHTML='<tr><td colspan="5" class="empty">No absences or training entered.</td></tr>'; return; }
+  L.innerHTML=S.absences.map((a,k)=>`<tr><td>${esc(S.names[S.ids.indexOf(a.id)]||'Former agent')}</td><td><span class="chip s${a.type}" style="color:var(--cell-ink)">${TYPE[a.type]}</span></td><td>${a.from}</td><td><input type="date" data-ret="${k}" value="${a.ret||''}" min="${addDay(a.from,1)}" aria-label="Back to work date"> <span class="tag">${a.ret?'':'Not known yet — still out'}</span></td><td><button data-rm="${k}">Remove</button></td></tr>`).join('');
+}
+$('abAdd').addEventListener('click',()=>{
+  const f=$('abF').value, t=$('abTo').value;
+  if(!f){ $('msg').textContent='Pick the first day of the absence.'; return; }
+  if(t&&t<=f){ $('msg').textContent='The back-to-work date must be after the first day of the absence.'; return; }
+  snap('Add absence');
+  S.absences.push({id:$('abA').value,type:+$('abT').value,from:f,ret:t||''});
+  $('abF').value=''; $('abTo').value='';
+  const r=S.result, endK=iso(r.year,r.month,dim(r.year,r.month));
+  if(f>endK){ save(); absUI(); renderGrids();
+    const [fy,fm,fd]=f.split('-').map(Number), first=fm-1===(r.month+1)%12&&fd===1;
+    $('msg').textContent=`Added for ${MONTHS[fm-1]} ${fy}. It goes on that month's schedule when you set it up${first?`, and the end of ${MONTHS[r.month]} is planned around it when you build or rebuild ${MONTHS[r.month]}`:''}.`; return; }
+  absChanged('Added');
+});
+$('abList').addEventListener('click',e=>{ const b=e.target.closest('[data-rm]'); if(!b) return; snap('Remove absence'); S.absences.splice(+b.dataset.rm,1); absChanged('Removed'); });
+$('abList').addEventListener('change',e=>{ const inp=e.target.closest('[data-ret]'); if(!inp) return; const a=S.absences[+inp.dataset.ret];
+  if(inp.value&&inp.value<=a.from){ $('msg').textContent='The back-to-work date must be after the first day of the absence.'; inp.value=a.ret||''; return; }
+  snap('Change back-to-work date'); a.ret=inp.value||''; absChanged('Back-to-work date changed'); });
+$('lock').addEventListener('change',()=>{ snap('Change kept days'); S.lock=Math.max(0,+$('lock').value||0); save(); });
+// ---- validation
+function check(){
+  const r=S.result, g=r.grid, D=g[0].length, Y=r.year, M=r.month;
+  const issues=[], bad=new Set(); const cat={cover:0,rest:0,sun:0,off:0,run:0,orun:0,cut:0};
+  const NX=nextInfo(Y,M,r.ids), OPEN=[0,0,0];
+  const offT=r.offTarget||S.off;
+  for(let d=0;d<D;d++){ const c=[0,0,0,0,0,0,0,0,0,0,0]; g.forEach(row=>c[row[d]]++); [1,2,3].forEach(s=>c[s]=cover(d,s));
+    for(let s=1;s<=3;s++) if(c[s]!==2){cat.cover++; issues.push(`${M+1}/${d+1}: ${SNAME[s]} (${LBL[s]}) has ${c[s]} agent${c[s]===1?'':'s'}`);}
+    if(c[4]&&[1,2,3].some(s=>c[s]<2)){cat.cover++; issues.push(`${M+1}/${d+1}: someone is on 18:00–03:00 while a main shift is short`);} }
+  const suns=[]; for(let d=0;d<D;d++) if(new Date(Y,M,d+1).getDay()===0) suns.push(d);
+  g.forEach((row,i)=>{
+    const nm=rName(i); const ne=[row.slice(0,15).includes(9),row.slice(15).includes(9)];
+    const os=[row.slice(0,15).filter(x=>x===0).length, row.slice(15).filter(x=>x===0).length];
+    const tg=r.targets?r.targets[i]:offT;
+    os.forEach((o,p)=>{ if(ne[p]) return; const lab=p?`16–${D}`:'1–15';
+      if(o>tg[p]){cat.off++;issues.push(`${nm}: ${o} days off in ${lab} (target ${tg[p]})`);}
+      else if(o<tg[p]){cat.cut+=tg[p]-o;} });
+    if(!row.includes(9)&&!suns.some(d=>RESTD(row[d]))){cat.sun++;issues.push(`${nm}: no Sunday off this month`);}
+    const prev=(r.prevLast||S.prevLast)[i];
+    const endOf=d=>{ const x=row[d]; if(!E.SH[x]) return null; if(isDS(i,d)&&DS_END[x]) return DS_END[x];
+      return isOC(i,d)?(E.OC_END[x]??E.SH[x][1]):E.SH[x][1]; };
+    for(let d=0;d<D;d++) if(isDS(i,d)){
+      let k=0; for(let x=d;x>=0&&WORK(row[x])&&!(r.dbl||[]).includes(i+':'+x)&&!isOC(i,x);x--) k++;
+      if(k>4){cat.run++;bad.add(i+':'+d);issues.push(`${nm}: double shift on the ${d+1} after ${k} days in a row (max 4)`);}
+      if(d+1<D&&!RESTD(row[d+1])&&row[d+1]!==9){cat.run++;bad.add(i+':'+(d+1));issues.push(`${nm}: no day off after the double shift on the ${d+1}`);} }
+    { const pe=r.prevEnd&&r.prevEnd[i]!=null?r.prevEnd[i]:null, n=row[0];
+      const short=pe!=null?(E.SH[n]&&24+E.SH[n][0]-pe<11):!E.restOK(prev,n);
+      if(short){cat.rest++;bad.add(i+':0');issues.push(`${nm}: under 11 h rest going into the 1st`);}
+      if(r.prevMustOff&&r.prevMustOff[i]&&WORK(n)){cat.run++;bad.add(i+':0');issues.push(`${nm}: must be off on the 1st after last month's double shift`);} }
+    for(let d=0;d+1<D;d++){ const e=endOf(d), n=row[d+1];
+      if(e!=null&&E.SH[n]&&24+E.SH[n][0]-e<11){cat.rest++;bad.add(i+':'+(d+1));issues.push(`${nm}: under 11 h rest between the ${d+1} and ${d+2}`);} }
+    (r.mustWork||[]).forEach(k=>{ const [a,d]=k.split(':').map(Number); if(a===i&&!(row[d]>=1&&row[d]<=4)){ cat.ret=(cat.ret||0)+1; bad.add(i+':'+d); issues.push(`${nm}: back to work on the ${d+1} but not on a shift`); } });
+    let orun=((r.prevOff||S.prevOff||[])[i])??((r.prevLast||S.prevLast)[i]===0?1:0);
+    for(let d=0;d<D;d++){ orun=row[d]===0?orun+1:0; if(orun>2){cat.orun++;bad.add(i+':'+d);issues.push(`${nm}: ${orun} days off in a row by the ${d+1} (max 2)`);} }
+    let run=(r.prevStreak||S.prevStreak)[i]||0; const dbl=new Set(r.dbl||[]);
+    for(let d=0;d<D;d++){ if(dbl.has(i+':'+d)||isOC(i,d)){ run=0; continue; } run=WORK(row[d])?run+1:0; if(run>5){cat.run++;bad.add(i+':'+d);issues.push(`${nm}: ${run} days in a row by the ${d+1} (legal max 5)`);} }
+    // look ahead to the 1st of next month (absences entered early)
+    if(row[D-1]!==9){ const NMN=MONTHS[(M+1)%12];
+      if(NX.nextMust[i]&&run>=MAXRUN){cat.run++;bad.add(i+':'+(D-1));issues.push(`${nm}: back to work on ${NMN} 1 after ${run} days in a row`);}
+      const el=endOf(D-1);
+      if(NX.nextAbs[i]===7&&el!=null&&el>22){cat.rest++;bad.add(i+':'+(D-1));issues.push(`${nm}: under 11 h rest before training on ${NMN} 1`);}
+      if(!NX.nextAbs[i]&&run<MAXRUN&&!(isDS(i,D-1))){ const l=row[D-1]; if(l===0||l===8||l===1){OPEN[0]++;OPEN[1]++;OPEN[2]++;} else if(l===2){OPEN[1]++;OPEN[2]++;} else OPEN[2]++; } }
+  });
+  if(OPEN[0]<2||OPEN[1]<4||OPEN[2]<6){ cat.next=1; const NMN=MONTHS[(M+1)%12];
+    issues.push(`${NMN} 1: not enough agents free to open next month (${OPEN[0]} for 05:00, ${OPEN[1]} for 05:00/13:00, ${OPEN[2]} in all) — rebuild this month or plan cover`); }
+  const sp=r.sup||[]; // supervisor: rest between his own shifts and cover shifts
+  if(r.supPrev&&r.supPrev.last){ const x=r.supPrev.last===10?r.supPrev.h:(r.supPrev.last>=1&&r.supPrev.last<=4?E.SH[r.supPrev.last]:null), y=supSH(sp[0],0);
+    if(x&&y&&24+y[0]-x[1]<11){cat.rest++;bad.add('sup:0');issues.push(`${SUP_ID}: under 11 h rest going into the 1st (was on ${r.supPrev.lab} last month)`);} }
+  for(let d=0;d+1<D;d++) if(!supRestOK(sp[d],sp[d+1],d,d+1)){cat.rest++;bad.add('sup:'+(d+1));issues.push(`${SUP_ID}: under 11 h rest between the ${d+1} and ${d+2}`);}
+  return {issues,bad,cat};
+}
+function renderChecks(){
+  const {issues,cat}=check();
+  const items=[['cover','2 agents on every shift'],['rest','11 h+ rest between shifts'],['sun','Sunday off for everyone'],['off','No extra days off'],['run','Max 5 days in a row (incl. carry-over)'],['orun','Max 2 days off in a row']];
+  $('checks').innerHTML=items.map(([k,t])=>`<span class="chip ${cat[k]?'bad':'ok'}">${cat[k]?'✕':'✓'} ${t}${cat[k]?` (${cat[k]})`:''}</span>`).join('')
+    +(cat.ret?`<span class="chip bad">✕ Back-to-work day not on a shift (${cat.ret})</span>`:'')
+    +(cat.next?`<span class="chip info">Next month's 1st is tight — see below</span>`:'')
+    +(cat.cut?`<span class="chip info">${cat.cut} day${cat.cut>1?'s':''} off given up to cover shifts</span>`:'');
+  $('issues').innerHTML=issues.slice(0,20).map(s=>`<li>${s.replace(/</g,'&lt;')}</li>`).join('');
+  $('checksTitle').textContent=`Rule checks — ${MONTHS[S.result.month]} ${S.result.year}`;
+}
+
+// ---- grids
+function renderGrid(tbl,d0,d1,p){
+  const r=S.result, g=r.grid, Y=r.year, M=r.month; const {bad}=check(); const rows=r.rows[p], homes=r.home[p];
+  let h='<thead><tr><th class="name">Agent</th>';
+  for(let d=d0;d<d1;d++){const dt=new Date(Y,M,d+1);const sun=dt.getDay()===0;
+    const hol=isHol(d);
+    h+=`<th class="${sun?'sun':''}${hol?' hol':''}"><button class="dayh" data-day="${d}" aria-pressed="${hol}" title="${hol?'Holiday — every shift worked counts as a Double day. Click to remove.':'Click to mark as a holiday (every shift worked counts as a Double day)'}">${dt.toLocaleDateString('en-US',{weekday:'short'})}<br>${d+1}${hol?'<i>HOL</i>':''}</button></th>`;}
+  h+='<th>Shifts</th><th>Off</th><th>18-03</th><th>Away</th><th>TRN</th><th title="Double days: holiday shifts + call-ins">DBL</th></tr></thead><tbody>';
+  orderOf(rows).forEach(i=>{ const row=g[i];
+    const emp=row.slice(d0,d1).some(v=>v!==9);
+    h+=`<tr><th class="name">${nm(i)}<small>${emp?SNAME[homes[i]]:'Not on the team'}</small></th>`;
+    let w=0,o=0,e=0,a=0,t=0,x2=0; const fx=r.fixedMask||[];
+    for(let d=d0;d<d1;d++){const v=row[d]; if(v>=1&&v<=4)w++; if(v===0||v===8)o++; if(v===4)e++; if(v===5||v===6)a++; if(v===7)t++;
+      const hx=isHol(d)&&isFloor(v); if(hx||isD(i,d)) x2++; const oc=isOC(i,d)&&v>=1&&v<=3, dsx=isDS(i,d)&&v>=1&&v<=3, dblc=isD(i,d)&&v>=1&&v<=4;
+      const ab=(r.absence&&r.absence[i]&&r.absence[i][d])||0, isfx=ab>0; h+=`<td${isHol(d)?' class="holc"':''}><button class="cell s${v}${oc?' oc':''}${dblc?' dblc':''}${dsx?' ds':''}${isfx?' fx':''}${bad.has(i+':'+d)?' warn':''}" data-i="${i}" data-d="${d}"${isfx?` title="${TYPE[ab]} period — click to switch between ${LBL[ab]} and OFF"`:v===8?' title="Extra day off requested — kept when you rebuild"':''} aria-haspopup="menu" aria-label="${nm(i)} day ${d+1}: ${oc?'called in on a day off, ':''}${dsx?'double shift '+DS_FULL[v]:(v>=1&&v<=4?(oc?OC_FULL[v]:FULL[v]):LBL[v])}${isD(i,d)||hx?', Double day':''}">${cellLab(v,oc,dsx)}${isD(i,d)?'<i class="dblb">DBL</i>':''}</button></td>`;}
+    h+=`<td class="tot">${w}</td><td class="tot">${o}</td><td class="tot">${e}</td><td class="tot">${a||''}</td><td class="tot">${t||''}</td><td class="tot">${x2||''}</td></tr>`;
+  });
+  { const sp=r.sup||[]; let w=0,o=0,cv=0;
+    h+=`<tr class="supsep"><th class="name" colspan="${d1-d0+7}">Supervisor</th></tr><tr class="suprow"><th class="name">${SUP_ID}<small>Supervisor · ${supHours(M).full}</small></th>`;
+    for(let d=d0;d<d1;d++){ const v=sp[d]??0; if(v===10||(v>=1&&v<=4)) w++; if(v===0) o++; if(v>=1&&v<=4) cv++;
+      h+=`<td${isHol(d)?' class="holc"':''}><button class="cell s${v===10?'sup':v}${v>=1&&v<=4?' supcov':''}${supIsOC(d)&&v>=1&&v<=3?' oc':''}${bad.has('sup:'+d)?' warn':''}" data-sup="1" data-d="${d}" aria-haspopup="menu" aria-label="${SUP_ID} day ${d+1}: ${supLab(v,d)}${v>=1&&v<=4?' (covering)':''}"${v>=1&&v<=4&&supIsOC(d)?' title="Covering on his day off — 8-hour call-in"':''}>${supLab(v,d)}</button></td>`; }
+    h+=`<td class="tot">${w}</td><td class="tot">${o}</td><td class="tot" title="Agent shifts covered">${cv||''}</td><td></td><td></td><td></td></tr>`; }
+  [1,2,3,4].forEach(s=>{ h+=`<tr class="cov"><th class="name"><small>${LBL[s]} on duty</small></th>`;
+    for(let d=d0;d<d1;d++){const c=s<4?cover(d,s):g.filter(row=>row[d]===s).length; h+=`<td class="${s<4&&c!==2?'badc':''}">${c}</td>`;}
+    h+='<td></td><td></td><td></td><td></td><td></td><td></td></tr>'; });
+  tbl.innerHTML=h+'</tbody>';
+}
+// ---- fix suggestions for short shifts
+const isHol=d=>S.holidays.includes(iso(S.result.year,S.result.month,d+1));
+const HOLAT=isHol; // exports: every shift worked on a holiday is a Double day
+const isFloor=v=>v>=1&&v<=4;
+const supIsOC=d=>!!(S.result.supOc&&S.result.supOc.includes(d));
+const supLab=(v,d)=>v===11?supAlt(S.result.month).lab:v===10?supHours(S.result.month).lab:(LBL[v]+(d!==undefined&&supIsOC(d)&&v>=1&&v<=4?'-off':''));
+const supSH=(v,d)=>v===11?supAlt(S.result.month).h:v===10?supHours(S.result.month).h:(v>=1&&v<=4?(d!==undefined&&supIsOC(d)?[E.SH[v][0],E.OC_END[v]]:E.SH[v]):null);
+const supRestOK=(a,b,da,db)=>{ const x=supSH(a,da), y=supSH(b,db); return !x||!y||24+y[0]-x[1]>=11; };
+const pin=(i,d)=>{ const r=S.result; r.pins=r.pins||[]; const k=i+':'+d; if(!r.pins.includes(k)) r.pins.push(k); }; // hand edits survive a rebuild
+const supOffDay=d=>{ const w=new Date(S.result.year,S.result.month,d+1).getDay(); return w===0||w===1; };
+const supOn=(d,s)=>(S.result.sup&&S.result.sup[d]===s)?1:0; // supervisor covering an agent shift counts as 1
+const isD=(i,d)=>!!(S.result.dbl&&S.result.dbl.includes(i+':'+d));
+const fmtD=d=>`${d+1} ${MONTHS[S.result.month].slice(0,3)}`;
+const rName=i=>{ const r=S.result; const id=r.ids&&r.ids[i]; const k=id?S.ids.indexOf(id):-1; return (k>=0?S.names[k]:(r.names&&r.names[i]))||('Agent '+(i+1)); };
+const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const ID_RE=/^B-\d{1,6}$/;
+function normId(v){ v=String(v||'').trim().toUpperCase(); return /^(ID|B)?\s*-?\s*\d{1,6}$/.test(v)?'B-'+v.replace(/\D/g,''):v; }
+const nm=i=>esc(rName(i));
+function scorer(){
+  const r=S.result, D=r.grid[0].length;
+  const fixed=r.grid.map(row=>row.map(v=>v===8?8:null));
+  const extras=r.rows[1].map((x,i)=>x<0?i:-1).filter(x=>x>=0);
+  const nx=nextInfo(r.year,r.month,r.ids);
+  return (g,extraDbl,extraOc,extraDs)=>E.buildMonth({...nx,prevEnd:r.prevEnd||null,prevMustOff:r.prevMustOff||[],preCover:r.preCover||{},
+    supCover:(r.sup||[]).map(v=>v>=1&&v<=3?v:0),ds:(r.ds||[]).concat(extraDs||[]),oc:(r.oc||[]).concat(extraOc||[]),agents:r.grid.length,extras,dbl:(r.dbl||[]).concat(extraDbl||[]),year:r.year,month:r.month,startHome:r.home[0].slice(),prevLast:(r.prevLast||S.prevLast).slice(),
+    prevStreak:(r.prevStreak||S.prevStreak).slice(),prevOff:(r.prevOff||S.prevOff||undefined),maxRun:MAXRUN,offP1:(r.offTarget||S.off)[0],offP2:(r.offTarget||S.off)[1],
+    fixed,absence:r.absence||[],score:g});
+}
+let FIXES=[], FIX_HIDDEN=false, FIX_TOTAL=0;
+function findFixes(){
+  // Same-day fixes only — nothing before or after the short day is touched.
+  const r=S.result, g=r.grid, D=g[0].length, score=scorer();
+  const base=score(g), baseV=base.violations.length;
+  const absAt=(i,d)=>(r.absence&&r.absence[i]&&r.absence[i][d])||0;
+  const plainOff=(i,d)=>d<0?((r.prevLast||S.prevLast)[i]===0):d>=D?false:(g[i][d]===0||g[i][d]===8)&&!absAt(i,d);
+  const gaps=[]; for(let d=0;d<D;d++) for(let s=1;s<=3;s++) if(cover(d,s)<2) gaps.push({d,s});
+  const test=(ch,xd,xo,xds)=>{ const t=g.map(row=>row.slice()); ch.forEach(([a,dd,v])=>t[a][dd]=v); const sc=score(t,xd,xo,xds); return {v:sc.violations.length,cost:sc.cost}; };
+  FIX_TOTAL=gaps.length;
+  return gaps.slice(0,4).map(({d,s})=>{
+    // Step 1: someone on 18:00–03:00 that day moves to the short shift
+    const late=[];
+    for(let a=0;a<g.length;a++) if(g[a][d]===4){ const ch=[[a,d,s]], t=test(ch);
+      if(t.v<baseV) late.push({ch,...t,kind:'late',txt:`${nm(a)} moves from 18:00–03:00 to ${FULL[s]} on ${fmtD(d)}.`,tag:'No days off lost'}); }
+    late.sort((x,y)=>x.v-y.v||x.cost-y.cost);
+    if(late.length) return {d,s,step:1,top:late.slice(0,3)};
+    // Step 2: someone with two days off in a row comes in on this one
+    const inc=[];
+    for(let a=0;a<g.length;a++) if(g[a][d]===0&&!absAt(a,d)&&(plainOff(a,d-1)||plainOff(a,d+1))){
+      const ch=[[a,d,s]], t=test(ch,null,[a+':'+d]); if(t.v>=baseV) continue;
+      const keep=plainOff(a,d-1)?d-1:d+1;
+      inc.push({ch,...t,oc:a+':'+d,kind:'callin',txt:`${nm(a)} comes in on their day off (${fmtD(d)}) to work ${OC_FULL[s]}; keeps ${fmtD(keep)} off.`,tag:`${nm(a)} gives up 1 day off`}); }
+    inc.sort((x,y)=>x.v-y.v||x.cost-y.cost);
+    if(inc.length) return {d,s,step:2,top:inc.slice(0,3)};
+    // Step 3: the supervisor covers the shift instead of his own that day
+    const sp=r.sup||[];
+    if(sp[d]===10&&supRestOK(sp[d-1],s)&&supRestOK(s,sp[d+1]))
+      return {d,s,step:3,top:[{ch:[],sup:[d,s],kind:'sup',txt:`${SUP_ID} (supervisor) covers ${FULL[s]} on ${fmtD(d)} instead of his ${supHours(r.month).full} shift.`,tag:'Supervisor cover'}]};
+    // Step 4: an agent already on the shift before works straight through — a double shift
+    const dsOpts=[];
+    { const prev=s===1?3:s-1, sd=s===1?d-1:d;
+      if(sd>=0) for(let a=0;a<g.length;a++) if(g[a][sd]===prev&&!isDS(a,sd)&&!absAt(a,sd)){
+        const t=test([],null,null,[a+':'+sd]);
+        if(t.v<baseV) dsOpts.push({ch:[],ds:a+':'+sd,kind:'ds',...t,
+          txt:`${nm(a)} works a double shift on ${fmtD(sd)} — ${DS_FULL[prev]} — covering ${LBL[s]}${s===1?` on ${fmtD(d)}`:''}.`,
+          tag:'Double shift'}); } }
+    dsOpts.sort((x,y)=>x.v-y.v||x.cost-y.cost);
+    if(dsOpts.length) return {d,s,step:4,top:dsOpts.slice(0,3)};
+    // Step 5 (very last): the supervisor comes in on his Sunday / Monday off
+    if(sp[d]===0&&supOffDay(d)&&supRestOK(sp[d-1],s,d-1,d)&&supRestOK(s,sp[d+1],d,d+1))
+      return {d,s,step:5,top:[{ch:[],sup:[d,s],supOc:true,kind:'sup',txt:`${SUP_ID} (supervisor) comes in on his day off (${fmtD(d)}) to cover ${OC_FULL[s]}.`,tag:'Supervisor, day off'}]};
+    return {d,s,step:0,top:[]};
+  });
+}
+let FORCE_LOCK=0;
+function renderFixes(){
+  const box=$('fixes'); const res=findFixes(); FIXES=[];
+  document.body.classList.toggle('has-fixes',!!res.length&&!FIX_HIDDEN);
+  if(!res.length){ box.innerHTML=''; return; }
+  if(FIX_HIDDEN){ box.innerHTML=`<div class="fx-head"><strong>${FIX_TOTAL} short shift${FIX_TOTAL>1?'s':''}</strong><button id="fxShow">Show fixes</button></div>`; return; }
+  const shown=res.length, total=FIX_TOTAL;
+  let h=`<div class="fx-head"><strong>Cover the short shift${total>shown?`s — showing ${shown} of ${total}`:''}</strong><button id="fxHide">Hide</button></div>`;
+  res.forEach(({d,s,step,top})=>{
+    h+=`<h3>${SNAME[s]} (${LBL[s]}) is short on ${fmtD(d)}</h3>`;
+    if(step===1) h+=`<p class="note">Step 1 — move the agent on 18:00–03:00:</p>`;
+    if(step===2) h+=`<p class="note">No one on 18:00–03:00 can take it. Step 2 — call in someone with two days off in a row:</p>`;
+    if(step===3) h+=`<p class="note">No agent on 18:00–03:00 or with two days off in a row can cover. Step 3 — the supervisor fills in:</p>`;
+    if(step===4) h+=`<p class="note">Step 4 — an agent on the shift before works a double shift:</p>`;
+    if(step===5) h+=`<p class="note">No agent can cover, and ${SUP_ID} is off that day. Step 5 (very last option) — the supervisor comes in on his day off:</p>`;
+    if(step===0) h+=`<p class="note">No one can cover ${fmtD(d)} — not even ${SUP_ID}, who is off or would break the 11-hour rest rule.</p>`;
+    top.forEach(c=>{ const k=FIXES.push(c)-1;
+      h+=`<div class="fix" data-fix="${k}"><p>${c.txt}</p><span class="tag${c.kind==='late'?' good':''}">${c.tag}</span><button data-apply="${k}">Apply</button></div>`; });
+  });
+  box.innerHTML=h;
+}
+const hint=(k,on)=>{ const c=FIXES[k]; if(!c) return;
+  if(c.ds){ const [a,d]=c.ds.split(':').map(Number); const el=document.querySelector(`.cell[data-i="${a}"][data-d="${d}"]`); el&&el.classList.toggle('hint',on); }
+  c.ch.forEach(([a,d])=>{ const el=document.querySelector(`.cell[data-i="${a}"][data-d="${d}"]`); el&&el.classList.toggle('hint',on); });
+  if(c.sup){ const el=document.querySelector(`.cell[data-sup][data-d="${c.sup[0]}"]`); el&&el.classList.toggle('hint',on); } };
+$('fixes').addEventListener('mouseover',e=>{ const f=e.target.closest('[data-fix]'); document.querySelectorAll('.cell.hint').forEach(x=>x.classList.remove('hint')); if(f) hint(+f.dataset.fix,true); });
+$('fixes').addEventListener('mouseleave',()=>document.querySelectorAll('.cell.hint').forEach(x=>x.classList.remove('hint')));
+$('fixes').addEventListener('focusin',e=>{ const f=e.target.closest('[data-fix]'); document.querySelectorAll('.cell.hint').forEach(x=>x.classList.remove('hint')); if(f) hint(+f.dataset.fix,true); });
+$('fixes').addEventListener('click',e=>{
+  if(BUSY) return;
+  if(e.target.id==='fxHide'){ FIX_HIDDEN=true; renderFixes(); return; }
+  if(e.target.id==='fxShow'){ FIX_HIDDEN=false; renderFixes(); return; }
+  const b=e.target.closest('[data-apply]'); if(!b) return; const c=FIXES[+b.dataset.apply]; if(!c) return;
+  snap('Apply fix'); c.ch.forEach(([a,d,v])=>{ S.result.grid[a][d]=v; pin(a,d); });
+  if(c.oc){ S.result.oc=(S.result.oc||[]).concat([c.oc]); }
+  if(c.ds){ S.result.ds=(S.result.ds||[]).concat([c.ds]); const [a,dd]=c.ds.split(':').map(Number); pin(a,dd); }
+  if(c.sup){ S.result.sup[c.sup[0]]=c.sup[1]; if(c.supOc){ S.result.supOc=(S.result.supOc||[]).concat([c.sup[0]]); } } if(c.dbl){ S.result.dbl=(S.result.dbl||[]).concat([c.dbl]); } save(); renderGrids();
+  $('msg').textContent='Fix applied.';
+});
+function cleanMarks(){ const r=S.result, g=r.grid; if(!g) return;
+  const holds=(k,hi)=>{ const [i,d]=k.split(':').map(Number); return g[i]&&g[i][d]>=1&&g[i][d]<=hi; };
+  if(r.oc) r.oc=r.oc.filter(k=>holds(k,4));
+  if(r.dbl) r.dbl=r.dbl.filter(k=>holds(k,4));
+  if(r.ds) r.ds=r.ds.filter(k=>holds(k,3)); }
+function renderGrids(){
+  cleanMarks();
+  const r=S.result, D=r.grid[0].length, mn=MONTHS[r.month];
+  $('h1title').textContent=`${mn} 1–15, ${r.year}`; $('h2title').textContent=`${mn} 16–${D}, ${r.year}`;
+  renderGrid($('g1'),0,15,0); renderGrid($('g2'),15,D,1); renderChecks(); renderFixes();
+}
+// ---- holidays: click a date to toggle
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.dayh'); if(!b||BUSY) return;
+  const d=+b.dataset.day, k=iso(S.result.year,S.result.month,d+1), on=S.holidays.includes(k);
+  snap(on?`Remove holiday ${fmtD(d)}`:`Holiday ${fmtD(d)}`);
+  S.holidays=on?S.holidays.filter(x=>x!==k):S.holidays.concat([k]); save(); renderGrids();
+  $('msg').textContent=on?`${fmtD(d)} is no longer a holiday.`:`${fmtD(d)} marked as a holiday — every shift worked that day counts as a Double day.`;
+  const nb=document.querySelector(`.dayh[data-day="${d}"]`); nb&&nb.focus();
+});
+// ---- cell picker pop-up
+const pop=$('picker'); let POP=null;
+function closePop(focus){ if(!POP) return; pop.hidden=true; const c=POP; POP=null;
+  if(focus){ const nb=document.querySelector(`.cell[data-i="${c.i}"][data-d="${c.d}"]`); nb&&nb.focus(); } }
+function openSupPop(btn){
+  const d=+btn.dataset.d, v=S.result.sup[d]; POP={sup:true,d};
+  const rest=(v===0), sh=supHours(S.result.month);
+  const opts=[[10,sh.lab,'Supervisor shift · '+sh.full],[1,LBL[1],'Cover · '+(rest?OC_FULL[1]:'05:00–14:00')],[2,LBL[2],'Cover · '+(rest?OC_FULL[2]:'13:00–22:00')],[3,LBL[3],'Cover · '+(rest?OC_FULL[3]:'21:00–05:00')],[0,'OFF','Day off'],[6,'SICK','Sick day'],[5,'VAC','Vacation day']];
+  pop.innerHTML=`<div class="pk-head">${SUP_ID} (supervisor) · ${new Date(S.result.year,S.result.month,d+1).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'})}</div>`+
+    opts.map(([code,lab,desc])=>`<button class="pk-opt${code===v?' cur':''}" data-code="${code}"><b class="s${code===10?'sup':code}">${lab}</b><span>${desc}</span>${code===v?'<em>current</em>':''}</button>`).join('');
+  placePop(btn);
+}
+const PHONE=matchMedia('(max-width:640px)');
+function placePop(btn){
+  pop.insertAdjacentHTML('beforeend','<button class="pk-cancel" type="button">Cancel</button>');
+  pop.hidden=false;
+  // on a phone the options slide up from the bottom, full width, with large touch targets
+  const sheet=PHONE.matches; pop.classList.toggle('sheet',sheet);
+  if(sheet){ pop.style.left=''; pop.style.top=''; (pop.querySelector('.pk-opt.cur')||pop.querySelector('.pk-opt')).focus({preventScroll:true}); return; }
+  const rc=btn.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=rc.left+window.scrollX, top=rc.bottom+window.scrollY+6;
+  left=Math.max(window.scrollX+8,Math.min(left,window.scrollX+document.documentElement.clientWidth-pw-8));
+  if(rc.bottom+ph+6>window.innerHeight && rc.top-ph-6>0) top=rc.top+window.scrollY-ph-6;
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+  (pop.querySelector('.pk-opt.cur')||pop.querySelector('.pk-opt')).focus();
+}
+function openPop(btn){
+  if(btn.dataset.sup){ openSupPop(btn); return; }
+  const i=+btn.dataset.i,d=+btn.dataset.d, ab=(S.result.absence&&S.result.absence[i]&&S.result.absence[i][d])||0, v=S.result.grid[i][d];
+  if(ab===7||(!ab&&v===7)){ $('msg').textContent='Training dates are changed in the absences list.'; return; }
+  if(v===9){ $('msg').textContent=`${rName(i)} is not on the team on this day.`; return; }
+  POP={i,d};
+  const rest=(v===0||v===8); // picking a shift on a day off makes it an 8-hour call-in
+  let opts=ab?[[ab,LBL[ab],TYPE[ab]],[0,'OFF','Day off (inside the '+TYPE[ab].toLowerCase()+')']]:optsFor(rest);
+  if(!ab&&v>=1&&v<=3) opts=opts.concat([[isDS(i,d)?'-ds':'ds',`${LBL[v]} DS`,isDS(i,d)?'Back to a single shift':'Double shift · '+DS_FULL[v]]]);
+  if(!ab&&v>=1&&v<=4&&isOC(i,d)) opts=opts.concat([[isD(i,d)?'-dbl':'dbl','DBL',isD(i,d)?'Not a Double day (normal call-in pay)':'Mark as Double day (paid double)']]);
+  pop.innerHTML=`<div class="pk-head">${nm(i)} · ${new Date(S.result.year,S.result.month,d+1).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'})}</div>`+
+    opts.map(([code,lab,desc])=>`<button class="pk-opt${code===v?' cur':''}" data-code="${code}"><b class="s${typeof code==='string'?v:code}${code==='ds'?' ds':''}${code==='dbl'?' dblc':''}"${code==='dbl'?' style="background:var(--dblc);color:var(--dbl-ink)"':''}>${lab}</b><span>${desc}</span>${code===v?'<em>current</em>':''}</button>`).join('');
+  placePop(btn);
+}
+document.addEventListener('click',e=>{
+  if(BUSY) return;
+  if(e.target.closest('.pk-cancel')){ closePop(true); return; }
+  const opt=e.target.closest('.pk-opt');
+  if(opt&&POP&&!POP.sup&&(opt.dataset.code==='dbl'||opt.dataset.code==='-dbl')){
+    const {i,d}=POP, on=opt.dataset.code==='dbl';
+    snap(`${on?'Double day':'Not a Double day'} ${fmtD(d)}`);
+    S.result.dbl=(S.result.dbl||[]).filter(k=>k!==i+':'+d); if(on) S.result.dbl.push(i+':'+d);
+    save(); renderGrids(); closePop(true); return; }
+  if(opt&&POP&&!POP.sup&&(opt.dataset.code==='ds'||opt.dataset.code==='-ds')){
+    const {i,d}=POP, on=opt.dataset.code==='ds';
+    snap(`${on?'Double shift':'Single shift'} ${fmtD(d)}`);
+    S.result.ds=(S.result.ds||[]).filter(k=>k!==i+':'+d); if(on) S.result.ds.push(i+':'+d);
+    pin(i,d); save(); renderGrids(); FIX_HIDDEN=false; renderFixes(); closePop(true); return; }
+  if(opt&&POP&&POP.sup){ const d=POP.d, code=+opt.dataset.code;
+    if(code!==S.result.sup[d]){ const was=S.result.sup[d]; snap(`Edit ${SUP_ID} ${fmtD(d)}`); S.result.sup[d]=code;
+      S.result.supOc=S.result.supOc||[];
+      if(was===0&&code>=1&&code<=4){ if(!S.result.supOc.includes(d)) S.result.supOc.push(d); } else S.result.supOc=S.result.supOc.filter(x=>x!==d); save(); renderGrids(); FIX_HIDDEN=false; renderFixes(); }
+    pop.hidden=true; POP=null; const nb=document.querySelector(`.cell[data-sup][data-d="${d}"]`); nb&&nb.focus(); return; }
+  if(opt&&POP){ const {i,d}=POP, code=+opt.dataset.code;
+    if(code!==S.result.grid[i][d]){ const was=S.result.grid[i][d]; snap(`Edit ${fmtD(d)}`); S.result.grid[i][d]=code; pin(i,d);
+      if(S.result.ds) S.result.ds=S.result.ds.filter(k=>k!==i+':'+d);
+      S.result.oc=S.result.oc||[];
+      if((was===0||was===8)&&code>=1&&code<=4){ if(!S.result.oc.includes(i+':'+d)) S.result.oc.push(i+':'+d); }
+      else if(!(code>=1&&code<=4)||was>=1&&was<=4) S.result.oc=S.result.oc.filter(k=>k!==i+':'+d); if(S.result.dbl) S.result.dbl=S.result.dbl.filter(k=>k!==i+':'+d); save(); renderGrids(); FIX_HIDDEN=false; renderFixes(); }
+    closePop(true); return; }
+  const b=e.target.closest('.cell');
+  if(b){ if(POP&&POP.d===+b.dataset.d&&(b.dataset.sup?POP.sup:POP.i===+b.dataset.i)){ closePop(false); return; } closePop(false); openPop(b); return; }
+  if(POP&&!e.target.closest('#picker')) closePop(false);
+});
+document.addEventListener('keydown',e=>{
+  if(!POP) return;
+  if(e.key==='Escape'){ e.preventDefault(); closePop(true); }
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); const os=[...pop.querySelectorAll('.pk-opt')]; let k=os.indexOf(document.activeElement);
+    k=(k+(e.key==='ArrowDown'?1:-1)+os.length)%os.length; os[k].focus(); }
+});
+// phones fire resize when the address bar slides away — only close when the width really changes
+let LASTW=window.innerWidth; window.addEventListener('resize',()=>{ if(window.innerWidth!==LASTW){ LASTW=window.innerWidth; closePop(false); } });
+
+// ---- busy lock: nothing may change while a schedule is being built
+const BUSY_IDS=['mon','yr','off1','off2','build','next','reset','undo','export','copyx','hireAdd','abAdd','abA','abT','abF','abTo','lock','hireName','hireFrom'];
+function setBusy(on){ BUSY=on; document.body.dataset.busy=on?'1':'';
+  BUSY_IDS.forEach(id=>{ const el=$(id); if(el) el.disabled=on; });
+  document.querySelectorAll('#agentRows input,#agentRows select,#agentRows button,#abList button,#abList input').forEach(el=>el.disabled=on);
+  if(on) closePop(false); else undoUI(); }
+// ---- build
+let CANCEL=null;
+$('cancelBuild').addEventListener('click',()=>{ if(CANCEL){ $('cancelBuild').disabled=true; $('msg').textContent='Cancelling…'; CANCEL(); } });
+$('build').addEventListener('click',async()=>{
+  if(BUSY) return;
+  const preState=JSON.stringify(S);
+  if(applyPending(iso(S.year,S.month,1))) { agentRows(); absUI(); renderPending(); }
+  if(!rowCheck()) return;
+  const btn=$('build'), r0=S.result;
+  const same=r0.year===S.year&&r0.month===S.month&&(r0.ids||[]).join()===S.ids.join();
+  // a schedule that is already out must not be replaced by accident
+  if(same&&r0.built&&!btn.dataset.armed){
+    btn.dataset.armed='1'; btn.textContent='Confirm rebuild'; btn.classList.add('danger');
+    $('msg').textContent=`This replaces ${MONTHS[S.month]} ${S.year} on screen, including hand edits${S.lock?` after day ${S.lock}`:''}. Requested days off, sick, vacation, Double days and edited cells stay put. Click again to confirm.`;
+    clearTimeout(btn._t); btn._t=setTimeout(()=>{ delete btn.dataset.armed; btn.textContent='Build schedule'; btn.classList.remove('danger'); },6000);
+    return;
+  }
+  delete btn.dataset.armed; btn.textContent='Build schedule'; btn.classList.remove('danger'); clearTimeout(btn._t);
+  // freeze everything this build depends on, so later clicks can't change it mid-run
+  const cfg={year:S.year,month:S.month,off:S.off.slice(),ids:S.ids.slice(),names:S.names.slice(),rows:S.rows.slice(),
+    prevLast:S.prevLast.slice(),prevStreak:S.prevStreak.slice(),prevOff:S.prevOff?S.prevOff.slice():undefined,
+    supPrev:S.supPrev?Object.assign({},S.supPrev):null,
+    prevEnd:S.prevEnd?S.prevEnd.slice():null, prevMustOff:S.prevMustOff?S.prevMustOff.slice():[], preCover:Object.assign({},S.preCover||{})};
+  HIST.push({label:'Build schedule',state:preState}); if(HIST.length>50) HIST.shift();
+  setBusy(true); $('prog').hidden=false; $('msg').textContent=`Building ${MONTHS[cfg.month]} ${cfg.year}… about 30 seconds.`;
+  const bar=$('prog').firstElementChild;
+  const absence=fixedFor(cfg.year,cfg.month,cfg.ids), D0=absence[0].length;
+  const fixed=Array.from({length:cfg.ids.length},()=>Array(D0).fill(null));
+  const lock=same?Math.min(Math.max(S.lock,FORCE_LOCK),D0):0; FORCE_LOCK=0;
+  if(same){
+    const g0=r0.grid, pins=new Set(r0.pins||[]);
+    for(let i=0;i<cfg.ids.length;i++) for(let d=0;d<D0;d++){
+      const v=g0[i][d];
+      if(d<lock) fixed[i][d]=v;                                  // days already worked
+      else if(v===8||v===9) fixed[i][d]=v;                       // requested days off / not on the team
+      else if((v===5||v===6)&&!absence[i][d]) fixed[i][d]=v;     // single sick / vacation days
+      else if(pins.has(i+':'+d)) fixed[i][d]=v;                  // hand edits and applied fixes
+    }
+  }
+  const dblKeep=same?(r0.dbl||[]):[];
+  dblKeep.forEach(k=>{ const [i,d]=k.split(':').map(Number); if(fixed[i]) fixed[i][d]=r0.grid[i][d]; });
+  const ocKeep=same?(r0.oc||[]).filter(k=>{const [i,d]=k.split(':').map(Number); return fixed[i]&&fixed[i][d]!=null;}):[]; // call-in marks stay with their pinned cells
+  const dsKeep=same?(r0.ds||[]).filter(k=>{const [i,d]=k.split(':').map(Number); return fixed[i]&&fixed[i][d]!=null;}):[];
+  const mustWork=mustWorkFor(cfg.year,cfg.month,cfg.ids);
+  const extras=cfg.rows.map((x,i)=>x<0?i:-1).filter(x=>x>=0);
+  let res;
+  try{
+    const job=runBuild({...nextInfo(cfg.year,cfg.month,cfg.ids),prevEnd:cfg.prevEnd,prevMustOff:cfg.prevMustOff,preCover:cfg.preCover,
+      supCover:(same&&r0.sup?r0.sup:[]).map(v=>v>=1&&v<=3?v:0),ds:dsKeep,oc:ocKeep,agents:cfg.ids.length,extras,mustWork,dbl:dblKeep,fixed,absence,year:cfg.year,month:cfg.month,
+      startHome:cfg.rows.map(homeOfRow),prevLast:cfg.prevLast,prevStreak:cfg.prevStreak,prevOff:cfg.prevOff,
+      maxRun:MAXRUN,offP1:cfg.off[0],offP2:cfg.off[1],seed:(Math.random()*1e9)|0,restarts:6,iters:400000},
+      p=>{bar.style.width=(p*100).toFixed(1)+'%'; $('msg').textContent=`Building ${MONTHS[cfg.month]} ${cfg.year}… ${Math.round(p*100)}%`;});
+    CANCEL=job.cancel; $('cancelBuild').hidden=false; $('cancelBuild').disabled=false;
+    res=await job.promise;
+  }catch(err){
+    CANCEL=null; $('cancelBuild').hidden=true; setBusy(false); $('prog').hidden=true; bar.style.width='0';
+    // put everything back exactly as it was before Build was clicked (including team changes that were due)
+    HIST.pop(); S=JSON.parse(preState); N=S.names.length; save();
+    syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
+    $('msg').textContent=err&&err.message==='cancelled'?'Build cancelled — nothing was changed.':'The build failed — nothing was changed.'; return; }
+  CANCEL=null; $('cancelBuild').hidden=true;
+  const supKeep=same&&r0.sup?r0.sup.slice():supDefault(cfg.year,cfg.month,cfg.supPrev);
+  S.result={built:true,prevEnd:cfg.prevEnd,prevMustOff:cfg.prevMustOff,preCover:cfg.preCover,ds:dsKeep,oc:ocKeep,supOc:same&&r0.supOc?r0.supOc.slice():[],pins:same?(r0.pins||[]).slice():[],sup:supKeep,supPrev:cfg.supPrev,names:cfg.names,ids:cfg.ids,
+    grid:res.grid,home:res.home,rows:[cfg.rows.slice(),cfg.rows.map(up)],absence,mustWork,dbl:dblKeep.slice(),
+    year:cfg.year,month:cfg.month,offTarget:res.offTarget,targets:res.targets,
+    prevLast:cfg.prevLast,prevStreak:cfg.prevStreak,prevOff:cfg.prevOff||null};
+  setBusy(false); $('prog').hidden=true; bar.style.width='0';
+  save(); renderGrids();
+  $('msg').textContent=res.violations.length?'Built — some rules could not be met; see the list below.':`Built ${MONTHS[cfg.month]} ${cfg.year}.`;
+});
+$('next').addEventListener('click',()=>{
+  snap('Set up next month');
+  const r=S.result, D=r.grid[0].length;
+  S.rows=r.rows[1].map(up);
+  // always move forward: whatever line an agent lands on, it takes the shift after the one they just worked
+  const nextOf=h=>h>=1&&h<=3?(h%3)+1:h;
+  S.rows.forEach((row,i)=>{ if(row>=0&&r.home[1][i]>=1&&r.home[1][i]<=3) S.rowShift[row]=nextOf(r.home[1][i]); });
+  S.prevLast=r.grid.map(row=>row[D-1]);
+  // when each agent's last shift really ended (call-ins end earlier, double shifts later) and who must rest on the 1st
+  const OCE={1:13,2:21,3:29,4:27}, DSE={1:22,2:29,3:38};
+  S.prevEnd=r.grid.map((row,i)=>{ const v=row[D-1]; if(!E.SH[v]) return null; const k=i+':'+(D-1);
+    return (r.ds||[]).includes(k)&&DSE[v]?DSE[v]:(r.oc||[]).includes(k)?(OCE[v]??E.SH[v][1]):E.SH[v][1]; });
+  S.prevMustOff=r.grid.map((row,i)=>(r.ds||[]).includes(i+':'+(D-1))?1:0);
+  S.preCover={1:r.grid.filter((row,i)=>row[D-1]===3&&(r.ds||[]).includes(i+':'+(D-1))).length};
+  S.prevStreak=r.grid.map(row=>{let k=0;for(let d=D-1;d>=0&&WORK(row[d]);d--)k++;return k;});
+  S.prevOff=r.grid.map(row=>{let k=0;for(let d=D-1;d>=0&&row[d]===0;d--)k++;return k;}); S.lock=0; $('lock').value=0;
+  { const lastSup=(r.sup||[])[D-1]??0, hh=lastSup===11?supAlt(r.month):supHours(r.month); S.supPrev={last:lastSup===11?10:lastSup,h:hh.h,lab:hh.lab}; }
+  S.month=(r.month+1)%12; S.year=r.year+(r.month===11?1:0);
+  const nD=dim(S.year,S.month); S.off=[defOff(15),defOff(nD-15)];
+  const chg=applyPending(iso(S.year,S.month,1));
+  save(); syncControls(); agentRows(); absUI(); renderPending();
+  if(chg){ $('msg').textContent=`Ready for ${MONTHS[S.month]} ${S.year} — team changes applied (${chg}). Press Build schedule.`; return; }
+  $('msg').textContent=`Ready for ${MONTHS[S.month]} ${S.year} — press Build schedule.`;
+});
+
+// ---- export
+// ---- copy for Excel (works everywhere, including shared links where file downloads are blocked)
+function scheduleHtml(){
+  const r=S.result, g=r.grid, D=g[0].length, Y=r.year, M=r.month;
+  const FILLC=['#E7E6E6','#BDD7EE','#C6E0B4','#F4C7D0','#F8CBAD','#D9D2E9','#FFE699','#A6E3E9','#DFD2F2','#FFFFFF'];
+  const DSFC={1:'#2E75B6',2:'#4E8B2B',3:'#B8436A'}, CALLINC='#FFD54A', DBLCC='#E08A1E';
+  const td='border:1px solid #BFBFBF;text-align:center;font-family:Arial;font-size:9pt;padding:2px 4px;';
+  const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let html='', text='';
+  [[0,15,0],[15,D,1]].forEach(([d0,d1,p])=>{
+    const rows=r.rows[p], homes=r.home[p];
+    const title=`Team Schedule — ${MONTHS[M]} ${d0+1}–${d1}, ${Y}`;
+    html+=`<table style="border-collapse:collapse"><tr><td colspan="${d1-d0+2}" style="font-family:Arial;font-size:14pt;font-weight:bold">${title}</td></tr><tr><td style="${td}font-weight:bold">Agent</td><td style="${td}font-weight:bold">Shift</td>`;
+    text+=title+'\n'+['Agent','Shift'].join('\t');
+    for(let d=d0;d<d1;d++){ const dt=new Date(Y,M,d+1), sun=dt.getDay()===0, hol=S.holidays.includes(iso(Y,M,d+1));
+      const lab=`${dt.toLocaleDateString('en-US',{weekday:'short'})} ${d+1}${hol?' HOL':''}`;
+      html+=`<td style="${td}font-weight:bold;${hol?'background:#F6D365;':sun?'background:#FDE9D9;color:#C00000;':''}">${lab}</td>`; text+='\t'+lab; }
+    html+='</tr>'; text+='\n';
+    orderOf(rows).forEach(i=>{ const row=g[i]; const who=rName(i);
+      html+=`<tr><td style="${td}text-align:left;font-weight:bold">${esc(who)}</td><td style="${td}text-align:left;color:#595959">${esc(SNAME[homes[i]]||'')}</td>`;
+      text+=who+'\t'+(SNAME[homes[i]]||'');
+      for(let d=d0;d<d1;d++){ const v=row[d], dd=(r.dbl||[]).includes(i+':'+d)||(HOLAT(d)&&v>=1&&v<=4), ocx=isOC(i,d), dsx=isDS(i,d);
+        const lab=cellLab(v,ocx,dsx)+(dd?' DBL':'');
+        const bgc=dsx&&DSFC[v]?DSFC[v]:dd&&v>=1&&v<=4?DBLCC:ocx&&v>=1&&v<=3?CALLINC:FILLC[v];
+        const fg=dsx&&DSFC[v]?'color:#fff;font-weight:bold;':dd||ocx?'font-weight:bold;':(v===0||v>=5?'font-weight:bold;':'');
+        html+=`<td style="${td}background:${bgc};${fg}">${lab}</td>`; text+='\t'+lab; }
+      html+='</tr>'; text+='\n'; });
+    { const sp=r.sup||[]; html+=`<tr><td colspan="${d1-d0+2}" style="font-family:Arial;font-size:9pt;font-weight:bold;color:#595959;padding-top:6px">Supervisor</td></tr><tr><td style="${td}text-align:left;font-weight:bold">${SUP_ID}</td><td style="${td}text-align:left;color:#595959">Supervisor</td>`;
+      text+=`Supervisor\n${SUP_ID}\tSupervisor`;
+      for(let d=d0;d<d1;d++){ const v=sp[d]??0, lab=supLab(v,d)+(v>=1&&v<=4?' (cover)':'')+(HOLAT(d)&&(v>=1&&v<=4||v===10||v===11)?' DBL':'');
+        html+=`<td style="${td}background:${v===10?'#FFFFFF':FILLC[v]};${v>=1&&v<=4?'border:2px solid #0B6E78;font-weight:bold;':''}">${lab}</td>`; text+='\t'+lab; }
+      html+='</tr>'; text+='\n'; }
+    html+='</table><br>'; text+='\n';
+  });
+  return {html,text};
+}
+async function copySchedule(){
+  const {html,text}=scheduleHtml();
+  try{ await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]); return true; }catch(e){}
+  const div=document.createElement('div'); div.contentEditable='true'; div.style.cssText='position:fixed;left:-9999px;top:0;background:#fff;color:#000';
+  div.innerHTML=html; document.body.appendChild(div);
+  const range=document.createRange(); range.selectNodeContents(div); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+  sel.removeAllRanges(); div.remove(); return ok;
+}
+$('copyx').addEventListener('click',async()=>{
+  const ok=await copySchedule();
+  $('msg').textContent=ok?'Schedule copied with its colours — open Excel, click cell A1 and paste (Ctrl+V).':'Copying was blocked in this view. Ask the owner of the page to download the Excel file.';
+});
+async function exportXlsx(){
+  const fallback=async why=>{ const ok=await copySchedule();
+    $('msg').textContent=ok?`${why} The schedule was copied instead — open Excel, click cell A1 and paste (Ctrl+V).`:`${why} Use “Copy for Excel” or ask the page owner for the file.`; };
+  if(!window.XLSX){ await fallback('The Excel library could not load here.'); return; }
+  let dl=null; try{ dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null; }catch(e){}
+  if(!dl){ await fallback('This view of the page can\'t save files (shared links are often limited).'); return; }
+  const r=S.result, g=r.grid, D=g[0].length, Y=r.year, M=r.month;
+  const FILL=['E7E6E6','BDD7EE','C6E0B4','F4C7D0','F8CBAD','D9D2E9','FFE699','A6E3E9','DFD2F2','FFFFFF'];
+  const DSF={1:'2E75B6',2:'4E8B2B',3:'B8436A'}, CALLIN='FFD54A', DBLC='E08A1E';
+  const fillOf=(v,oc,dsx,dd)=>dsx&&DSF[v]?DSF[v]:dd&&v>=1&&v<=4?DBLC:oc&&v>=1&&v<=3?CALLIN:FILL[v];
+  const inkOf=(v,oc,dsx,dd)=>dsx&&DSF[v]?'FFFFFF':dd?'2E1B00':oc?'3A2C00':undefined;
+  const bd={style:'thin',color:{rgb:'BFBFBF'}}; const border={top:bd,bottom:bd,left:bd,right:bd};
+  const font=(o={})=>Object.assign({name:'Arial',sz:10},o);
+  const wb=XLSX.utils.book_new(), ws={};
+  const put=(rr,cc,v,st)=>{ws[XLSX.utils.encode_cell({r:rr,c:cc})]={v,t:typeof v==='number'?'n':'s',s:st};};
+  let R=0, maxC=1;
+  put(R,0,`Team Schedule — ${MONTHS[M]} ${Y}`,{font:font({bold:true,sz:14})}); R+=2;
+  // both halves on one sheet, stacked
+  [[0,15,0],[15,D,1]].forEach(([d0,d1,p])=>{
+    const homes=r.home[p], rows=r.rows[p], nd=d1-d0, sp=r.sup||[];
+    maxC=Math.max(maxC,1+nd);
+    put(R,0,`${MONTHS[M]} ${d0+1}–${d1}`,{font:font({bold:true,sz:11})});
+    put(R+1,0,'DAY',{font:font({bold:true})}); put(R+2,0,'DATE',{font:font({bold:true})});
+    for(let j=0;j<nd;j++){ const dt=new Date(Y,M,d0+j+1), sun=dt.getDay()===0, hol=S.holidays.includes(iso(Y,M,d0+j+1));
+      const st={font:font({bold:true,color:{rgb:sun?'C00000':'000000'}}),alignment:{horizontal:'center'},border,
+        fill:hol?{fgColor:{rgb:'F6D365'}}:sun?{fgColor:{rgb:'FDE9D9'}}:undefined};
+      put(R+1,1+j,dt.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()+(hol?' · HOL':''),st);
+      put(R+2,1+j,`${d0+j+1}-${MONTHS[M].slice(0,3)}`,st); }
+    let rr=R+3;
+    orderOf(rows).forEach(i=>{ const row=g[i];
+      put(rr,0,rName(i),{font:font({bold:true})});
+      for(let j=0;j<nd;j++){ const v=row[d0+j], dd=(r.dbl||[]).includes(i+':'+(d0+j))||(HOLAT(d0+j)&&v>=1&&v<=4);
+        const ocx=isOC(i,d0+j), dsx=isDS(i,d0+j), ink=inkOf(v,ocx,dsx,dd);
+        put(rr,1+j,cellLab(v,ocx,dsx)+(dd?' DBL':''),{font:font({bold:!v||v>=5||dd||dsx,sz:9,color:ink?{rgb:ink}:undefined}),
+          alignment:{horizontal:'center'}, border, fill:{fgColor:{rgb:fillOf(v,ocx,dsx,dd)}}}); }
+      rr++; });
+    rr++; // blank row, then the supervisor
+    put(rr,0,SUP_ID,{font:font({bold:true})});
+    for(let j=0;j<nd;j++){ const v=sp[d0+j]??0, cov=v>=1&&v<=4;
+      put(rr,1+j,supLab(v,d0+j)+(cov?' (cover)':'')+(HOLAT(d0+j)&&(cov||v===10||v===11)?' DBL':''),{font:font({bold:cov||!v,sz:9}),alignment:{horizontal:'center'},
+        border:cov?{top:{style:'medium',color:{rgb:'0B6E78'}},bottom:{style:'medium',color:{rgb:'0B6E78'}},left:{style:'medium',color:{rgb:'0B6E78'}},right:{style:'medium',color:{rgb:'0B6E78'}}}:border,
+        fill:{fgColor:{rgb:v===10?'FFFFFF':FILL[v]}}}); }
+    R=rr+3;
+  });
+  put(R,0,'05:00 Morning (to 14:00) · 13:00 Afternoon (to 22:00) · 21:00 Night (to 05:00) · 18:00 Late swing (to 03:00) · "-off" called in on a day off (8 h) · OFF day off · VAC vacation · SICK sick leave · TRN cross-training · X OFF extra day off requested · DBL Double day · HOL holiday',{font:font({italic:true,color:{rgb:'595959'},sz:9})});
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:R+1,c:maxC}});
+  ws['!cols']=[{wch:14},...Array(maxC).fill({wch:9})];
+  ws['!freeze']={xSplit:1};
+  const mn=MONTHS[M].slice(0,3);
+  XLSX.utils.book_append_sheet(wb,ws,`${mn} ${Y}`);
+  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  try{ await dl.save({filename:`Team_Schedule_${mn}_${Y}.xlsx`,data:new Blob([buf])}); $('msg').textContent='Excel file saved.'; }
+  catch(err){ if(err&&err.code==='declined'){ $('msg').textContent='Download cancelled.'; return; }
+    await fallback('The file could not be saved in this view.'); }
+}
+$('export').addEventListener('click',exportXlsx);
+$('reset').addEventListener('click',()=>{
+  const btn=$('reset');
+  if(!btn.dataset.armed){ // two-step confirm (pop-up dialogs are blocked inside the artifact viewer)
+    btn.dataset.armed='1'; btn.textContent='Click again to reset'; btn.classList.add('danger');
+    $('msg').textContent='This clears names, absences and the schedule on this device.';
+    clearTimeout(btn._t); btn._t=setTimeout(()=>{ delete btn.dataset.armed; btn.textContent='Reset'; btn.classList.remove('danger'); },5000);
+    return;
+  }
+  delete btn.dataset.armed; btn.textContent='Reset'; btn.classList.remove('danger'); clearTimeout(btn._t);
+  snap('Reset');
+  try{ localStorage.removeItem('rota-state-v6'); }catch(e){}
+  S=fresh(); N=S.names.length; syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=0; renderGrids();
+  $('msg').textContent='Reset — back to the October 2026 starting schedule. Undo brings your work back.';
+});
+
+$('undo').addEventListener('click',()=>{
+  if($('build').disabled) return; // not while a build is running
+  const h=HIST.pop(); if(!h) return;
+  S=JSON.parse(h.state); N=S.names.length; save();
+  syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
+  $('msg').textContent=`Undone: ${h.label}.`;
+});
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)){ e.preventDefault(); $('undo').click(); }
+});
+syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock; renderGrids(); undoUI();
+if(LOAD_NOTE) $('msg').textContent=LOAD_NOTE;
+})();
+</script>
+
+</body></html>
