@@ -165,3 +165,32 @@
 .schedule-builder .sync [data-state="offline"]{color:var(--bad)}
 .schedule-builder .toplinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 .schedule-builder a.linkbtn{display:inline-block;text-decoration:none;color:var(--accent);border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+
+/* ── Excel-style schedule grid ─────────────────────────────────────
+   `table.grid` collides with Tailwind's `.grid{display:grid}` utility, which broke the table
+   layout (header and body columns stopped lining up) — force a real table back.
+   Then: collapsed borders, one line per cell, every day column the same width, each shift
+   filling its cell edge to edge, and a frozen ID column. Colours are unchanged. */
+.schedule-builder table.grid{display:table;border-collapse:collapse;border-spacing:0;border:1px solid var(--line)}
+.schedule-builder table.grid thead{display:table-header-group}
+.schedule-builder table.grid tbody{display:table-row-group}
+.schedule-builder table.grid th,.schedule-builder table.grid td{border:1px solid var(--line);padding:0;height:32px;vertical-align:middle}
+.schedule-builder table.grid thead th{min-width:58px;padding:2px 0;background:var(--panel);border-radius:0}
+.schedule-builder table.grid thead th.sun{background:var(--sun-bg)}
+.schedule-builder table.grid thead th.hol{background:var(--hol)}
+.schedule-builder table.grid .dayh{padding:2px 0;border-radius:0}
+.schedule-builder table.grid th.name{padding:3px 10px;min-width:96px;box-shadow:inset -2px 0 0 var(--line);z-index:2}
+.schedule-builder table.grid td.holc{border-radius:0}
+.schedule-builder table.grid .cell{display:flex;align-items:center;justify-content:center;width:100%;min-width:58px;height:32px;border-radius:0;margin:0}
+.schedule-builder table.grid .cell.s9{box-shadow:none}
+.schedule-builder table.grid .dblb{top:1px;right:1px}
+.schedule-builder table.grid td.tot{padding:0 8px;min-width:36px}
+.schedule-builder table.grid thead th{white-space:nowrap}
+.schedule-builder table.grid tr.supsep th{border-left:0;border-right:0;height:auto;box-shadow:none}
+.schedule-builder table.grid tr.cov td,.schedule-builder table.grid tr.cov th{height:24px;font-size:11px}
+@media (pointer:coarse){ .schedule-builder table.grid .cell{min-width:58px;height:38px} .schedule-builder table.grid th,.schedule-builder table.grid td{height:38px} }
+@media (max-width:640px){
+  /* keep the frozen ID column narrow on a phone so more days fit */
+  .schedule-builder table.grid th.name{min-width:0;max-width:104px;white-space:normal;padding:3px 8px}
+  .schedule-builder table.grid th.name small{white-space:normal;line-height:1.25}
+}
