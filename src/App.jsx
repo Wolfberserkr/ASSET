@@ -30,6 +30,10 @@ const Scorecard       = lazy(() => import('./pages/management/Scorecard'))
 const AuditDigest     = lazy(() => import('./pages/management/AuditDigest'))
 const Remediation     = lazy(() => import('./pages/management/Remediation'))
 
+// Surveillance schedule — lazy loaded
+const ScheduleView    = lazy(() => import('./pages/schedule/ScheduleView'))
+const ScheduleBuilder = lazy(() => import('./pages/schedule/ScheduleBuilder'))
+
 function PageLoader() {
   return (
     <div
@@ -83,6 +87,15 @@ export default function App() {
               <Route path="/management/scorecard"      element={<Scorecard />} />
               <Route path="/management/audit-digest"   element={<AuditDigest />} />
               <Route path="/management/remediation"    element={<Remediation />} />
+            </Route>
+
+            {/* Surveillance schedule — surveillance staff only (pit roles have no access) */}
+            <Route element={<ProtectedRoute allowedRoles={['agent', 'supervisor', 'director']} />}>
+              <Route path="/schedule"                  element={<ScheduleView />} />
+            </Route>
+            {/* Schedule builder — Director + Supervisor; everyone else goes to the published view */}
+            <Route element={<ProtectedRoute allowedRoles={['director', 'supervisor']} redirectTo="/schedule" />}>
+              <Route path="/schedule/builder"          element={<ScheduleBuilder />} />
             </Route>
 
             {/* Fallback */}

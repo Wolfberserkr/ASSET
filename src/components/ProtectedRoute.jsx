@@ -1,7 +1,9 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function ProtectedRoute({ allowedRoles }) {
+// `redirectTo`: where a signed-in user with the wrong role goes instead of their home page
+// (e.g. an agent opening the schedule builder lands on the published schedule).
+export default function ProtectedRoute({ allowedRoles, redirectTo }) {
   const { user, profile, loading } = useAuth()
 
   if (loading) {
@@ -20,6 +22,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
+    if (redirectTo) return <Navigate to={redirectTo} replace />
     // Wrong role — redirect to correct home
     if (profile.role === 'agent' || profile.role === 'pit_manager') return <Navigate to="/dashboard" replace />
     return <Navigate to="/management" replace />

@@ -1,0 +1,167 @@
+/* Team Schedule Builder — the reference page's CSS (reference/team-schedule-builder.html),
+   scoped under .schedule-builder so it can't leak into the rest of ASSET. The colour tokens
+   (light + dark) are the reference :root variables, unchanged. Also used by the published
+   schedule view (.schedule-builder.schedule-view, see view.css). */
+.schedule-builder{
+  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#15212C; --muted:#5B6874; --line:#D5DCE3; --accent:#0B6E78; --accent-ink:#FFFFFF;
+  --am:#BDD7EE; --pm:#C6E0B4; --nt:#F4C7D0; --lt:#F8CBAD; --off:#E4E7EB; --cell-ink:#15212C; --vac:#D9D2E9; --sick:#FFE699; --trn:#A6E3E9; --hol:#F6D365; --hol-ink:#7A4B00; --hol-soft:#FBEFC8;
+  --am-d:#2E75B6; --pm-d:#4E8B2B; --nt-d:#B8436A; --ds-ink:#FFFFFF; --callin:#FFD54A; --callin-ink:#3A2C00; --dblc:#E08A1E; --dbl-ink:#2E1B00; --xoff:#DFD2F2; --xoff-ink:#2E2350;
+  --ok:#1E7A46; --ok-bg:#E1F2E8; --bad:#B42318; --bad-bg:#FCE8E6; --sun:#B42318; --sun-bg:#FBEDEB;
+}
+@media (prefers-color-scheme: dark){.schedule-builder:not([data-theme="light"]){
+  --bg:#0F161C; --panel:#17212A; --ink:#E6EDF3; --muted:#93A1AE; --line:#2A3743; --accent:#3FB6C0; --accent-ink:#06282C;
+  --am:#2C4A66; --pm:#33502A; --nt:#5B2E3A; --lt:#6A3C22; --off:#222D37; --cell-ink:#E6EDF3; --vac:#43385E; --sick:#5E4B12; --trn:#1D5157; --hol:#6B5210; --hol-ink:#FFD76A; --hol-soft:#3A3014;
+  --am-d:#14497A; --pm-d:#27591B; --nt-d:#7C2744; --ds-ink:#F2F7FF; --callin:#C9A227; --callin-ink:#1E1600; --dblc:#9A5A05; --dbl-ink:#FFF3E0; --xoff:#4A3E6B; --xoff-ink:#EDE7FA;
+  --ok:#6FD49A; --ok-bg:#15331F; --bad:#FF8A80; --bad-bg:#3A1917; --sun:#FF8A80; --sun-bg:#2B1A1C;}}
+.schedule-builder[data-theme="dark"]{
+  --bg:#0F161C; --panel:#17212A; --ink:#E6EDF3; --muted:#93A1AE; --line:#2A3743; --accent:#3FB6C0; --accent-ink:#06282C;
+  --am:#2C4A66; --pm:#33502A; --nt:#5B2E3A; --lt:#6A3C22; --off:#222D37; --cell-ink:#E6EDF3; --vac:#43385E; --sick:#5E4B12; --trn:#1D5157; --hol:#6B5210; --hol-ink:#FFD76A; --hol-soft:#3A3014;
+  --am-d:#14497A; --pm-d:#27591B; --nt-d:#7C2744; --ds-ink:#F2F7FF; --callin:#C9A227; --callin-ink:#1E1600; --dblc:#9A5A05; --dbl-ink:#FFF3E0; --xoff:#4A3E6B; --xoff-ink:#EDE7FA;
+  --ok:#6FD49A; --ok-bg:#15331F; --bad:#FF8A80; --bad-bg:#3A1917; --sun:#FF8A80; --sun-bg:#2B1A1C;}
+.schedule-builder, .schedule-builder *{box-sizing:border-box}
+.schedule-builder{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;margin:0}
+.schedule-builder .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px;display:grid;gap:20px}
+.schedule-builder header h1{font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.schedule-builder header p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.schedule-builder .panel>*{min-width:0}
+.schedule-builder .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.schedule-builder .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.schedule-builder .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.schedule-builder .field{display:grid;gap:4px}
+.schedule-builder .field label{font-size:12px;color:var(--muted);font-weight:500}
+.schedule-builder input,.schedule-builder select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+.schedule-builder input[type=number]{width:90px}
+.schedule-builder input:focus-visible,.schedule-builder select:focus-visible,.schedule-builder button:focus-visible,.schedule-builder .cell:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.schedule-builder button{font:inherit;font-weight:600;border-radius:6px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.schedule-builder button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.schedule-builder button:disabled{opacity:.55;cursor:default}
+.schedule-builder button.danger{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.schedule-builder .progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden;flex:1 1 160px;align-self:center}
+.schedule-builder .progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.schedule-builder .scroll{overflow-x:auto;position:relative;max-width:100%}
+.schedule-builder table.agents{border-collapse:collapse;width:100%;min-width:620px}
+.schedule-builder table.agents th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;padding:4px 6px}
+.schedule-builder table.agents td{padding:4px 6px}
+.schedule-builder table.agents input[type=text]{width:100%}
+.schedule-builder table.agents input[type=number]{width:70px}
+.schedule-builder .checks{display:flex;flex-wrap:wrap;gap:8px}
+.schedule-builder .chip{font-size:13px;padding:4px 10px;border-radius:999px;font-weight:500}
+.schedule-builder .chip.ok{background:var(--ok-bg);color:var(--ok)}
+.schedule-builder .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.schedule-builder .issues{margin:10px 0 0;padding-left:18px;color:var(--bad);font-size:13px}
+.schedule-builder table.grid{border-collapse:separate;border-spacing:2px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.schedule-builder table.grid th{font-weight:600;padding:2px 4px;text-align:center;color:var(--muted)}
+.schedule-builder table.grid th.sun{color:var(--sun);background:var(--sun-bg);border-radius:4px}
+.schedule-builder table.grid th.name{text-align:left;font-family:"IBM Plex Sans",sans-serif;color:var(--ink);font-size:13px;white-space:nowrap;padding-right:10px;position:sticky;left:0;background:var(--panel);z-index:1}
+.schedule-builder table.grid th.name small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.schedule-builder .cell{width:54px;height:30px;border-radius:4px;border:0;padding:0;font:inherit;color:var(--cell-ink);cursor:pointer;font-weight:400}
+.schedule-builder .s0{background:var(--off);font-weight:600}.schedule-builder .s1{background:var(--am)}.schedule-builder .s2{background:var(--pm)}.schedule-builder .s3{background:var(--nt)}.schedule-builder .s4{background:var(--lt)}.schedule-builder .s5{background:var(--vac);font-weight:600}.schedule-builder .s6{background:var(--sick);font-weight:600}.schedule-builder .s7{background:var(--trn);font-weight:600}.schedule-builder .s8{background:var(--xoff);color:var(--xoff-ink);font-weight:600}
+.schedule-builder .cell{position:relative}
+.schedule-builder .dblb{position:absolute;top:-6px;right:-4px;font:700 8px/1 "IBM Plex Sans",sans-serif;font-style:normal;letter-spacing:.04em;background:var(--bad);color:#fff;border-radius:3px;padding:2px 3px}
+.schedule-builder .dayh{all:unset;cursor:pointer;display:block;padding:2px 4px;border-radius:4px;text-align:center;line-height:1.3}
+.schedule-builder .dayh:hover{background:var(--off)}
+.schedule-builder .dayh:focus-visible{outline:2px solid var(--accent)}
+.schedule-builder .dayh i{display:block;font:700 9px/1.2 "IBM Plex Sans",sans-serif;font-style:normal;letter-spacing:.06em}
+.schedule-builder table.grid th.hol{background:var(--hol);color:var(--hol-ink);border-radius:4px}
+.schedule-builder td.holc{background:var(--hol-soft);border-radius:4px}
+.schedule-builder .dblb.hx{background:var(--hol-ink);color:var(--panel)}
+.schedule-builder .s9{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);cursor:default}
+.schedule-builder .hire{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-top:14px}
+.schedule-builder .hire input[type=text]{min-width:200px}
+.schedule-builder .linkbtn{padding:4px 10px;font-weight:500;font-size:13px}
+.schedule-builder .rm-cell{white-space:nowrap}
+.schedule-builder .rm-cell .tag,.schedule-builder #pendList .tag{font-size:12px;color:var(--muted);margin-right:6px}
+.schedule-builder #pendList{display:grid;gap:6px;margin-top:10px;font-size:13px}
+.schedule-builder #pendList:empty{display:none}
+.schedule-builder .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.schedule-builder .ssup{background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--ink);font-weight:600}
+.schedule-builder .cell.supcov{box-shadow:inset 0 0 0 2px var(--accent)}
+.schedule-builder tr.supsep th{padding-top:14px;text-align:left;font:600 11px "IBM Plex Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px dashed var(--line)}
+.schedule-builder .wrap>*{min-width:0}
+@media (max-width:640px){
+  .schedule-builder .wrap{padding:16px 16px 48px;gap:14px}
+  .schedule-builder header h1{font-size:22px}
+  .schedule-builder .panel{padding:14px}
+  .schedule-builder .controls{gap:10px}
+  .schedule-builder .field{flex:1 1 140px}
+  .schedule-builder input[type=number]{width:100%}
+  .schedule-builder table.agents,.schedule-builder table.abs{min-width:520px}
+}
+@media (pointer:coarse){ .schedule-builder .cell{height:38px;width:58px} .schedule-builder .dayh{padding:6px 4px} .schedule-builder button{padding:10px 14px} }
+.schedule-builder[data-busy="1"] .cell,.schedule-builder[data-busy="1"] .dayh{pointer-events:none;opacity:.6}
+/* double shift: the dark version of its own shift colour */
+.schedule-builder .cell.ds,.schedule-builder .legend b.ds{font-weight:700;font-size:9.5px;letter-spacing:-.03em;color:var(--ds-ink);background-image:none}
+.schedule-builder .cell.ds.s1,.schedule-builder .legend b.ds.s1{background:var(--am-d)} .schedule-builder .cell.ds.s2{background:var(--pm-d)} .schedule-builder .cell.ds.s3{background:var(--nt-d)}
+/* called in on a day off: yellow · a Double day: amber */
+.schedule-builder .cell.oc,.schedule-builder .legend b.oc{background:var(--callin)!important;background-image:none!important;color:var(--callin-ink)!important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.schedule-builder .cell.dblc{background:var(--dblc)!important;color:var(--dbl-ink)!important}
+.schedule-builder .cell.oc{font-size:9.5px;letter-spacing:-.03em;white-space:nowrap;font-weight:600}
+.schedule-builder .bad{border-color:var(--bad)!important;box-shadow:0 0 0 1px var(--bad)}
+.schedule-builder .cell.hint{outline:2px solid var(--accent);outline-offset:1px}
+.schedule-builder .fixes{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));width:min(520px,calc(100% - 32px));max-height:45vh;overflow:auto;z-index:5;display:grid;gap:10px;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.schedule-builder .fixes:empty{display:none}
+.schedule-builder .picker{position:absolute;z-index:10;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;display:grid;gap:2px;width:250px}
+.schedule-builder .picker[hidden],.schedule-builder .fixes[hidden]{display:none}
+.schedule-builder .pk-cancel{display:none}
+.schedule-builder .picker.sheet{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:75vh;overflow:auto;border-radius:16px 16px 0 0;
+  padding:8px 12px calc(12px + env(safe-area-inset-bottom,0px));gap:4px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+.schedule-builder .picker.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 6px}
+.schedule-builder .picker.sheet .pk-head{font-size:14px;padding:4px 8px 8px}
+.schedule-builder .picker.sheet .pk-opt{min-height:48px;padding:10px 12px;font-size:15px}
+.schedule-builder .picker.sheet .pk-opt b{min-width:64px;font-size:13px;padding:6px}
+.schedule-builder .picker.sheet .pk-cancel{display:block;min-height:48px;margin-top:6px;width:100%;font-size:15px}
+.schedule-builder .pk-head{font-size:12px;color:var(--muted);padding:4px 8px 6px;font-weight:600}
+.schedule-builder .pk-opt{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:6px 8px;border-radius:6px;text-align:left;font-weight:400;font-size:13px;width:100%}
+.schedule-builder .pk-opt:hover,.schedule-builder .pk-opt:focus-visible{background:var(--off);outline:none}
+.schedule-builder .pk-opt b{display:inline-block;min-width:48px;text-align:center;border-radius:4px;padding:3px 4px;font:600 11px "IBM Plex Mono",monospace;color:var(--cell-ink)}
+.schedule-builder .pk-opt span{flex:1}
+.schedule-builder .pk-opt em{font-style:normal;font-size:11px;color:var(--accent);font-weight:600}
+.schedule-builder .pk-opt.cur{background:var(--off)}
+.schedule-builder .fixes .fx-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.schedule-builder .fixes .fx-head button{padding:4px 10px;font-weight:500}
+.schedule-builder .fixes h3{font-size:14px;margin:0;font-weight:600}
+.schedule-builder .fix{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.schedule-builder .fix p{margin:0;flex:1 1 220px}
+.schedule-builder .fix .tag{font-size:12px;color:var(--muted)}
+.schedule-builder .fix .tag.good{color:var(--ok)}
+.schedule-builder .fixes .note{margin:0}
+.schedule-builder .cell.fx{outline:1px dashed var(--muted);outline-offset:-3px}
+.schedule-builder .chip.info{background:var(--off);color:var(--ink)}
+.schedule-builder table.abs{border-collapse:collapse;width:100%;min-width:520px;margin-top:12px}
+.schedule-builder table.abs th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;padding:4px 6px}
+.schedule-builder table.abs td{padding:6px;border-top:1px solid var(--line)}
+.schedule-builder .empty{color:var(--muted);font-size:13px;padding:8px 0}
+.schedule-builder .cell.warn{box-shadow:inset 0 0 0 2px var(--bad)}
+.schedule-builder td.tot{text-align:center;padding:0 6px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.schedule-builder tr.cov td{text-align:center;color:var(--muted)}
+.schedule-builder tr.cov td.badc{color:var(--bad);font-weight:600}
+.schedule-builder tr.cov th{font-weight:400}
+.schedule-builder .legend{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:13px;color:var(--muted)}
+.schedule-builder .legend span{display:inline-flex;align-items:center;gap:6px}
+.schedule-builder .legend b{display:inline-block;min-width:30px;padding:0 3px;height:18px;border-radius:3px;font:600 10px/18px "IBM Plex Mono",monospace;text-align:center;color:var(--cell-ink)}
+.schedule-builder .note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.schedule-builder .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.schedule-builder .msg{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.schedule-builder .progress i{transition:none}}
+@media (max-width:640px){
+  .schedule-builder .fixes{left:0;right:0;bottom:0;width:auto;max-height:60vh;border-radius:16px 16px 0 0;border-width:1px 0 0;
+    padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 28px rgba(0,0,0,.22)}
+  .schedule-builder .fixes::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto}
+  .schedule-builder .fixes .fx-head{position:sticky;top:-10px;background:var(--panel);padding:6px 0;z-index:1}
+  .schedule-builder .fixes .fx-head button{min-height:40px;padding:8px 14px}
+  .schedule-builder .fix{flex-direction:column;align-items:stretch}
+  .schedule-builder .fix p{flex:none}
+  .schedule-builder .fix button{min-height:44px;width:100%}
+  .schedule-builder.has-fixes .wrap{padding-bottom:62vh}
+}
+
+/* ── ASSET integration ─────────────────────────────────────────── */
+.schedule-builder{border-radius:12px;min-width:0}
+/* ASSET scrolls inside <main>, not the window: the cell menu is fixed to the viewport */
+.schedule-builder .picker:not(.sheet){position:fixed}
+.schedule-builder .issues{list-style:disc} /* Tailwind preflight strips list bullets */
+.schedule-builder .sync{margin-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.schedule-builder .sync [data-state="conflict"],.schedule-builder .sync [data-state="error"]{color:var(--bad);font-weight:600}
+.schedule-builder .sync [data-state="offline"]{color:var(--bad)}
+.schedule-builder .toplinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.schedule-builder a.linkbtn{display:inline-block;text-decoration:none;color:var(--accent);border:1px solid var(--line);border-radius:6px;background:var(--panel)}
