@@ -4,12 +4,10 @@
 .schedule-view .dayh{cursor:default}
 .schedule-view .dayh:hover{background:none}
 .schedule-view .s11{background:transparent}
-/* the signed-in user's row */
-.schedule-view table.grid tr.me th.name{background:var(--accent);color:var(--accent-ink);border-radius:4px}
+/* the signed-in user's row: accent ID cell and a heavy accent rule above and below the row */
+.schedule-view table.grid tr.me th.name{background:var(--accent);color:var(--accent-ink)}
 .schedule-view table.grid tr.me th.name small{color:var(--accent-ink);opacity:.85}
-.schedule-view table.grid tr.me td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
-.schedule-view table.grid tr.me td:first-of-type{border-radius:4px 0 0 4px}
-.schedule-view table.grid tr.me td:last-of-type{border-radius:0 4px 4px 0}
+.schedule-view table.grid tr.me>*{border-top:3px solid var(--accent);border-bottom:3px solid var(--accent)}
 .schedule-view .you{display:inline-block;margin-left:6px;font:700 9px/1 "IBM Plex Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:3px;background:var(--accent-ink);color:var(--accent);vertical-align:1px}
 .schedule-view .errnote{color:var(--bad)}
 /* My next shifts */
