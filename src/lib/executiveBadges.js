@@ -8,7 +8,7 @@
 // unaffected. Pure module — no React/Supabase — so it runs in plain Node.
 //
 // The server holds its own copies, which are what actually enforce this:
-//   public.is_executive_badge()  supabase/migrations/20260929120000_exclude_executives_from_reports.sql
+//   public.is_executive_badge()  supabase/migrations/20260929180314_exclude_executives_from_reports.sql
 //   EXECUTIVE_BADGES             supabase/functions/admin-users/index.ts
 // Change all three together.
 

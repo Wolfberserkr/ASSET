@@ -234,7 +234,7 @@ Raul (B-07), Ben (B-08) and Ryan (B-09) are executives with ordinary `agent` acc
 - **Password reset is Henk-only.** Henk (director, B-10) and nobody else can reset their passwords, even if one of them is given a head role (which normally locks the row). Another director or Raquel gets a 403. Deactivate, delete and force logout follow the normal rules.
 
 Matched on the badge number (`B-07` == `B-7` == `B-007`), B- badges only (Pit `M-08` is unaffected). **The list lives in three places — change all three together:**
-- `public.is_executive_badge()` — migration `supabase/migrations/20260929120000_exclude_executives_from_reports.sql`, which also adds the filter to `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats`, `get_department_scorecard`, `get_department_scorecard_games` (signatures unchanged, replaced in place).
+- `public.is_executive_badge()` — migration `supabase/migrations/20260929180314_exclude_executives_from_reports.sql`, which also adds the filter to `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats`, `get_department_scorecard`, `get_department_scorecard_games` (signatures unchanged, replaced in place).
 - `EXECUTIVE_BADGES` in `supabase/functions/admin-users/index.ts` (password reset).
 - `src/lib/executiveBadges.js` — used by the bell (`Layout.jsx`), `WeakAreas.jsx`, `UserManagement.jsx`, and the leaderboard (`Dashboard.jsx`, which also hides B-10).
 
@@ -282,7 +282,7 @@ Why: `date_trunc('month', NOW())` runs in the database timezone (UTC on Supabase
 `add_user_management.sql` (partially — everything else in it is still authoritative and re-runnable), `add_department_question_stats.sql`, `fix_team_dashboard_avg_monthly.sql`, `add_department_scorecard.sql`, `add_audit_digest.sql`.
 A `DROP FUNCTION IF EXISTS` guard does **not** help — it matches nothing, and the file's own `CREATE` then re-adds the overload.
 
-Re-running any older file that defines `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats` or the scorecard pair (including `add_month_scoped_reports.sql`) also **silently puts the executive team back into that report** — same signature, so it replaces the filtered version. Re-run `supabase/migrations/20260929120000_exclude_executives_from_reports.sql` afterwards.
+Re-running any older file that defines `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats` or the scorecard pair (including `add_month_scoped_reports.sql`) also **silently puts the executive team back into that report** — same signature, so it replaces the filtered version. Re-run `supabase/migrations/20260929180314_exclude_executives_from_reports.sql` afterwards.
 
 ### Surveillance Schedule (Surveillance only)
 Team shift schedule — built by Henk/Angelo, read by agents. Handoff spec: `reference/SCHEDULE_HANDOFF.md`.
