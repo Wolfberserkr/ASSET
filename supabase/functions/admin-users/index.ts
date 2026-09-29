@@ -49,12 +49,13 @@ const ASSIGNABLE: Record<string, string[]> = {
 const deptOf = (role: string) =>
   PIT_ROLES.includes(role) ? 'pit' : 'surveillance'
 
-// Henk (director, B-10) — and only Henk — may also reset the passwords of
-// these badges, even if they hold a head role that is otherwise off-limits.
-// Matched on the badge number so padding variants all resolve
-// (B-07 == B-7 == B-007). Mirrored for display in UserManagement.jsx.
+// The executive team (B-07, B-08, B-09). Henk (director, B-10) — and only
+// Henk — may reset their passwords, even if they hold a head role that is
+// otherwise off-limits. Matched on the badge number so padding variants all
+// resolve (B-07 == B-7 == B-007). Same list as src/lib/executiveBadges.js and
+// public.is_executive_badge() — change all three together.
 const HENK_BADGE = 10
-const HENK_ONLY_RESET_BADGES = [7, 8, 9]
+const EXECUTIVE_BADGES = [7, 8, 9]
 
 const badgeOf = (employeeId: unknown) => {
   const m = String(employeeId ?? '').trim().toUpperCase().match(/^B\s*-?\s*(\d+)$/)
@@ -249,7 +250,7 @@ Deno.serve(async (req) => {
     if (deptOf(target.role) !== callerDept) {
       return json(403, { error: 'You can only manage users in your own department.' })
     }
-    const henkOnly = HENK_ONLY_RESET_BADGES.includes(badgeOf(target.employee_id) ?? -1)
+    const henkOnly = EXECUTIVE_BADGES.includes(badgeOf(target.employee_id) ?? -1)
     if (henkOnly && !callerIsHenk) {
       return json(403, { error: 'Only Henk can reset this user\'s password.' })
     }

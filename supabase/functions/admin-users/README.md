@@ -44,6 +44,7 @@ Surveillance/Pit department wall.
 No head can touch another head's account or a user in the other department.
 
 **Exception — Henk-only password resets:** Henk (`director`, badge B-10), and
-only Henk, can `reset_password` for badges **B-07, B-08, B-09**, even if they
-hold a head role. Any other caller gets a 403 for those badges. See
-`HENK_BADGE` / `HENK_ONLY_RESET_BADGES` in `index.ts`.
+only Henk, can `reset_password` for the executive team, badges **B-07, B-08,
+B-09**, even if they hold a head role. Any other caller gets a 403 for those
+badges. See `HENK_BADGE` / `EXECUTIVE_BADGES` in `index.ts` (same list as
+`src/lib/executiveBadges.js` and `public.is_executive_badge()`).

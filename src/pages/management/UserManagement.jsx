@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { badgeNumber, isExecutive } from '../../lib/executiveBadges'
 import Layout from '../../components/Layout'
 import {
   UserCog, UserPlus, X, AlertTriangle, Eye, EyeOff,
@@ -25,16 +26,10 @@ const ASSIGNABLE_ROLES = {
 
 const ACCOUNT_HEADS = ['director', 'casino_manager']
 
-// Henk (director, B-10) — and only Henk — may also reset these badges'
+// Henk (director, B-10) — and only Henk — may reset the executive team's
 // passwords, even if they hold a head role. Enforced by the admin-users edge
-// function; mirrored here so the button shows for the right person. Matched
-// on the badge number so padding variants all resolve (B-07 == B-7 == B-007).
+// function; mirrored here so the button shows for the right person.
 const HENK_BADGE = 10
-const HENK_ONLY_RESET_BADGES = new Set([7, 8, 9])
-const badgeNumber = (employeeId) => {
-  const m = String(employeeId ?? '').trim().toUpperCase().match(/^B\s*-?\s*(\d+)$/)
-  return m ? parseInt(m[1], 10) : null
-}
 
 // Extracts the friendly message the Edge Function put in its JSON body.
 async function invokeAdmin(payload) {
@@ -263,7 +258,7 @@ export default function UserManagement() {
             const isHead = ACCOUNT_HEADS.includes(u.role)
             const locked = isSelf || isHead            // cannot deactivate/delete
             const canHardDelete = !locked && !history.has(u.id)
-            const henkOnly = HENK_ONLY_RESET_BADGES.has(badgeNumber(u.employee_id))
+            const henkOnly = isExecutive(u.employee_id)
             const canReset = !isSelf && (henkOnly ? iAmHenk : !isHead)
             const busy = busyId === u.id
             const resetBtn = (

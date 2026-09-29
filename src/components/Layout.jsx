@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Countdown from './Countdown'
 import { supabase } from '../lib/supabase'
 import { computeDecay, decayDismissKey } from '../lib/decayUtils'
+import { isExecutive } from '../lib/executiveBadges'
 import { currentMonthKey, monthLabel, monthRange, prevMonthKey } from '../lib/monthRange'
 import { useCooldown } from '../hooks/useCooldown'
 import {
@@ -173,7 +174,8 @@ export default function Layout({ children, bg, contentKey, wide = false }) {
       supabase.from('sessions').select('user_id, score, completed_at')
         .eq('status', 'completed').gte('completed_at', cutoff28),
     ]).then(([sRes, uRes, decayRes]) => {
-      const agents = uRes.data ?? []
+      // The executive team drills but is never held to the team target.
+      const agents = (uRes.data ?? []).filter(u => !isExecutive(u.employee_id))
       const counts = {}
       for (const s of sRes.data ?? []) counts[s.user_id] = (counts[s.user_id] ?? 0) + 1
       const missedList = agents.filter(u => (counts[u.id] ?? 0) < REQUIRED)
