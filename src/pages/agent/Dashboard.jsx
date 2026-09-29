@@ -9,17 +9,16 @@ import RingGauge from '../../components/RingGauge'
 import OnboardingModal from '../../components/OnboardingModal'
 import { useCooldown } from '../../hooks/useCooldown'
 import { computeTrend } from '../../lib/decayUtils'
+import { EXECUTIVE_BADGES, badgeNumber } from '../../lib/executiveBadges'
 import {
   CheckCircle, TrendingUp, Clock, PlayCircle, AlertTriangle, Bell, Target,
 } from 'lucide-react'
 
-// Non-participant agents excluded from the leaderboard (per Rick). Matched on
-// the badge number so padding variants all resolve (B-008 == B-8 == 8).
-const LEADERBOARD_EXCLUDED_BADGES = new Set([8, 9, 10])
-const badgeNumber = (employeeId) => {
-  const m = String(employeeId ?? '').match(/(\d+)\s*$/)
-  return m ? parseInt(m[1], 10) : null
-}
+// Non-participants excluded from the leaderboard (per Rick): the executive
+// team and B-10. get_team_leaderboard already drops the executives
+// server-side; filtering here too keeps the panel right whichever of the
+// two deploys lands first.
+const LEADERBOARD_EXCLUDED_BADGES = new Set([...EXECUTIVE_BADGES, 10])
 
 // Ring gradients cycle through the accent family; weakest game gets coral.
 const RING_COLORS = [

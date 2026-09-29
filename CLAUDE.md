@@ -8,6 +8,7 @@ Internal web-based training platform for the Surveillance department at Aruba Ma
 - **Henk** — Director of Surveillance (management portal user)
 - **Angelo** — Supervisor (management portal user; can create and edit questions)
 - **Raquel** — Casino Manager (pit management portal user; tracks Pit Managers, can create and edit questions; does not do drills)
+- **Executive team** — Raul (B-07), Ben (B-08), Ryan (B-09): agent accounts, used only to test their own casino knowledge; kept off the leaderboard and out of every team report (see Executive Team)
 
 ## Tech Stack
 - **Frontend:** React + Vite, Tailwind CSS v4 (@tailwindcss/vite plugin)
@@ -221,9 +222,23 @@ The **User Management** page (sidebar → Admin, route `/management/users`) is v
 - **Deactivate / Reactivate:** flips `users.is_active` via the `set_user_active` RPC (SECURITY DEFINER, head-only, same-department, cannot target self or another head). This is the reversible default that preserves all session/audit history.
 - **Delete permanently:** hard-deletes the auth account (cascades `public.users`) — **only** when the user has zero session history; otherwise the UI/edge function forces deactivation instead. Guarded to same-department, non-head targets.
 - **Reset password:** head sets a new password for a user directly (`reset_password` action on the edge function → `auth.admin.updateUserById`). Matches the "hand credentials over directly" model — synthetic `@stellaris.local` emails aren't deliverable, so there's no recovery-link flow. Department-walled, non-self, non-head. Writes `USER_PASSWORD_RESET` (never logs the password). The user keeps any live session until it expires or is force-logged-out.
+  - **Executive team (B-07, B-08, B-09):** only **Henk** can reset their passwords — see Executive Team below.
 - **Force logout:** head ends a user's **active** session (`force_logout` action → stamps `users.force_logout_at`, migration `supabase/add_force_logout.sql`). The signed-in client polls `get_my_force_logout()` (every 45s + on window focus, in `AuthContext`) and signs itself out when `force_logout_at` is newer than its access token's `iat`. This terminates the session within ~a minute; for a **permanent** block, deactivate instead (the login flow refuses deactivated users). Department-walled, non-self, non-head. Writes `USER_FORCE_LOGOUT`.
 - **Why an Edge Function:** creating an auth user with a password, resetting a password, and hard-deleting an auth account all require the Supabase **service-role key**, which must never ship in the browser bundle. `supabase/functions/admin-users/index.ts` runs those actions server-side, re-verifying from the caller's JWT that they are an active `director`/`casino_manager` and enforcing the department wall. `functions.invoke('admin-users', …)` forwards the caller's JWT automatically. Deploy with `supabase functions deploy admin-users` (service-role/URL/anon keys are injected by the Edge runtime — no extra secrets).
 - The six actions write `USER_CREATED` / `USER_DEACTIVATED` / `USER_REACTIVATED` / `USER_DELETED` / `USER_PASSWORD_RESET` / `USER_FORCE_LOGOUT` rows to the audit log.
+
+### Executive Team (B-07, B-08, B-09)
+Raul (B-07), Ben (B-08) and Ryan (B-09) are executives with ordinary `agent` accounts, on the agent side only to test their own casino knowledge. They drill exactly like agents (sessions, scoring, cooldown, their own dashboard, recert progress and history all work), but:
+- **Kept out of every team number.** Team Dashboard, Completion Tracker (so never flagged for missing 20 sessions), the management notification bell (recert + decay alerts), Weak Areas, Question Stats, Scorecard (roster, recert rate, accuracy), the Remediation assign list, the agent Dashboard leaderboard and team average. Their sessions and answers are removed from the aggregates, not just their rows.
+- **Still visible where it's a record, not a report:** Audit Log, Audit Digest, their own Agent Detail page, and User Management.
+- **Password reset is Henk-only.** Henk (director, B-10) and nobody else can reset their passwords, even if one of them is given a head role (which normally locks the row). Another director or Raquel gets a 403. Deactivate, delete and force logout follow the normal rules.
+
+Matched on the badge number (`B-07` == `B-7` == `B-007`), B- badges only (Pit `M-08` is unaffected). **The list lives in three places — change all three together:**
+- `public.is_executive_badge()` — migration `supabase/migrations/20260929180314_exclude_executives_from_reports.sql`, which also adds the filter to `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats`, `get_department_scorecard`, `get_department_scorecard_games` (signatures unchanged, replaced in place).
+- `EXECUTIVE_BADGES` in `supabase/functions/admin-users/index.ts` (password reset).
+- `src/lib/executiveBadges.js` — used by the bell (`Layout.jsx`), `WeakAreas.jsx`, `UserManagement.jsx`, and the leaderboard (`Dashboard.jsx`, which also hides B-10).
+
+B-08 and B-09 were first created in July and hard-deleted by Henk on 2026-07-22 (before this exclusion existed); they need recreating via User Management as `agent`.
 
 ### Head Reports & Remediation (heads-only: director / casino_manager, gated by `canManageUsers`)
 Three pages sit under the heads-only routes (`src/App.jsx`) and nav (`headsNav` in `Layout.jsx`), all department-scoped:
@@ -266,6 +281,8 @@ Why: `date_trunc('month', NOW())` runs in the database timezone (UTC on Supabase
 `add_month_scoped_reports.sql` changed six function signatures. Postgres treats a new parameter as a **new overload**, so re-running an older file that still declares the old signature creates a duplicate and PostgREST then fails with `PGRST203` for *both* call shapes, taking down Team Dashboard, Completion and Remediation together. These files have had their conflicting `CREATE` blocks commented out behind explanatory banners:
 `add_user_management.sql` (partially — everything else in it is still authoritative and re-runnable), `add_department_question_stats.sql`, `fix_team_dashboard_avg_monthly.sql`, `add_department_scorecard.sql`, `add_audit_digest.sql`.
 A `DROP FUNCTION IF EXISTS` guard does **not** help — it matches nothing, and the file's own `CREATE` then re-adds the overload.
+
+Re-running any older file that defines `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats` or the scorecard pair (including `add_month_scoped_reports.sql`) also **silently puts the executive team back into that report** — same signature, so it replaces the filtered version. Re-run `supabase/migrations/20260929180314_exclude_executives_from_reports.sql` afterwards.
 
 ### Surveillance Schedule (Surveillance only)
 Team shift schedule — built by Henk/Angelo, read by agents. Handoff spec: `reference/SCHEDULE_HANDOFF.md`.
@@ -513,7 +530,8 @@ src/
   hooks/         — useAdaptiveDifficulty, useSessionTimer, useCooldown, useMonthSelection
   lib/           — supabase.js client, questionRandomizer.js, sessionDraw.js (pure draw/diversity engine),
                    monthRange.js (pure month/UTC-boundary engine), reportingMonthStorage.js,
-                   exportXlsx.js, fetchAllRows.js, fetchInChunks.js
+                   exportXlsx.js, fetchAllRows.js, fetchInChunks.js,
+                   executiveBadges.js (executive team badge list — see Executive Team)
   pages/
     Login.jsx
     agent/       — Dashboard, DrillSession, Results, History, ChangePassword, Practice

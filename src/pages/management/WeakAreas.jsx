@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Layout from '../../components/Layout'
 import { fetchInChunks } from '../../lib/fetchInChunks'
+import { isExecutive } from '../../lib/executiveBadges'
 import { exportXlsx, summarySheet } from '../../lib/exportXlsx'
 import { useMonthSelection } from '../../hooks/useMonthSelection'
 import { prevMonthKey, monthLabel } from '../../lib/monthRange'
@@ -58,21 +59,27 @@ export default function WeakAreas() {
     // 1. Games + agents (static-ish, always fetch)
     const [gamesRes, agentsRes] = await Promise.all([
       supabase.from('games').select('id, name'),
-      supabase.from('users').select('id, name, employee_id').eq('role', drillRole).eq('is_active', true),
+      // Inactive users too, so an executive's sessions are dropped below even
+      // after the account is deactivated.
+      supabase.from('users').select('id, name, employee_id, is_active').eq('role', drillRole),
     ])
     if (gamesRes.error)  throw gamesRes.error
     if (agentsRes.error) throw agentsRes.error
     const gMap = Object.fromEntries((gamesRes.data ?? []).map(g => [g.id, g.name]))
     setGameNames(gMap)
-    const agentList = agentsRes.data ?? []
+    // The executive team drills but is kept out of every team report.
+    const drillTakers = agentsRes.data ?? []
+    const executiveIds = new Set(drillTakers.filter(u => isExecutive(u.employee_id)).map(u => u.id))
+    const agentList = drillTakers.filter(u => u.is_active && !executiveIds.has(u.id))
     setAgents(agentList)
 
     // 2. Completed sessions in the selected month, plus the agent filter
     let sQ = supabase.from('sessions').select('id, user_id').eq('status', 'completed')
       .gte('completed_at', range.from).lt('completed_at', range.to)
     if (selectedAgent !== 'all')     sQ = sQ.eq('user_id', selectedAgent)
-    const { data: sessions, error: sErr } = await sQ
+    const { data: sessionRows, error: sErr } = await sQ
     if (sErr) throw sErr
+    const sessions = (sessionRows ?? []).filter(s => !executiveIds.has(s.user_id))
 
     if (!sessions?.length) {
       setGameStats([]); setWorstQs([]); setAgentRows([]); setLoading(false); return
