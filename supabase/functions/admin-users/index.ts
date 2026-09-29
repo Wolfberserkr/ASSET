@@ -14,7 +14,8 @@
 //   { action: 'delete', user_id }   ← hard delete; blocked if the
 //                                      user has any session history
 //   { action: 'reset_password', user_id, password }  ← admin-set a
-//                                      new password (service role)
+//                                      new password (service role);
+//                                      B-07/B-08/B-09 are Henk-only
 //   { action: 'force_logout', user_id }  ← stamp force_logout_at so
 //                                      the target's client signs out
 //
@@ -48,6 +49,18 @@ const ASSIGNABLE: Record<string, string[]> = {
 const deptOf = (role: string) =>
   PIT_ROLES.includes(role) ? 'pit' : 'surveillance'
 
+// Henk (director, B-10) — and only Henk — may also reset the passwords of
+// these badges, even if they hold a head role that is otherwise off-limits.
+// Matched on the badge number so padding variants all resolve
+// (B-07 == B-7 == B-007). Mirrored for display in UserManagement.jsx.
+const HENK_BADGE = 10
+const HENK_ONLY_RESET_BADGES = [7, 8, 9]
+
+const badgeOf = (employeeId: unknown) => {
+  const m = String(employeeId ?? '').trim().toUpperCase().match(/^B\s*-?\s*(\d+)$/)
+  return m ? parseInt(m[1], 10) : null
+}
+
 function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
@@ -78,7 +91,7 @@ Deno.serve(async (req) => {
 
   // 2. Confirm the caller is an active account manager.
   const { data: callerProfile } = await admin
-    .from('users').select('role, is_active').eq('id', caller.id).single()
+    .from('users').select('role, is_active, employee_id').eq('id', caller.id).single()
 
   if (
     !callerProfile ||
@@ -89,6 +102,8 @@ Deno.serve(async (req) => {
   }
 
   const callerDept = deptOf(callerProfile.role)
+  const callerIsHenk =
+    callerProfile.role === 'director' && badgeOf(callerProfile.employee_id) === HENK_BADGE
 
   let body: any
   try {
@@ -234,7 +249,11 @@ Deno.serve(async (req) => {
     if (deptOf(target.role) !== callerDept) {
       return json(403, { error: 'You can only manage users in your own department.' })
     }
-    if (ACCOUNT_MANAGERS.includes(target.role)) {
+    const henkOnly = HENK_ONLY_RESET_BADGES.includes(badgeOf(target.employee_id) ?? -1)
+    if (henkOnly && !callerIsHenk) {
+      return json(403, { error: 'Only Henk can reset this user\'s password.' })
+    }
+    if (ACCOUNT_MANAGERS.includes(target.role) && !henkOnly) {
       return json(403, { error: 'You cannot reset another administrator\'s password.' })
     }
 

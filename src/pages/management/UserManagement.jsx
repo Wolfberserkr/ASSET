@@ -25,6 +25,17 @@ const ASSIGNABLE_ROLES = {
 
 const ACCOUNT_HEADS = ['director', 'casino_manager']
 
+// Henk (director, B-10) — and only Henk — may also reset these badges'
+// passwords, even if they hold a head role. Enforced by the admin-users edge
+// function; mirrored here so the button shows for the right person. Matched
+// on the badge number so padding variants all resolve (B-07 == B-7 == B-007).
+const HENK_BADGE = 10
+const HENK_ONLY_RESET_BADGES = new Set([7, 8, 9])
+const badgeNumber = (employeeId) => {
+  const m = String(employeeId ?? '').trim().toUpperCase().match(/^B\s*-?\s*(\d+)$/)
+  return m ? parseInt(m[1], 10) : null
+}
+
 // Extracts the friendly message the Edge Function put in its JSON body.
 async function invokeAdmin(payload) {
   const { data, error } = await supabase.functions.invoke('admin-users', { body: payload })
@@ -42,8 +53,9 @@ async function invokeAdmin(payload) {
 }
 
 export default function UserManagement() {
-  const { user, department } = useAuth()
+  const { user, profile, department } = useAuth()
   const assignable = ASSIGNABLE_ROLES[department] ?? []
+  const iAmHenk = profile?.role === 'director' && badgeNumber(profile?.employee_id) === HENK_BADGE
 
   const [users,   setUsers]   = useState([])
   const [history, setHistory] = useState(() => new Set()) // ids with ≥1 session
@@ -251,7 +263,17 @@ export default function UserManagement() {
             const isHead = ACCOUNT_HEADS.includes(u.role)
             const locked = isSelf || isHead            // cannot deactivate/delete
             const canHardDelete = !locked && !history.has(u.id)
+            const henkOnly = HENK_ONLY_RESET_BADGES.has(badgeNumber(u.employee_id))
+            const canReset = !isSelf && (henkOnly ? iAmHenk : !isHead)
             const busy = busyId === u.id
+            const resetBtn = (
+              <button onClick={() => openReset(u)}
+                className="p-2 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center"
+                style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-cyan)' }}
+                title="Reset password">
+                <KeyRound size={15} />
+              </button>
+            )
             return (
               <div key={u.id} className="flex items-center gap-3 px-4 py-3"
                 style={{ borderBottom: i < users.length - 1 ? '1px solid var(--color-brand-border)' : 'none',
@@ -284,15 +306,14 @@ export default function UserManagement() {
                   <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin shrink-0"
                     style={{ borderColor: 'var(--color-brand-cyan)' }} />
                 ) : locked ? (
-                  <span className="text-xs shrink-0" style={{ color: 'var(--color-brand-muted)' }}>—</span>
+                  canReset ? (
+                    <div className="flex items-center gap-2 shrink-0">{resetBtn}</div>
+                  ) : (
+                    <span className="text-xs shrink-0" style={{ color: 'var(--color-brand-muted)' }}>—</span>
+                  )
                 ) : (
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => openReset(u)}
-                      className="p-2 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center"
-                      style={{ background: 'var(--color-brand-surface)', color: 'var(--color-brand-cyan)' }}
-                      title="Reset password">
-                      <KeyRound size={15} />
-                    </button>
+                    {canReset && resetBtn}
                     {u.is_active && (
                       <button onClick={() => setConfirmLogout(u)}
                         className="p-2 rounded-lg min-w-[34px] min-h-[34px] flex items-center justify-center"
