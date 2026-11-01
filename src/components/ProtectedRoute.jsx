@@ -3,8 +3,9 @@ import { useAuth } from '../context/AuthContext'
 
 // `redirectTo`: where a signed-in user with the wrong role goes instead of their home page
 // (e.g. an agent opening the schedule builder lands on the published schedule).
-export default function ProtectedRoute({ allowedRoles, redirectTo }) {
-  const { user, profile, loading } = useAuth()
+// `excludeExecutives`: the executive team (B-07/08/09) is sent to its dashboard.
+export default function ProtectedRoute({ allowedRoles, redirectTo, excludeExecutives = false }) {
+  const { user, profile, loading, isExecutive } = useAuth()
 
   if (loading) {
     return (
@@ -26,6 +27,10 @@ export default function ProtectedRoute({ allowedRoles, redirectTo }) {
     // Wrong role — redirect to correct home
     if (profile.role === 'agent' || profile.role === 'pit_manager') return <Navigate to="/dashboard" replace />
     return <Navigate to="/management" replace />
+  }
+
+  if (excludeExecutives && isExecutive) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <Outlet />
