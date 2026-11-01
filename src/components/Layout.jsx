@@ -52,9 +52,9 @@ const mgmtNav = [
   { to: '/management/audit-log',        label: 'Audit Log',         icon: FileText,        group: 'Reports' },
 ]
 
-// Surveillance schedule — agent / supervisor / director only (never the pit roles).
+// Surveillance schedule — agent / supervisor / director only (never the pit roles,
+// never the executive team); gated by `canViewSchedule` from AuthContext.
 const scheduleLink = { to: '/schedule', label: 'Schedule', icon: CalendarDays, group: 'Main' }
-const SCHEDULE_ROLES = ['agent', 'supervisor', 'director']
 
 // Head-only links — appended for the two department heads (director /
 // casino_manager) via the canManageUsers flag. Scorecard/Digest sit under
@@ -133,7 +133,7 @@ function NavItem({ to, label, icon: Icon, onClick, disabled, badge }) {
 // `wide`: pages whose content is a wide grid (the schedule builder) get a
 // wider column than the default max-w-5xl.
 export default function Layout({ children, bg, contentKey, wide = false }) {
-  const { user, profile, logout, isManagement, canManageUsers, department, drillRole } = useAuth()
+  const { user, profile, logout, isManagement, canManageUsers, canViewSchedule, department, drillRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -230,7 +230,7 @@ export default function Layout({ children, bg, contentKey, wide = false }) {
           : link,
       )
   // Schedule goes at the end of the Main group
-  const navLinks = SCHEDULE_ROLES.includes(profile?.role)
+  const navLinks = canViewSchedule
     ? (() => {
         const at = baseLinks.findLastIndex(l => l.group === 'Main') + 1
         return [...baseLinks.slice(0, at), scheduleLink, ...baseLinks.slice(at)]

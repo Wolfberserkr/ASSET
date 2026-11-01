@@ -89,8 +89,8 @@ export default function App() {
               <Route path="/management/remediation"    element={<Remediation />} />
             </Route>
 
-            {/* Surveillance schedule — surveillance staff only (pit roles have no access) */}
-            <Route element={<ProtectedRoute allowedRoles={['agent', 'supervisor', 'director']} />}>
+            {/* Surveillance schedule — surveillance staff only (pit roles and the executive team have no access) */}
+            <Route element={<ProtectedRoute allowedRoles={['agent', 'supervisor', 'director']} excludeExecutives />}>
               <Route path="/schedule"                  element={<ScheduleView />} />
             </Route>
             {/* Schedule builder — Director + Supervisor; everyone else goes to the published view */}

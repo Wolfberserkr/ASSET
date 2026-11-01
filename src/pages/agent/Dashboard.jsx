@@ -65,7 +65,7 @@ function KvRow({ items }) {
 }
 
 export default function AgentDashboard() {
-  const { user, profile, department } = useAuth()
+  const { user, profile, department, isExecutive } = useAuth()
   const navigate = useNavigate()
 
   // Cooldown is shared with the sidebar — single source of truth, single ticker.
@@ -118,7 +118,8 @@ export default function AgentDashboard() {
           .eq('status', 'completed')
           .gte('completed_at', trendCutoff)
           .order('completed_at', { ascending: false }),
-        supabase.rpc('get_team_leaderboard'),
+        // The executive team doesn't see the leaderboard — skip the fetch.
+        isExecutive ? Promise.resolve({ data: [], error: null }) : supabase.rpc('get_team_leaderboard'),
         supabase
           .from('session_answers')
           .select('game_id, is_correct, sessions!inner(user_id)')
@@ -161,7 +162,7 @@ export default function AgentDashboard() {
       console.error(err)
       setLoadError('Failed to load dashboard data.')
     }
-  }, [user])
+  }, [user, isExecutive])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -542,7 +543,8 @@ export default function AgentDashboard() {
           ]} />
           <KvRow items={[
             { k: 'Best Score · 28d', v: bestScore ?? '—' },
-            { k: 'Team Rank', v: myRank > 0 ? `#${myRank} of ${rankedTeam.length}` : '—' },
+            // Executives (B-07/08/09) don't see team standings.
+            ...(isExecutive ? [] : [{ k: 'Team Rank', v: myRank > 0 ? `#${myRank} of ${rankedTeam.length}` : '—' }]),
           ]} />
           {strongest && (
             <KvRow items={[{ k: 'Strongest Game', v: `${strongest.name} · ${Math.round(strongest.acc * 100)}%` }]} />
@@ -555,8 +557,8 @@ export default function AgentDashboard() {
             }]} />
           )}
 
-          {/* Mini leaderboard */}
-          <div className="mt-4">
+          {/* Mini leaderboard — hidden from the executive team */}
+          {!isExecutive && <div className="mt-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mb-2" style={{ color: 'var(--color-brand-muted)', opacity: 0.75 }}>
               Team Leaderboard
             </p>
@@ -592,7 +594,7 @@ export default function AgentDashboard() {
                 )
               })
             )}
-          </div>
+          </div>}
 
           <button
             onClick={() => navigate('/drill')}

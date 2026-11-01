@@ -229,14 +229,15 @@ The **User Management** page (sidebar → Admin, route `/management/users`) is v
 
 ### Executive Team (B-07, B-08, B-09)
 Raul (B-07), Ben (B-08) and Ryan (B-09) are executives with ordinary `agent` accounts, on the agent side only to test their own casino knowledge. They drill exactly like agents (sessions, scoring, cooldown, their own dashboard, recert progress and history all work), but:
+- **No Schedule, no leaderboard.** They have no Schedule nav link, `/schedule` redirects them to their dashboard, and `public.is_surveillance_member()` refuses them every published month (migration `supabase/migrations/20261101120000_hide_schedule_from_executives.sql`, applied to production 2026-11-01; executives on `agent` role only). Their Dashboard hides the Team Leaderboard panel and the Team Rank line and doesn't fetch `get_team_leaderboard`. Frontend flags `isExecutive` / `canViewSchedule` come from `AuthContext`.
 - **Kept out of every team number.** Team Dashboard, Completion Tracker (so never flagged for missing 20 sessions), the management notification bell (recert + decay alerts), Weak Areas, Question Stats, Scorecard (roster, recert rate, accuracy), the Remediation assign list, the agent Dashboard leaderboard and team average. Their sessions and answers are removed from the aggregates, not just their rows.
 - **Still visible where it's a record, not a report:** Audit Log, Audit Digest, their own Agent Detail page, and User Management.
 - **Password reset is Henk-only.** Henk (director, B-10) and nobody else can reset their passwords, even if one of them is given a head role (which normally locks the row). Another director or Raquel gets a 403. Deactivate, delete and force logout follow the normal rules.
 
 Matched on the badge number (`B-07` == `B-7` == `B-007`), B- badges only (Pit `M-08` is unaffected). **The list lives in three places — change all three together:**
-- `public.is_executive_badge()` — migration `supabase/migrations/20260929180314_exclude_executives_from_reports.sql`, which also adds the filter to `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats`, `get_department_scorecard`, `get_department_scorecard_games` (signatures unchanged, replaced in place).
+- `public.is_executive_badge()` (also used by `is_surveillance_member()` for the schedule) — migration `supabase/migrations/20260929180314_exclude_executives_from_reports.sql`, which also adds the filter to `get_all_agents`, `get_team_leaderboard`, `get_team_benchmark`, `get_question_stats`, `get_department_scorecard`, `get_department_scorecard_games` (signatures unchanged, replaced in place).
 - `EXECUTIVE_BADGES` in `supabase/functions/admin-users/index.ts` (password reset).
-- `src/lib/executiveBadges.js` — used by the bell (`Layout.jsx`), `WeakAreas.jsx`, `UserManagement.jsx`, and the leaderboard (`Dashboard.jsx`, which also hides B-10).
+- `src/lib/executiveBadges.js` — used by `AuthContext` (`isExecutive` / `canViewSchedule`), the bell (`Layout.jsx`), `WeakAreas.jsx`, `UserManagement.jsx`, and the leaderboard (`Dashboard.jsx`, which also hides B-10).
 
 B-08 and B-09 were first created in July and hard-deleted by Henk on 2026-07-22 (before this exclusion existed); they need recreating via User Management as `agent`.
 
@@ -290,7 +291,7 @@ Team shift schedule — built by Henk/Angelo, read by agents. Handoff spec: `ref
 | Role | Access |
 |---|---|
 | `director`, `supervisor` | `/schedule/builder` (build, edit, cover short shifts, export Excel, **Publish**) + the view |
-| `agent` | `/schedule` — published months, read-only, own row highlighted, "My next shifts" |
+| `agent` (except the executive team B-07/08/09) | `/schedule` — published months, read-only, own row highlighted, "My next shifts" |
 | pit roles, signed out | none — no nav item, route redirects |
 
 - **Database** (migrations in `supabase/migrations/2026092816*.sql`, applied to production 2026-09-28 — **do not re-apply**): `surveillance_schedule_workspace` (one row `id = 1`, `state jsonb`, `version` for optimistic locking; editors only) and `surveillance_schedules` (one row per published month, `month` 1–12; read for active agent/supervisor/director, write for editors, delete = unpublish for the director only). Triggers bump `version`, stamp who/when, and write `schedule_published` / `schedule_republished` / `schedule_unpublished` to `audit_log`. Helpers `is_schedule_editor()` / `is_surveillance_member()`. All access goes through `src/features/schedule/scheduleApi.js`.

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logAudit } from '../lib/audit'
 import { clearMonthSelectionStorage } from '../lib/reportingMonthStorage'
+import { isExecutive as isExecutiveBadge } from '../lib/executiveBadges'
 
 const AuthContext = createContext(null)
 
@@ -247,6 +248,11 @@ export function AuthProvider({ children }) {
     ? 'pit'
     : 'surveillance'
 
+  // Executive team (B-07/08/09) on agent accounts: no Schedule, no leaderboard.
+  // Server-side, public.is_surveillance_member() refuses them the published
+  // schedules too (migration 20261101120000_hide_schedule_from_executives.sql).
+  const isExecutive = profile?.role === 'agent' && isExecutiveBadge(profile?.employee_id)
+
   const value = {
     user,
     profile,
@@ -259,6 +265,9 @@ export function AuthProvider({ children }) {
     canManageUsers: profile?.role === 'director' || profile?.role === 'casino_manager',
     department,
     drillRole:    department === 'pit' ? 'pit_manager' : 'agent',
+    isExecutive,
+    // Surveillance schedule: agent / supervisor / director, minus the executives.
+    canViewSchedule: ['agent', 'supervisor', 'director'].includes(profile?.role) && !isExecutive,
   }
 
   return (
