@@ -824,12 +824,16 @@ $('build').addEventListener('click',async()=>{
     $('msg').textContent=err&&err.message==='cancelled'?'Build cancelled — nothing was changed.':'The build failed — nothing was changed.'; return; }
   CANCEL=null; $('cancelBuild').hidden=true;
   const supKeep=same&&r0.sup?r0.sup.slice():supDefault(cfg.year,cfg.month,cfg.supPrev);
-  if(same) NEXT_KIND='rebuild';
   S.result={built:true,prevEnd:cfg.prevEnd,prevMustOff:cfg.prevMustOff,preCover:cfg.preCover,ds:dsKeep,oc:ocKeep,supOc:same&&r0.supOc?r0.supOc.slice():[],pins:same?(r0.pins||[]).slice():[],sup:supKeep,supPrev:cfg.supPrev,names:cfg.names,ids:cfg.ids,
     grid:res.grid,home:res.home,rows:[cfg.rows.slice(),cfg.rows.map(up)],absence,mustWork,dbl:dblKeep.slice(),
     year:cfg.year,month:cfg.month,offTarget:res.offTarget,targets:res.targets,
     prevLast:cfg.prevLast,prevStreak:cfg.prevStreak,prevOff:cfg.prevOff||null};
   setBusy(false); $('prog').hidden=true; bar.style.width='0';
+  // the first build of a month is its first draft: start its change log from exactly what the
+  // engine produced and archive it now, before anyone can edit (the archive keeps its first copy)
+  { const key=monthKey(S.result);
+    if(S.auditBase&&S.auditBase.key===key) NEXT_KIND='rebuild';
+    else { S.auditBase={key,cells:cellMap(toPublished(S))}; if(REMOTE_OK&&!CONFLICT) afterSave(); } }
   save(); renderGrids(); orderUI();
   $('msg').textContent=res.violations.length?'Built — some rules could not be met; see the list below.':`Built ${MONTHS[cfg.month]} ${cfg.year}.`;
 });

@@ -129,7 +129,7 @@ export async function listChanges(year, month1to12) {
 export async function getOriginal(year, month1to12) {
   const { data, error } = await supabase
     .from('surveillance_schedule_originals')
-    .select('data, built_by, built_at')
+    .select('data, built_by, built_at, source')
     .eq('year', year)
     .eq('month', month1to12)
     .maybeSingle();
@@ -137,11 +137,11 @@ export async function getOriginal(year, month1to12) {
   return data;
 }
 
-// employee IDs (never names) of the editors in a change list
+// employee ID + role (never names) of the editors in a change list: { uuid: { badge, role } }
 export async function editorIds(userIds) {
   const ids = [...new Set(userIds.filter(Boolean))];
   if (!ids.length) return {};
-  const { data, error } = await supabase.from('users').select('id, employee_id').in('id', ids);
+  const { data, error } = await supabase.from('users').select('id, employee_id, role').in('id', ids);
   if (error) throw error;
-  return Object.fromEntries((data || []).map((u) => [u.id, u.employee_id]));
+  return Object.fromEntries((data || []).map((u) => [u.id, { badge: u.employee_id, role: u.role }]));
 }
