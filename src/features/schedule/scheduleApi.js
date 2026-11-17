@@ -74,3 +74,74 @@ export async function unpublishSchedule(year, month1to12) {
   const { error } = await supabase.from('surveillance_schedules').delete().eq('year', year).eq('month', month1to12);
   if (error) throw error;
 }
+
+// ---- month archive (Director + Supervisor): every built month, viewable in the builder ----
+export async function listMonths() {
+  const { data, error } = await supabase
+    .from('surveillance_schedule_months')
+    .select('year, month, updated_at')
+    .order('year', { ascending: false })
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getMonth(year, month1to12) {
+  const { data, error } = await supabase
+    .from('surveillance_schedule_months')
+    .select('year, month, data, built_at, updated_at')
+    .eq('year', year)
+    .eq('month', month1to12)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// The first save of a month becomes its original build (database trigger); later saves update the copy.
+export async function saveMonth(year, month1to12, data) {
+  const { error } = await supabase
+    .from('surveillance_schedule_months')
+    .upsert({ year, month: month1to12, data }, { onConflict: 'year,month' });
+  if (error) throw error;
+}
+
+// ---- change audit (written by any editor, read by the Director only — RLS) ----
+// rows: [{ client_id, year, month, kind, after_publish, cells }]; client_id makes retries safe.
+export async function logChanges(rows) {
+  if (!rows.length) return;
+  const { error } = await supabase
+    .from('surveillance_schedule_changes')
+    .upsert(rows, { onConflict: 'client_id', ignoreDuplicates: true });
+  if (error) throw error;
+}
+
+export async function listChanges(year, month1to12) {
+  const { data, error } = await supabase
+    .from('surveillance_schedule_changes')
+    .select('id, kind, after_publish, cells, changed_by, changed_at')
+    .eq('year', year)
+    .eq('month', month1to12)
+    .order('changed_at', { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getOriginal(year, month1to12) {
+  const { data, error } = await supabase
+    .from('surveillance_schedule_originals')
+    .select('data, built_by, built_at')
+    .eq('year', year)
+    .eq('month', month1to12)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// employee IDs (never names) of the editors in a change list
+export async function editorIds(userIds) {
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (!ids.length) return {};
+  const { data, error } = await supabase.from('users').select('id, employee_id').in('id', ids);
+  if (error) throw error;
+  return Object.fromEntries((data || []).map((u) => [u.id, u.employee_id]));
+}

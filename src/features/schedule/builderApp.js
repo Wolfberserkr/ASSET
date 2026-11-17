@@ -9,12 +9,14 @@
 import { toPublished } from './publishShape.js';
 import E from './engine.js';
 import { orderFollowing, prevMonthOf, slotShifts } from './rowOrder.js';
+import { cellMap, diffMaps } from './scheduleDiff.js';
 
 const DRAFT_KEY = 'schedule-builder-draft-v1';
 const SAVE_DELAY_MS = 1500;
 
 export function mount(rootEl, opts = {}) {
-const { initial = {}, storage, publish, unpublish, listPublished, getPublished, canUnpublish = false, download } = opts;
+const { initial = {}, storage, publish, unpublish, listPublished, getPublished, canUnpublish = false, download,
+  archive, logChanges, onWorkingMonth, onArchived } = opts;
 let DEAD = false;
 const LISTENERS = [];
 const on = (target, type, fn, o) => { target.addEventListener(type, fn, o); LISTENERS.push([target, type, fn, o]); };
@@ -149,11 +151,39 @@ async function flushSave(){
   clearTimeout(SAVE_T); SAVE_T=null;
   if(SAVING||!DIRTY||CONFLICT||!REMOTE_OK) return;
   SAVING=true; DIRTY=false; if(!DEAD) syncUI('saving');
-  try{ VERSION=await storage.save(JSON.parse(JSON.stringify(S)),VERSION); if(!DIRTY&&!DEAD) syncUI('saved'); }
+  recordChanges();
+  try{ VERSION=await storage.save(JSON.parse(JSON.stringify(S)),VERSION); if(!DIRTY&&!DEAD) syncUI('saved'); afterSave(); }
   catch(e){ if(e&&e.code==='CONFLICT'){ CONFLICT=true; if(!DEAD) syncUI('conflict'); }
     else { DIRTY=true; if(!DEAD){ syncUI('error'); SAVE_T=setTimeout(flushSave,10000); } } }
   finally{ SAVING=false;
     if(DIRTY&&!CONFLICT&&!SAVE_T){ if(DEAD) flushSave(); else SAVE_T=setTimeout(flushSave,SAVE_DELAY_MS); } }
+}
+// ---- change audit + month archive
+// S.auditBase holds the cells as last logged for the month on screen; every save compares the
+// schedule with it and queues the changed cells (S.auditQueue, saved with the workspace so nothing
+// is lost if the page closes). After a good save the queue goes to the change log (Director-only)
+// and the month's copy goes to the archive — whose first copy is the month's original build.
+let NEXT_KIND=null; // 'rebuild' for the first save after rebuilding the month on screen
+const newId=()=>(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));
+const monthKey=r=>`${r.year}-${r.month+1}`;
+function recordChanges(){
+  const r=S.result; if(!r||!r.built) return;
+  const key=monthKey(r), now=cellMap(toPublished(S)), base=S.auditBase;
+  if(base&&base.key===key){ const cells=diffMaps(base.cells,now);
+    if(cells.length) (S.auditQueue=S.auditQueue||[]).push({client_id:newId(),year:r.year,month:r.month+1,kind:NEXT_KIND||'edit',after_publish:PUBLISHED.has(key),cells}); }
+  S.auditBase={key,cells:now}; NEXT_KIND=null;
+}
+const keepAudit=prev=>{ S.auditBase=prev.auditBase; S.auditQueue=prev.auditQueue; }; // undo must not rewind the log
+let LAST_ARCH=null, SENDING=false;
+async function afterSave(){
+  const r=S.result;
+  if(archive&&r&&r.built){ const d=toPublished(S), txt=JSON.stringify(d);
+    if(txt!==LAST_ARCH){ try{ await archive(r.year,r.month+1,d); LAST_ARCH=txt; onArchived&&onArchived(); }catch(e){ /* retried on the next save */ } } }
+  const q=(S.auditQueue||[]).slice();
+  if(logChanges&&q.length&&!SENDING){ SENDING=true;
+    try{ await logChanges(q); const sent=new Set(q.map(x=>x.client_id)); S.auditQueue=(S.auditQueue||[]).filter(x=>!sent.has(x.client_id)); if(!DEAD) save(); }
+    catch(e){ /* stays queued; sent with the next save */ }
+    finally{ SENDING=false; } }
 }
 // ---- undo history (last 50 actions, this page session)
 const HIST=[];
@@ -631,6 +661,7 @@ function renderGrids(){
   const r=S.result, D=r.grid[0].length, mn=MONTHS[r.month];
   $('h1title').textContent=`${mn} 1–15, ${r.year}`; $('h2title').textContent=`${mn} 16–${D}, ${r.year}`;
   renderGrid($('g1'),0,15,0); renderGrid($('g2'),15,D,1); renderChecks(); renderFixes(); pubUI();
+  if(onWorkingMonth) onWorkingMonth(r.year,r.month,!!r.built);
 }
 // ---- holidays: click a date to toggle
 on(document,'click',e=>{
@@ -788,11 +819,12 @@ $('build').addEventListener('click',async()=>{
   }catch(err){
     CANCEL=null; $('cancelBuild').hidden=true; setBusy(false); $('prog').hidden=true; bar.style.width='0';
     // put everything back exactly as it was before Build was clicked (including team changes that were due)
-    HIST.pop(); S=JSON.parse(preState); N=S.names.length; save();
+    HIST.pop(); { const prev=S; S=JSON.parse(preState); keepAudit(prev); } N=S.names.length; save();
     syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
     $('msg').textContent=err&&err.message==='cancelled'?'Build cancelled — nothing was changed.':'The build failed — nothing was changed.'; return; }
   CANCEL=null; $('cancelBuild').hidden=true;
   const supKeep=same&&r0.sup?r0.sup.slice():supDefault(cfg.year,cfg.month,cfg.supPrev);
+  if(same) NEXT_KIND='rebuild';
   S.result={built:true,prevEnd:cfg.prevEnd,prevMustOff:cfg.prevMustOff,preCover:cfg.preCover,ds:dsKeep,oc:ocKeep,supOc:same&&r0.supOc?r0.supOc.slice():[],pins:same?(r0.pins||[]).slice():[],sup:supKeep,supPrev:cfg.supPrev,names:cfg.names,ids:cfg.ids,
     grid:res.grid,home:res.home,rows:[cfg.rows.slice(),cfg.rows.map(up)],absence,mustWork,dbl:dblKeep.slice(),
     year:cfg.year,month:cfg.month,offTarget:res.offTarget,targets:res.targets,
@@ -945,14 +977,14 @@ $('reset').addEventListener('click',()=>{
   }
   delete btn.dataset.armed; btn.textContent='Reset'; btn.classList.remove('danger'); clearTimeout(btn._t);
   snap('Reset');
-  S=fresh(); N=S.names.length; save(); syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=0; renderGrids();
+  { const prev=S; S=fresh(); keepAudit(prev); } N=S.names.length; save(); syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=0; renderGrids();
   $('msg').textContent='Reset — back to the October 2026 starting schedule. Undo brings your work back.';
 });
 
 $('undo').addEventListener('click',()=>{
   if($('build').disabled) return; // not while a build is running
   const h=HIST.pop(); if(!h) return;
-  S=JSON.parse(h.state); N=S.names.length; save();
+  { const prev=S; S=JSON.parse(h.state); keepAudit(prev); } N=S.names.length; save();
   syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
   $('msg').textContent=`Undone: ${h.label}.`;
 });
@@ -1007,6 +1039,9 @@ if(listPublished) listPublished().then(rows=>{ if(DEAD) return; (rows||[]).forEa
 syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock; renderGrids(); undoUI();
 syncUI(REMOTE_OK?'saved':'offline');
 if(LOAD_NOTE) $('msg').textContent=LOAD_NOTE;
+{ const r=S.result; // start the change log from what is on screen now, so the first edit is recorded
+  if(r&&r.built&&!(S.auditBase&&S.auditBase.key===monthKey(r))) S.auditBase={key:monthKey(r),cells:cellMap(toPublished(S))}; }
+if(REMOTE_OK) afterSave(); // keep the archive copy of the month on screen current (and send any queued change log)
 
 return function unmount(){
   DEAD=true;
