@@ -1,6 +1,6 @@
 // Read-only schedule grid in the published shape (surveillance_schedules.data / the builder's month
 // archive). Shared by the agents' Schedule page and the builder's month viewer. IDs only, never names.
-// `changed` (optional): Map of 'ID:day0' -> original label, to highlight cells changed since the original build.
+// `changed` (optional): Map of 'ID:day0' -> hover text, to outline cells (e.g. changed since the first draft).
 import { LBL, SNAME, SUP_ID, supHours, supAlt, cellLab, iso } from './scheduleShared'
 
 export function valid(d) {
@@ -66,7 +66,7 @@ export function Grid({ P, d0, d1, p, myRow = null, changed = null }) {
                   const was = changed && changed.get(`${d.ids[i]}:${day}`)
                   return (
                     <td key={day} className={P.isHol(day) ? 'holc' : undefined}>
-                      <span className={`${cls}${was != null ? ' chg' : ''}`} title={was != null ? `Originally ${was}` : undefined}>
+                      <span className={`${cls}${was != null ? ' chg' : ''}`} title={was != null ? was : undefined}>
                         {cellLab(v, isOc, isDs)}{isD && <i className="dblb">DBL</i>}
                       </span>
                     </td>
@@ -87,7 +87,7 @@ export function Grid({ P, d0, d1, p, myRow = null, changed = null }) {
               const cls = `cell s${v === 10 || v === 11 ? 'sup' : v}${cov ? ' supcov' : ''}${P.supOc.has(day) && v >= 1 && v <= 3 ? ' oc' : ''}`
               return (
                 <td key={day} className={P.isHol(day) ? 'holc' : undefined}>
-                  <span className={`${cls}${supWas(day) != null ? ' chg' : ''}`} title={supWas(day) != null ? `Originally ${supWas(day)}` : undefined}>{supLab(P, v, day)}</span>
+                  <span className={`${cls}${supWas(day) != null ? ' chg' : ''}`} title={supWas(day) != null ? supWas(day) : undefined}>{supLab(P, v, day)}</span>
                 </td>
               )
             })}

@@ -45,3 +45,5 @@
 .schedule-builder.months-bar .chglist s{color:var(--muted)}
 /* a cell changed since the original build */
 .schedule-view .cell.chg{outline:3px solid var(--bad);outline-offset:-3px;position:relative}
+.schedule-builder.months-bar .chgwho{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px;font-size:14px}
+.schedule-builder.months-bar .chgwho span{color:var(--muted);font-size:13px}
