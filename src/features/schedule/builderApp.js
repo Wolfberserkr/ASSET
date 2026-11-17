@@ -8,12 +8,15 @@
 //   · a Publish / Republish (and, for the Director, Unpublish) step was added
 import { toPublished } from './publishShape.js';
 import E from './engine.js';
+import { orderFollowing, prevMonthOf, slotShifts } from './rowOrder.js';
+import { cellMap, diffMaps } from './scheduleDiff.js';
 
 const DRAFT_KEY = 'schedule-builder-draft-v1';
 const SAVE_DELAY_MS = 1500;
 
 export function mount(rootEl, opts = {}) {
-const { initial = {}, storage, publish, unpublish, listPublished, canUnpublish = false, download } = opts;
+const { initial = {}, storage, publish, unpublish, listPublished, getPublished, canUnpublish = false, download,
+  archive, logChanges, onWorkingMonth, onArchived } = opts;
 let DEAD = false;
 const LISTENERS = [];
 const on = (target, type, fn, o) => { target.addEventListener(type, fn, o); LISTENERS.push([target, type, fn, o]); };
@@ -148,11 +151,39 @@ async function flushSave(){
   clearTimeout(SAVE_T); SAVE_T=null;
   if(SAVING||!DIRTY||CONFLICT||!REMOTE_OK) return;
   SAVING=true; DIRTY=false; if(!DEAD) syncUI('saving');
-  try{ VERSION=await storage.save(JSON.parse(JSON.stringify(S)),VERSION); if(!DIRTY&&!DEAD) syncUI('saved'); }
+  recordChanges();
+  try{ VERSION=await storage.save(JSON.parse(JSON.stringify(S)),VERSION); if(!DIRTY&&!DEAD) syncUI('saved'); afterSave(); }
   catch(e){ if(e&&e.code==='CONFLICT'){ CONFLICT=true; if(!DEAD) syncUI('conflict'); }
     else { DIRTY=true; if(!DEAD){ syncUI('error'); SAVE_T=setTimeout(flushSave,10000); } } }
   finally{ SAVING=false;
     if(DIRTY&&!CONFLICT&&!SAVE_T){ if(DEAD) flushSave(); else SAVE_T=setTimeout(flushSave,SAVE_DELAY_MS); } }
+}
+// ---- change audit + month archive
+// S.auditBase holds the cells as last logged for the month on screen; every save compares the
+// schedule with it and queues the changed cells (S.auditQueue, saved with the workspace so nothing
+// is lost if the page closes). After a good save the queue goes to the change log (Director-only)
+// and the month's copy goes to the archive — whose first copy is the month's original build.
+let NEXT_KIND=null; // 'rebuild' for the first save after rebuilding the month on screen
+const newId=()=>(globalThis.crypto&&crypto.randomUUID)?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));
+const monthKey=r=>`${r.year}-${r.month+1}`;
+function recordChanges(){
+  const r=S.result; if(!r||!r.built) return;
+  const key=monthKey(r), now=cellMap(toPublished(S)), base=S.auditBase;
+  if(base&&base.key===key){ const cells=diffMaps(base.cells,now);
+    if(cells.length) (S.auditQueue=S.auditQueue||[]).push({client_id:newId(),year:r.year,month:r.month+1,kind:NEXT_KIND||'edit',after_publish:PUBLISHED.has(key),cells}); }
+  S.auditBase={key,cells:now}; NEXT_KIND=null;
+}
+const keepAudit=prev=>{ S.auditBase=prev.auditBase; S.auditQueue=prev.auditQueue; }; // undo must not rewind the log
+let LAST_ARCH=null, SENDING=false;
+async function afterSave(){
+  const r=S.result;
+  if(archive&&r&&r.built){ const d=toPublished(S), txt=JSON.stringify(d);
+    if(txt!==LAST_ARCH){ try{ await archive(r.year,r.month+1,d); LAST_ARCH=txt; onArchived&&onArchived(); }catch(e){ /* retried on the next save */ } } }
+  const q=(S.auditQueue||[]).slice();
+  if(logChanges&&q.length&&!SENDING){ SENDING=true;
+    try{ await logChanges(q); const sent=new Set(q.map(x=>x.client_id)); S.auditQueue=(S.auditQueue||[]).filter(x=>!sent.has(x.client_id)); if(!DEAD) save(); }
+    catch(e){ /* stays queued; sent with the next save */ }
+    finally{ SENDING=false; } }
 }
 // ---- undo history (last 50 actions, this page session)
 const HIST=[];
@@ -171,40 +202,109 @@ function onMonthChange(){
   if(BUSY) return;
   snap('Change month');
   S.month=+$('mon').value; S.year=+$('yr').value||S.year;
-  const D=dim(S.year,S.month); S.off=[defOff(15),defOff(D-15)]; syncControls(); save();
+  const D=dim(S.year,S.month); S.off=[defOff(15),defOff(D-15)]; syncControls(); save(); orderUI();
 }
 $('mon').addEventListener('change',onMonthChange); $('yr').addEventListener('change',onMonthChange);
 $('off1').addEventListener('change',()=>{if(BUSY)return;snap('Change days off');S.off[0]=$('off1').value===''?STD_OFF:Math.max(0,+$('off1').value);syncControls();save();});
 $('off2').addEventListener('change',()=>{if(BUSY)return;snap('Change days off');S.off[1]=$('off2').value===''?STD_OFF:Math.max(0,+$('off2').value);syncControls();save();});
 
+// Rows are fixed slots (Row 1 · Morning, Row 2 · Night, Row 3 · Afternoon, …): the table lists the slots in
+// order and each slot holds one agent ID. Typing the ID of someone already on the team swaps the two agents.
+const slotName=k=>k<0?SNAME[4]:`Row ${k+1} · ${SNAME[RS()[k]]}`;
+function teamOrder(){ // agent indexes top to bottom: one per slot (-1 = empty slot), then the extras
+  const core=[...Array(RN()).keys()].map(k=>S.rows.indexOf(k));
+  return core.concat(S.rows.map((r,i)=>r<0?i:-1).filter(i=>i>=0)); }
 function agentRows(){
   const tb=$('agentRows'); tb.innerHTML='';
-  for(let i=0;i<N;i++){
+  const list=teamOrder(), seq=list.filter(i=>i>=0);
+  const opt=(vals,sel)=>vals.map(([v,t])=>`<option value="${v}"${v==sel?' selected':''}>${t}</option>`).join('');
+  list.forEach((i,k)=>{
     const tr=document.createElement('tr');
-    const opt=(vals,sel)=>vals.map(([v,t])=>`<option value="${v}"${v==sel?' selected':''}>${t}</option>`).join('');
-    tr.innerHTML=`<td><input type="text" id="nm${i}" aria-label="ID of agent ${i+1}"></td>
-      <td><select id="sh${i}" aria-label="Row for agent ${i+1}">${opt(RS().map((sh,k)=>[k,`Row ${k+1} · ${SNAME[sh]}`]).concat([[-1,'Extra · 18:00 / cover']]),S.rows[i])}</select></td>
-      <td><select id="pl${i}" aria-label="Last shift for agent ${i+1}">${opt([[0,'Off / unknown'],[1,'05-14'],[2,'13-22'],[3,'21-05'],[4,'18-03']],S.prevLast[i])}</select></td>
-      <td><input type="number" min="0" max="5" id="ps${i}" value="${S.prevStreak[i]}" aria-label="Streak for agent ${i+1}"></td>
+    const slot=i<0?k:S.rows[i];
+    const head=`<th scope="row" class="slot${slot<0?' extra':''}">${slotName(slot)}</th>`;
+    if(i<0){ tr.innerHTML=`${head}<td colspan="4" class="note">Open row — filled by the next agent who joins.</td>`; tb.appendChild(tr); return; }
+    const lab=slotName(slot);
+    tr.innerHTML=`${head}<td><input type="text" id="nm${i}" aria-label="Agent ID, ${lab}"></td>
+      <td><select id="pl${i}" aria-label="Last shift, ${lab}">${opt([[0,'Off / unknown'],[1,'05-14'],[2,'13-22'],[3,'21-05'],[4,'18-03']],S.prevLast[i])}</select></td>
+      <td><input type="number" min="0" max="5" id="ps${i}" value="${S.prevStreak[i]}" aria-label="Days worked in a row, ${lab}"></td>
       <td class="rm-cell">${pendTag(S.ids[i])||`<button class="linkbtn" data-leave="${i}">Remove…</button>`}</td>`;
     tb.appendChild(tr);
+    const step=(e,pre)=>{ const at=seq.indexOf(i), j=seq[at+(e.shiftKey?-1:1)]; return j==null?null:$(pre+j); };
     const nm=tr.querySelector('#nm'+i); nm.value=S.names[i];
     nm.addEventListener('focus',()=>{nm._snapped=false;});
-    nm.addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next name (Shift+Enter → previous)
-      const nx=$('nm'+(i+(e.shiftKey?-1:1))); if(nx){ nx.focus(); nx.select(); } else nm.blur(); });
+    nm.addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next slot (Shift+Enter → previous)
+      if(swapIn(i,nm)) return;
+      const nx=step(e,'nm'); if(nx){ nx.focus(); nx.select(); } else nm.blur(); });
     nm.addEventListener('input',()=>{ const val=normId(nm.value);
       nm.classList.toggle('bad',!ID_RE.test(val));
       if(!ID_RE.test(val)){ $('msg').textContent='IDs must look like B-24 (letter "B-" then numbers only).'; return; }
-      if(S.names.some((n,k)=>k!==i&&n===val)){ nm.classList.add('bad'); $('msg').textContent=`${val} is already on the team.`; return; }
-      if(!nm._snapped){snap('Change ID');nm._snapped=true;} S.names[i]=val;renderGrids();absUI();save(); $('msg').textContent=''; });
+      const j=S.names.findIndex((n,x)=>x!==i&&n===val);
+      if(j>=0){ nm.classList.add('bad'); $('msg').textContent=`${val} is in ${slotName(S.rows[j])}. Press Enter to swap ${val} and ${S.names[i]}.`; return; }
+      if(!nm._snapped){snap('Change ID');nm._snapped=true;} S.names[i]=val;renderGrids();absUI();save();orderUI(); $('msg').textContent=''; });
+    nm.addEventListener('change',()=>swapIn(i,nm));
     nm.addEventListener('blur',()=>{ nm.value=S.names[i]; nm.classList.remove('bad'); });
-    tr.querySelector('#sh'+i).addEventListener('change',e=>{snap('Change row');S.rows[i]=+e.target.value;save();rowCheck();});
     tr.querySelector('#pl'+i).addEventListener('change',e=>{snap('Change last shift');S.prevLast[i]=+e.target.value; if(S.prevOff) S.prevOff[i]=S.prevLast[i]===0?1:0;save();});
-    tr.querySelector('#ps'+i).addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next row (Shift+Enter → previous)
-      const nx=$('ps'+(i+(e.shiftKey?-1:1))); if(nx){ nx.focus(); nx.select(); } else e.target.blur(); });
+    tr.querySelector('#ps'+i).addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); // Enter → next slot (Shift+Enter → previous)
+      const nx=step(e,'ps'); if(nx){ nx.focus(); nx.select(); } else e.target.blur(); });
     tr.querySelector('#ps'+i).addEventListener('change',e=>{snap('Change days in a row');S.prevStreak[i]=+e.target.value||0;save();});
-  }
+  });
+  orderUI();
 }
+// typing the ID of another agent into a slot swaps the two agents' slots (each keeps their own details)
+function swapIn(i,nm){
+  if(BUSY) return false;
+  const val=normId(nm.value), j=S.names.findIndex((n,x)=>x!==i&&n===val);
+  if(j<0) return false;
+  nm.value=S.names[i]; // the swap is done once: the change/blur that follows Enter must not repeat it
+  snap('Swap rows'); const a=S.rows[i]; S.rows[i]=S.rows[j]; S.rows[j]=a; save();
+  agentRows();
+  $('msg').textContent=`${S.names[j]} is now in ${slotName(S.rows[j])} and ${S.names[i]} in ${slotName(S.rows[i])}. Press Build schedule to use this order.`;
+  return true;
+}
+// ---- row order check: does this month follow on from the last published month?
+const PREV=new Map(); // 'year-month(1-12)' → published data | null
+function prevData(y,m){
+  const p=prevMonthOf(y,m), k=`${p.year}-${p.month}`;
+  if(PREV.has(k)) return PREV.get(k);
+  PREV.set(k,undefined);
+  if(getPublished) getPublished(p.year,p.month).then(row=>{ if(DEAD) return; PREV.set(k,row?row.data:null); orderUI(); pubUI(); },()=>PREV.set(k,null));
+  return undefined;
+}
+// the result on screen, as employee IDs and slots
+const resultTeam=r=>({names:(r.ids||[]).map((id,i)=>{ const k=S.ids.indexOf(id); return k>=0?S.names[k]:(r.names||[])[i]; }),rows:r.rows[0]});
+function orderState(){
+  const prev=prevData(S.year,S.month); if(!prev) return null;
+  const setup=orderFollowing(prev,S.names,S.rows);
+  const r=S.result, onScreen=r&&r.built&&r.year===S.year&&r.month===S.month&&(r.ids||[]).join()===S.ids.join();
+  const screen=onScreen?orderFollowing(prev,resultTeam(r).names,r.rows[0]):null;
+  const p=prevMonthOf(S.year,S.month), pd=dim(p.year,p.month-1);
+  return {setup,screen,prevLabel:`${MONTHS[p.month-1]} 16–${pd}`};
+}
+function orderUI(){
+  const box=$('orderChk'); if(!box) return;
+  const st=orderState(); if(!st||st.setup.status==='none'){ box.hidden=true; box.innerHTML=''; return; }
+  box.hidden=false; const {setup,screen,prevLabel}=st;
+  if(setup.status==='team-changed'){ box.className='orderchk'; box.innerHTML=`<p>The team changed since ${esc(prevLabel)}, so the row order can't be checked automatically.</p>`; return; }
+  const bad=setup.status==='mismatch'||(screen&&screen.status==='mismatch');
+  if(!bad){ box.className='orderchk good'; box.innerHTML=`<p>✓ Follows ${esc(prevLabel)} — everyone moved up one row.</p>`; return; }
+  const list=setup.order.map((id,k)=>`<li><b>${esc(id)}</b> <span>${esc(slotName(k))}</span></li>`).join('');
+  const both=screen&&screen.status==='mismatch';
+  box.className='orderchk bad';
+  box.innerHTML=`<p><strong>${both?`The ${esc(MONTHS[S.month])} schedule on screen doesn't`:`This order doesn't`} follow ${esc(prevLabel)}.</strong> Following on, everyone moves up one row:</p>
+    <ol>${list}</ol>
+    <button id="useOrder">${both?`Put ${esc(MONTHS[S.month])} in this order`:'Use this order'}</button>
+    <p class="note">${both?'Each agent keeps their own shifts — only the order of the rows changes.':'Then press Build schedule.'}</p>`;
+}
+on(rootEl,'click',e=>{
+  if(!e.target.closest('#useOrder')||BUSY) return;
+  const st=orderState(); if(!st||st.setup.status!=='mismatch'&&!(st.screen&&st.screen.status==='mismatch')) return;
+  const r=S.result, screenToo=st.screen&&st.screen.status==='mismatch';
+  snap(screenToo?'Put rows in order':'Use order');
+  S.rows=st.setup.expected.slice(); S.rowShift=slotShifts(RN());
+  if(screenToo){ r.rows=[S.rows.slice(),S.rows.map(up)]; }
+  save(); agentRows(); renderGrids();
+  $('msg').textContent=screenToo?`${MONTHS[S.month]} now follows ${st.prevLabel}. Every agent kept their shifts — check the schedule, then publish.`:`Rows now follow ${st.prevLabel}. Press Build schedule.`;
+});
 
 function rowCheck(){
   const core=S.rows.filter(x=>x>=0); const dup=core.length!==new Set(core).size;
@@ -561,6 +661,7 @@ function renderGrids(){
   const r=S.result, D=r.grid[0].length, mn=MONTHS[r.month];
   $('h1title').textContent=`${mn} 1–15, ${r.year}`; $('h2title').textContent=`${mn} 16–${D}, ${r.year}`;
   renderGrid($('g1'),0,15,0); renderGrid($('g2'),15,D,1); renderChecks(); renderFixes(); pubUI();
+  if(onWorkingMonth) onWorkingMonth(r.year,r.month,!!r.built);
 }
 // ---- holidays: click a date to toggle
 on(document,'click',e=>{
@@ -718,26 +819,26 @@ $('build').addEventListener('click',async()=>{
   }catch(err){
     CANCEL=null; $('cancelBuild').hidden=true; setBusy(false); $('prog').hidden=true; bar.style.width='0';
     // put everything back exactly as it was before Build was clicked (including team changes that were due)
-    HIST.pop(); S=JSON.parse(preState); N=S.names.length; save();
+    HIST.pop(); { const prev=S; S=JSON.parse(preState); keepAudit(prev); } N=S.names.length; save();
     syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
     $('msg').textContent=err&&err.message==='cancelled'?'Build cancelled — nothing was changed.':'The build failed — nothing was changed.'; return; }
   CANCEL=null; $('cancelBuild').hidden=true;
   const supKeep=same&&r0.sup?r0.sup.slice():supDefault(cfg.year,cfg.month,cfg.supPrev);
+  if(same) NEXT_KIND='rebuild';
   S.result={built:true,prevEnd:cfg.prevEnd,prevMustOff:cfg.prevMustOff,preCover:cfg.preCover,ds:dsKeep,oc:ocKeep,supOc:same&&r0.supOc?r0.supOc.slice():[],pins:same?(r0.pins||[]).slice():[],sup:supKeep,supPrev:cfg.supPrev,names:cfg.names,ids:cfg.ids,
     grid:res.grid,home:res.home,rows:[cfg.rows.slice(),cfg.rows.map(up)],absence,mustWork,dbl:dblKeep.slice(),
     year:cfg.year,month:cfg.month,offTarget:res.offTarget,targets:res.targets,
     prevLast:cfg.prevLast,prevStreak:cfg.prevStreak,prevOff:cfg.prevOff||null};
   setBusy(false); $('prog').hidden=true; bar.style.width='0';
-  save(); renderGrids();
+  save(); renderGrids(); orderUI();
   $('msg').textContent=res.violations.length?'Built — some rules could not be met; see the list below.':`Built ${MONTHS[cfg.month]} ${cfg.year}.`;
 });
 $('next').addEventListener('click',()=>{
   snap('Set up next month');
   const r=S.result, D=r.grid[0].length;
   S.rows=r.rows[1].map(up);
-  // always move forward: whatever line an agent lands on, it takes the shift after the one they just worked
-  const nextOf=h=>h>=1&&h<=3?(h%3)+1:h;
-  S.rows.forEach((row,i)=>{ if(row>=0&&r.home[1][i]>=1&&r.home[1][i]<=3) S.rowShift[row]=nextOf(r.home[1][i]); });
+  // rows are fixed slots (Morning, Night, Afternoon from row 1): moving up one slot moves everyone forward one shift
+  S.rowShift=slotShifts(RN());
   S.prevLast=r.grid.map(row=>row[D-1]);
   // when each agent's last shift really ended (call-ins end earlier, double shifts later) and who must rest on the 1st
   const OCE={1:13,2:21,3:29,4:27}, DSE={1:22,2:29,3:38};
@@ -876,14 +977,14 @@ $('reset').addEventListener('click',()=>{
   }
   delete btn.dataset.armed; btn.textContent='Reset'; btn.classList.remove('danger'); clearTimeout(btn._t);
   snap('Reset');
-  S=fresh(); N=S.names.length; save(); syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=0; renderGrids();
+  { const prev=S; S=fresh(); keepAudit(prev); } N=S.names.length; save(); syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=0; renderGrids();
   $('msg').textContent='Reset — back to the October 2026 starting schedule. Undo brings your work back.';
 });
 
 $('undo').addEventListener('click',()=>{
   if($('build').disabled) return; // not while a build is running
   const h=HIST.pop(); if(!h) return;
-  S=JSON.parse(h.state); N=S.names.length; save();
+  { const prev=S; S=JSON.parse(h.state); keepAudit(prev); } N=S.names.length; save();
   syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock||0; renderGrids(); undoUI();
   $('msg').textContent=`Undone: ${h.label}.`;
 });
@@ -917,7 +1018,9 @@ function arm(b,label,rest,msg){ b.dataset.armed='1'; b.textContent=label; b.clas
 $('publish').addEventListener('click',async()=>{
   if(BUSY||!publish) return; const b=$('publish'), r=S.result, Y=r.year, M=r.month, label=`${MONTHS[M]} ${Y}`;
   const has=PUBLISHED.has(pubKey());
-  if(has&&!b.dataset.armed){ arm(b,'Confirm republish','Republish',`${label} is already published. Republishing replaces what agents see now with the schedule on screen. Click again to confirm.`); return; }
+  const prev=prevData(Y,M), chk=prev?orderFollowing(prev,resultTeam(r).names,r.rows[0]):null, off=chk&&chk.status==='mismatch';
+  const pl=prevMonthOf(Y,M), offMsg=off?`${label} doesn't follow the row order of ${MONTHS[pl.month-1]} 16–${dim(pl.year,pl.month-1)} (see Agents). `:'';
+  if((has||off)&&!b.dataset.armed){ arm(b,has?'Confirm republish':'Publish anyway',has?'Republish':'Publish',`${offMsg}${has?`${label} is already published. Republishing replaces what agents see now with the schedule on screen. `:''}Click again to confirm.`); return; }
   disarm(b); b.disabled=true; $('msg').textContent=`Publishing ${label}…`;
   try{ await publish(Y,M+1,toPublished(S)); if(DEAD) return; PUBLISHED.add(`${Y}-${M+1}`); $('msg').textContent=`Published — agents can see ${label} now.`; }
   catch(e){ if(!DEAD) $('msg').textContent=`Publishing failed — ${e&&e.message||'please try again'}.`; }
@@ -936,6 +1039,9 @@ if(listPublished) listPublished().then(rows=>{ if(DEAD) return; (rows||[]).forEa
 syncControls(); agentRows(); absUI(); renderPending(); $('lock').value=S.lock; renderGrids(); undoUI();
 syncUI(REMOTE_OK?'saved':'offline');
 if(LOAD_NOTE) $('msg').textContent=LOAD_NOTE;
+{ const r=S.result; // start the change log from what is on screen now, so the first edit is recorded
+  if(r&&r.built&&!(S.auditBase&&S.auditBase.key===monthKey(r))) S.auditBase={key:monthKey(r),cells:cellMap(toPublished(S))}; }
+if(REMOTE_OK) afterSave(); // keep the archive copy of the month on screen current (and send any queued change log)
 
 return function unmount(){
   DEAD=true;

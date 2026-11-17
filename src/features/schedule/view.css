@@ -29,3 +29,19 @@
   .schedule-view .mynext{order:-1}
   .schedule-view .wrap>header{order:-2}
 }
+/* builder: month picker bar + Director's change audit */
+.schedule-builder.months-bar .wrap{padding-bottom:0}
+.schedule-builder.months-bar .chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;align-self:center}
+.schedule-builder.months-bar .chk input{width:18px;height:18px;accent-color:var(--accent)}
+.schedule-builder.months-bar .changes .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.schedule-builder.months-bar .changes .row h2{margin:0}
+.schedule-builder.months-bar .chglist{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px;max-height:420px;overflow:auto}
+.schedule-builder.months-bar .chglist>li{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.schedule-builder.months-bar .chgh{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:14px}
+.schedule-builder.months-bar .chgh span{color:var(--muted);font-size:13px}
+.schedule-builder.months-bar .chgh .tag{border:1px solid var(--line);border-radius:999px;padding:0 8px;font-size:12px}
+.schedule-builder.months-bar .chgh .tag.pub{border-color:var(--bad);color:var(--bad)}
+.schedule-builder.months-bar .chglist ul{margin:6px 0 0;padding-left:18px;font-size:13px;columns:2 260px}
+.schedule-builder.months-bar .chglist s{color:var(--muted)}
+/* a cell changed since the original build */
+.schedule-view .cell.chg{outline:3px solid var(--bad);outline-offset:-3px;position:relative}
