@@ -44,6 +44,16 @@
 .schedule-builder table.agents td{padding:4px 6px}
 .schedule-builder table.agents input[type=text]{width:100%}
 .schedule-builder table.agents input[type=number]{width:70px}
+.schedule-builder table.agents th.slot{font-size:13px;color:var(--ink);font-weight:600;white-space:nowrap}
+.schedule-builder table.agents th.slot.extra{color:var(--muted);font-weight:500}
+.schedule-builder .orderchk{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}
+.schedule-builder .orderchk p{margin:0}
+.schedule-builder .orderchk.good{border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.schedule-builder .orderchk.bad{border-color:var(--bad);background:var(--bad-bg)}
+.schedule-builder .orderchk.bad strong{color:var(--bad)}
+.schedule-builder .orderchk ol{margin:8px 0;padding-left:22px;columns:3 170px;column-gap:20px}
+.schedule-builder .orderchk li span{color:var(--muted);font-size:13px}
+.schedule-builder .orderchk .note{margin-top:6px}
 .schedule-builder .checks{display:flex;flex-wrap:wrap;gap:8px}
 .schedule-builder .chip{font-size:13px;padding:4px 10px;border-radius:999px;font-weight:500}
 .schedule-builder .chip.ok{background:var(--ok-bg);color:var(--ok)}

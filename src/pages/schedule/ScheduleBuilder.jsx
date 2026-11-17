@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { mount } from '../../features/schedule/builderApp'
 import template from '../../features/schedule/builderTemplate'
 import {
-  loadWorkspace, saveWorkspace, publishSchedule, unpublishSchedule, listPublished,
+  loadWorkspace, saveWorkspace, publishSchedule, unpublishSchedule, listPublished, getPublished,
 } from '../../features/schedule/scheduleApi'
 import '../../features/schedule/fonts'
 import '../../features/schedule/builder.css'
@@ -40,6 +40,7 @@ export default function ScheduleBuilder() {
       publish: publishSchedule,
       unpublish: unpublishSchedule,
       listPublished,
+      getPublished,
       canUnpublish,
     })
     return () => { unmount(); el.innerHTML = '' }

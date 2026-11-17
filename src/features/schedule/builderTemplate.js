@@ -30,9 +30,10 @@ export default `
 
   <section class="panel">
     <div class="row"><h2>Agents</h2><button id="next">Set up next month from this one</button></div>
+    <div id="orderChk" class="orderchk" aria-live="polite" hidden></div>
     <div class="scroll">
       <table class="agents">
-        <thead><tr><th>Agent ID</th><th>Row in the 1–15 schedule</th><th>Last shift of previous month</th><th>Days worked in a row at month end</th><th><span class="sr">Team changes</span></th></tr></thead>
+        <thead><tr><th>Row in the 1–15 schedule</th><th>Agent ID</th><th>Last shift of previous month</th><th>Days worked in a row at month end</th><th><span class="sr">Team changes</span></th></tr></thead>
         <tbody id="agentRows"></tbody>
       </table>
     </div>
@@ -43,7 +44,7 @@ export default `
       <p class="note" style="margin:0;flex:1 1 260px">Changes take effect from the start of a schedule (the 1st or 16th). A new agent fills an open row if someone has left, otherwise joins as an extra on 18:00–03:00 and covers gaps. When someone leaves, their row is removed and the team shrinks.</p>
     </div>
     <div id="pendList"></div>
-    <p class="note">Rows are fixed lines — Morning, Night, Afternoon, repeating from row 1. Every schedule each agent moves up one row (row 1 wraps to the last row), which moves everyone forward one shift: Morning → Afternoon → Night → Morning. The last two columns carry rest time and the legal 5-days-in-a-row limit across the month change — fill them in from last month's schedule, or use the button to fill them automatically.</p>
+    <p class="note">Rows are fixed slots — Morning, Night, Afternoon, repeating from row 1. Type an agent ID into a slot; typing the ID of someone already on the team and pressing Enter swaps the two. Every schedule (the 16th and the 1st) each agent moves up one slot (row 1 wraps to the last row), which moves everyone forward one shift: Morning → Afternoon → Night → Morning. The last two columns carry rest time and the legal 5-days-in-a-row limit across the month change — fill them in from last month's schedule, or use the button to fill them automatically.</p>
   </section>
 
   <section class="panel">
